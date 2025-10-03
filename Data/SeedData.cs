@@ -137,6 +137,46 @@ namespace NYR.API.Data
                 }
             }
 
+            // Seed Categories (Master Data)
+            if (!await context.Categories.AnyAsync())
+            {
+                var categories = new List<Category>
+                {
+                    new Category { Name = "Electronics", Description = "Electronic devices and gadgets", IsActive = true },
+                    new Category { Name = "Clothing", Description = "Apparel and fashion items", IsActive = true },
+                    new Category { Name = "Home & Garden", Description = "Home improvement and garden supplies", IsActive = true },
+                    new Category { Name = "Sports & Outdoors", Description = "Sports equipment and outdoor gear", IsActive = true },
+                    new Category { Name = "Books & Media", Description = "Books, movies, and media", IsActive = true },
+                    new Category { Name = "Health & Beauty", Description = "Health and beauty products", IsActive = true },
+                    new Category { Name = "Automotive", Description = "Automotive parts and accessories", IsActive = true },
+                    new Category { Name = "Toys & Games", Description = "Toys and gaming products", IsActive = true }
+                };
+
+                await context.Categories.AddRangeAsync(categories);
+                await context.SaveChangesAsync();
+            }
+
+            // Seed Brands (Master Data)
+            if (!await context.Brands.AnyAsync())
+            {
+                var brands = new List<Brand>
+                {
+                    new Brand { Name = "Apple", Description = "Technology company", IsActive = true },
+                    new Brand { Name = "Samsung", Description = "Electronics and technology", IsActive = true },
+                    new Brand { Name = "Nike", Description = "Athletic footwear and apparel", IsActive = true },
+                    new Brand { Name = "Adidas", Description = "Sports and lifestyle brand", IsActive = true },
+                    new Brand { Name = "Sony", Description = "Electronics and entertainment", IsActive = true },
+                    new Brand { Name = "Microsoft", Description = "Technology and software", IsActive = true },
+                    new Brand { Name = "LG", Description = "Electronics and home appliances", IsActive = true },
+                    new Brand { Name = "Canon", Description = "Cameras and imaging equipment", IsActive = true },
+                    new Brand { Name = "Dell", Description = "Computer technology", IsActive = true },
+                    new Brand { Name = "HP", Description = "Technology and printing solutions", IsActive = true }
+                };
+
+                await context.Brands.AddRangeAsync(brands);
+                await context.SaveChangesAsync();
+            }
+
             // Seed Admin User
             if (!await context.Users.AnyAsync())
             {
