@@ -177,6 +177,32 @@ namespace NYR.API.Data
                 await context.SaveChangesAsync();
             }
 
+			// Seed Vans
+			if (!await context.Vans.AnyAsync())
+			{
+				var vans = new List<Van>
+				{
+					new Van { DefaultDriverName = "Alice Carter", VanName = "Van Alpha", VanNumber = "VAN-001", IsActive = true },
+					new Van { DefaultDriverName = "Bob Evans", VanName = "Van Beta", VanNumber = "VAN-002", IsActive = true }
+				};
+
+				await context.Vans.AddRangeAsync(vans);
+				await context.SaveChangesAsync();
+			}
+
+			// Seed Warehouses
+			if (!await context.Warehouses.AnyAsync())
+			{
+				var warehouses = new List<Warehouse>
+				{
+					new Warehouse { Name = "NY Central Warehouse", AddressLine1 = "100 Warehouse Rd", City = "New York", State = "NY", ZipCode = "10010", IsActive = true },
+					new Warehouse { Name = "LA Distribution Center", AddressLine1 = "200 Logistics Ave", City = "Los Angeles", State = "CA", ZipCode = "90012", IsActive = true }
+				};
+
+				await context.Warehouses.AddRangeAsync(warehouses);
+				await context.SaveChangesAsync();
+			}
+
             // Seed Admin User
             if (!await context.Users.AnyAsync())
             {

@@ -18,6 +18,8 @@ namespace NYR.API.Data
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductVariation> ProductVariations { get; set; }
+		public DbSet<Van> Vans { get; set; }
+		public DbSet<Warehouse> Warehouses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -84,6 +86,20 @@ namespace NYR.API.Data
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(e => e.PriceAdjustment).HasPrecision(18, 2);
             });
+
+			// Configure Van entity
+			modelBuilder.Entity<Van>(entity =>
+			{
+				entity.HasIndex(e => e.VanNumber).IsUnique();
+				entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+			});
+
+			// Configure Warehouse entity
+			modelBuilder.Entity<Warehouse>(entity =>
+			{
+				entity.HasIndex(e => e.Name);
+				entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+			});
 
             // Configure relationships
             modelBuilder.Entity<User>()

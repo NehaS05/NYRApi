@@ -65,6 +65,8 @@ builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
+builder.Services.AddScoped<IVanRepository, VanRepository>();
+builder.Services.AddScoped<IWarehouseRepository, WarehouseRepository>();
 
 // Service Registration
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -77,6 +79,8 @@ builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
+builder.Services.AddScoped<IVanService, VanService>();
+builder.Services.AddScoped<IWarehouseService, WarehouseService>();
 
 // JWT Authentication Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -136,10 +140,9 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    
-    // Ensure database is created
-    await context.Database.EnsureCreatedAsync();
-    
+    // Apply pending EF Core migrations
+    await context.Database.MigrateAsync();
+
     // Seed initial data
     await SeedData.SeedAsync(context);
 }
