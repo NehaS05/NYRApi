@@ -108,5 +108,52 @@ namespace NYR.API.Controllers
             var users = await _userService.GetUsersByLocationAsync(locationId);
             return Ok(users);
         }
+
+        [HttpGet("{id}/driver-availability")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<IEnumerable<DriverAvailabilityDto>>> GetDriverAvailability(int id)
+        {
+            var availabilities = await _userService.GetDriverAvailabilityAsync(id);
+            return Ok(availabilities);
+        }
+
+        [HttpPost("{id}/driver-availability")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> SaveDriverAvailability(int id, [FromBody] DriverAvailabilityBulkDto bulkDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _userService.SaveDriverAvailabilityAsync(id, bulkDto);
+                if (result)
+                    return Ok(new { message = "Driver availability saved successfully" });
+                else
+                    return BadRequest("Failed to save driver availability");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}/driver-availability/{availabilityId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> DeleteDriverAvailability(int id, int availabilityId)
+        {
+            try
+            {
+                var result = await _userService.DeleteDriverAvailabilityAsync(id, availabilityId);
+                if (result)
+                    return Ok(new { message = "Driver availability deleted successfully" });
+                else
+                    return NotFound("Driver availability not found");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

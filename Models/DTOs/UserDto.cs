@@ -16,6 +16,7 @@ namespace NYR.API.Models.DTOs
         public string? LocationName { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
+        public IEnumerable<DriverAvailabilityDto>? DriverAvailabilities { get; set; }
     }
 
     public class CreateUserDto

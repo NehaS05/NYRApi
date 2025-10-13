@@ -12,5 +12,8 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<UserDto>> GetUsersByRoleAsync(int roleId);
         Task<IEnumerable<UserDto>> GetUsersByCustomerAsync(int customerId);
         Task<IEnumerable<UserDto>> GetUsersByLocationAsync(int locationId);
+        Task<IEnumerable<DriverAvailabilityDto>> GetDriverAvailabilityAsync(int userId);
+        Task<bool> SaveDriverAvailabilityAsync(int userId, DriverAvailabilityBulkDto bulkDto);
+        Task<bool> DeleteDriverAvailabilityAsync(int userId, int availabilityId);
     }
 }

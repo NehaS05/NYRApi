@@ -20,6 +20,7 @@ namespace NYR.API.Data
         public DbSet<ProductVariation> ProductVariations { get; set; }
 		public DbSet<Van> Vans { get; set; }
 		public DbSet<Warehouse> Warehouses { get; set; }
+        public DbSet<DriverAvailability> DriverAvailabilities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -101,6 +102,12 @@ namespace NYR.API.Data
 				entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 			});
 
+            // Configure DriverAvailability entity
+            modelBuilder.Entity<DriverAvailability>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
             // Configure relationships
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
@@ -149,6 +156,12 @@ namespace NYR.API.Data
                 .HasOne(v => v.Product)
                 .WithMany(p => p.Variations)
                 .HasForeignKey(v => v.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DriverAvailability>()
+                .HasOne(d => d.User)
+                .WithMany(u => u.DriverAvailabilities)
+                .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

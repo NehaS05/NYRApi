@@ -13,6 +13,7 @@ namespace NYR.API.Services
         private readonly IRoleRepository _roleRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly ILocationRepository _locationRepository;
+        private readonly IDriverAvailabilityRepository _driverAvailabilityRepository;
         private readonly IMapper _mapper;
 
         public UserService(
@@ -20,12 +21,14 @@ namespace NYR.API.Services
             IRoleRepository roleRepository,
             ICustomerRepository customerRepository,
             ILocationRepository locationRepository,
+            IDriverAvailabilityRepository driverAvailabilityRepository,
             IMapper mapper)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
             _customerRepository = customerRepository;
             _locationRepository = locationRepository;
+            _driverAvailabilityRepository = driverAvailabilityRepository;
             _mapper = mapper;
         }
 
@@ -38,7 +41,19 @@ namespace NYR.API.Services
         public async Task<UserDto?> GetUserByIdAsync(int id)
         {
             var user = await _userRepository.GetUserWithDetailsAsync(id);
-            return user != null ? _mapper.Map<UserDto>(user) : null;
+            if (user == null)
+                return null;
+
+            var userDto = _mapper.Map<UserDto>(user);
+            
+            // Load driver availability if user is a driver
+            if (user.RoleId == 3) // Driver role
+            {
+                var availabilities = await _driverAvailabilityRepository.GetActiveByUserIdAsync(id);
+                userDto.DriverAvailabilities = _mapper.Map<IEnumerable<DriverAvailabilityDto>>(availabilities);
+            }
+
+            return userDto;
         }
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto createUserDto)
@@ -157,6 +172,64 @@ namespace NYR.API.Services
             Array.Copy(hash, 0, hashBytes, 16, 32);
 
             return Convert.ToBase64String(hashBytes);
+        }
+
+        public async Task<IEnumerable<DriverAvailabilityDto>> GetDriverAvailabilityAsync(int userId)
+        {
+            var availabilities = await _driverAvailabilityRepository.GetByUserIdAsync(userId);
+            return _mapper.Map<IEnumerable<DriverAvailabilityDto>>(availabilities);
+        }
+
+        public async Task<bool> SaveDriverAvailabilityAsync(int userId, DriverAvailabilityBulkDto bulkDto)
+        {
+            // Validate user exists and is a driver
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || user.RoleId != 3)
+                throw new ArgumentException("User not found or not a driver");
+
+            // Delete existing availabilities
+            await _driverAvailabilityRepository.DeleteByUserIdAsync(userId);
+
+            // Create new availabilities for selected days
+            var availabilities = new List<DriverAvailability>();
+            foreach (var day in bulkDto.Days)
+            {
+                if (day.Value) // If day is selected
+                {
+                    availabilities.Add(new DriverAvailability
+                    {
+                        UserId = userId,
+                        DayOfWeek = day.Key,
+                        StartTime = bulkDto.StartTime,
+                        EndTime = bulkDto.EndTime,
+                        IsActive = true
+                    });
+                }
+            }
+
+            if (availabilities.Any())
+            {
+                await _driverAvailabilityRepository.AddRangeAsync(availabilities);
+            }
+
+            return true;
+        }
+
+        public async Task<bool> DeleteDriverAvailabilityAsync(int userId, int availabilityId)
+        {
+            // Validate user exists and is a driver
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null || user.RoleId != 3)
+                throw new ArgumentException("User not found or not a driver");
+
+            // Get the availability to delete
+            var availability = await _driverAvailabilityRepository.GetByIdAsync(availabilityId);
+            if (availability == null || availability.UserId != userId)
+                return false;
+
+            // Delete the availability
+            await _driverAvailabilityRepository.DeleteAsync(availability);
+            return true;
         }
     }
 }
