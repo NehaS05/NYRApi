@@ -11,10 +11,12 @@ namespace NYR.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IDriverAvailabilityService _driverAvailabilityService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IDriverAvailabilityService driverAvailabilityService)
         {
             _userService = userService;
+            _driverAvailabilityService = driverAvailabilityService;
         }
 
         [HttpGet]
@@ -131,6 +133,27 @@ namespace NYR.API.Controllers
                     return Ok(new { message = "Driver availability saved successfully" });
                 else
                     return BadRequest("Failed to save driver availability");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPost("{id}/driver-availability/individual")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> CreateIndividualDriverAvailability(int id, [FromBody] CreateDriverAvailabilityDto createDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                // Ensure the userId in the DTO matches the route parameter
+                createDto.UserId = id;
+                
+                var result = await _driverAvailabilityService.CreateAsync(createDto);
+                return Ok(result);
             }
             catch (ArgumentException ex)
             {
