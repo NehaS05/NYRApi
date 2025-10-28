@@ -196,10 +196,169 @@ namespace NYR.API.Data
 				var warehouses = new List<Warehouse>
 				{
 					new Warehouse { Name = "NY Central Warehouse", AddressLine1 = "100 Warehouse Rd", City = "New York", State = "NY", ZipCode = "10010", IsActive = true },
-					new Warehouse { Name = "LA Distribution Center", AddressLine1 = "200 Logistics Ave", City = "Los Angeles", State = "CA", ZipCode = "90012", IsActive = true }
+					new Warehouse { Name = "LA Distribution Center", AddressLine1 = "200 Logistics Ave", City = "Los Angeles", State = "CA", ZipCode = "90012", IsActive = true },
+					new Warehouse { Name = "Chicago Storage Hub", AddressLine1 = "300 Industrial Blvd", City = "Chicago", State = "IL", ZipCode = "60601", IsActive = true },
+					new Warehouse { Name = "Houston Mega Center", AddressLine1 = "400 Commerce St", City = "Houston", State = "TX", ZipCode = "77001", IsActive = true },
+					new Warehouse { Name = "Phoenix Distribution", AddressLine1 = "500 Desert Way", City = "Phoenix", State = "AZ", ZipCode = "85001", IsActive = true }
 				};
 
 				await context.Warehouses.AddRangeAsync(warehouses);
+				await context.SaveChangesAsync();
+			}
+
+			// Seed Suppliers
+			if (!await context.Suppliers.AnyAsync())
+			{
+				var suppliers = new List<Supplier>
+				{
+					new Supplier { Name = "Global Medical Supplies", Email = "orders@globalmedical.com", PhoneNumber = "555-1001", Address = "100 Medical Dr, Boston, MA 02101", ContactPerson = "John Smith", IsActive = true },
+					new Supplier { Name = "HealthTech Solutions", Email = "sales@healthtech.com", PhoneNumber = "555-1002", Address = "200 Tech Ave, Austin, TX 73301", ContactPerson = "Jane Doe", IsActive = true },
+					new Supplier { Name = "MedEquip Direct", Email = "info@medequip.com", PhoneNumber = "555-1003", Address = "300 Equipment Blvd, Denver, CO 80201", ContactPerson = "Mike Johnson", IsActive = true }
+				};
+
+				await context.Suppliers.AddRangeAsync(suppliers);
+				await context.SaveChangesAsync();
+			}
+
+			// Seed Products
+			if (!await context.Products.AnyAsync())
+			{
+				var category = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Health & Beauty");
+				var brand = await context.Brands.FirstOrDefaultAsync(b => b.Name == "Apple");
+				var supplier = await context.Suppliers.FirstOrDefaultAsync(s => s.Name == "Global Medical Supplies");
+
+				if (category != null && brand != null && supplier != null)
+				{
+					var products = new List<Product>
+					{
+						new Product 
+						{ 
+							Name = "Pneumatic Walking Boot", 
+							Description = "Adjustable pneumatic walking boot for foot injuries", 
+							BarcodeSKU = "PWB-001", 
+							CategoryId = category.Id, 
+							BrandId = brand.Id, 
+							SupplierId = supplier.Id, 
+							Price = 89.99m, 
+							ShowInCatalogue = true, 
+							IsUniversal = false, 
+							IsActive = true 
+						},
+						new Product 
+						{ 
+							Name = "Knee Brace Support", 
+							Description = "Heavy-duty knee brace for sports and recovery", 
+							BarcodeSKU = "KBS-002", 
+							CategoryId = category.Id, 
+							BrandId = brand.Id, 
+							SupplierId = supplier.Id, 
+							Price = 45.50m, 
+							ShowInCatalogue = true, 
+							IsUniversal = false, 
+							IsActive = true 
+						},
+						new Product 
+						{ 
+							Name = "Wrist Support Band", 
+							Description = "Compression wrist support for carpal tunnel relief", 
+							BarcodeSKU = "WSB-003", 
+							CategoryId = category.Id, 
+							BrandId = brand.Id, 
+							SupplierId = supplier.Id, 
+							Price = 25.99m, 
+							ShowInCatalogue = true, 
+							IsUniversal = false, 
+							IsActive = true 
+						}
+					};
+
+					await context.Products.AddRangeAsync(products);
+					await context.SaveChangesAsync();
+				}
+			}
+
+			// Seed Product Variations
+			if (!await context.ProductVariations.AnyAsync())
+			{
+				var products = await context.Products.ToListAsync();
+				var productVariations = new List<ProductVariation>();
+
+				foreach (var product in products)
+				{
+					// Add size variations
+					productVariations.AddRange(new List<ProductVariation>
+					{
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Small", SKU = $"{product.BarcodeSKU}-S", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Medium", SKU = $"{product.BarcodeSKU}-M", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Large", SKU = $"{product.BarcodeSKU}-L", PriceAdjustment = 5.00m, StockQuantity = 0, IsActive = true },
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Extra Large", SKU = $"{product.BarcodeSKU}-XL", PriceAdjustment = 10.00m, StockQuantity = 0, IsActive = true }
+					});
+
+					// Add color variations for first product
+					if (product.Name == "Pneumatic Walking Boot")
+					{
+						productVariations.AddRange(new List<ProductVariation>
+						{
+							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Black", SKU = $"{product.BarcodeSKU}-BLK", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
+							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "White", SKU = $"{product.BarcodeSKU}-WHT", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
+							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Blue", SKU = $"{product.BarcodeSKU}-BLU", PriceAdjustment = 0, StockQuantity = 0, IsActive = true }
+						});
+					}
+				}
+
+				await context.ProductVariations.AddRangeAsync(productVariations);
+				await context.SaveChangesAsync();
+			}
+
+			// Seed Warehouse Inventory
+			if (!await context.WarehouseInventories.AnyAsync())
+			{
+				var warehouses = await context.Warehouses.ToListAsync();
+				var productVariations = await context.ProductVariations.ToListAsync();
+
+				var warehouseInventories = new List<WarehouseInventory>();
+
+				// Add inventory to first warehouse
+				if (warehouses.Any() && productVariations.Any())
+				{
+					var firstWarehouse = warehouses.First();
+					var selectedVariations = productVariations.Take(8).ToList(); // Take first 8 variations
+
+					foreach (var variation in selectedVariations)
+					{
+						warehouseInventories.Add(new WarehouseInventory
+						{
+							WarehouseId = firstWarehouse.Id,
+							ProductId = variation.ProductId,
+							ProductVariationId = variation.Id,
+							Quantity = new Random().Next(5, 50),
+							Notes = $"Initial stock for {variation.VariationType}: {variation.VariationValue}",
+							IsActive = true
+						});
+					}
+
+					// Add some inventory to second warehouse
+					if (warehouses.Count > 1)
+					{
+						var secondWarehouse = warehouses[1];
+						var secondVariations = productVariations.Skip(4).Take(6).ToList();
+
+						foreach (var variation in secondVariations)
+						{
+							warehouseInventories.Add(new WarehouseInventory
+							{
+								WarehouseId = secondWarehouse.Id,
+								ProductId = variation.ProductId,
+								ProductVariationId = variation.Id,
+								Quantity = new Random().Next(3, 30),
+								Notes = $"Initial stock for {variation.VariationType}: {variation.VariationValue}",
+								IsActive = true
+							});
+						}
+					}
+				}
+
+				await context.WarehouseInventories.AddRangeAsync(warehouseInventories);
 				await context.SaveChangesAsync();
 			}
 

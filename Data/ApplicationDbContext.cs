@@ -20,6 +20,7 @@ namespace NYR.API.Data
         public DbSet<ProductVariation> ProductVariations { get; set; }
 		public DbSet<Van> Vans { get; set; }
 		public DbSet<Warehouse> Warehouses { get; set; }
+        public DbSet<WarehouseInventory> WarehouseInventories { get; set; }
         public DbSet<DriverAvailability> DriverAvailabilities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -102,6 +103,13 @@ namespace NYR.API.Data
 				entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
 			});
 
+            // Configure WarehouseInventory entity
+            modelBuilder.Entity<WarehouseInventory>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.HasIndex(e => new { e.WarehouseId, e.ProductVariationId }).IsUnique();
+            });
+
             // Configure DriverAvailability entity
             modelBuilder.Entity<DriverAvailability>(entity =>
             {
@@ -163,6 +171,25 @@ namespace NYR.API.Data
                 .WithMany(u => u.DriverAvailabilities)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure WarehouseInventory relationships
+            modelBuilder.Entity<WarehouseInventory>()
+                .HasOne(wi => wi.Warehouse)
+                .WithMany()
+                .HasForeignKey(wi => wi.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseInventory>()
+                .HasOne(wi => wi.Product)
+                .WithMany()
+                .HasForeignKey(wi => wi.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WarehouseInventory>()
+                .HasOne(wi => wi.ProductVariation)
+                .WithMany()
+                .HasForeignKey(wi => wi.ProductVariationId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
