@@ -22,6 +22,7 @@ namespace NYR.API.Data
 		public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<WarehouseInventory> WarehouseInventories { get; set; }
         public DbSet<DriverAvailability> DriverAvailabilities { get; set; }
+        public DbSet<Scanner> Scanners { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -116,6 +117,13 @@ namespace NYR.API.Data
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
 
+            // Configure Scanner entity
+            modelBuilder.Entity<Scanner>(entity =>
+            {
+                entity.HasIndex(e => e.ScannerId).IsUnique();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
             // Configure relationships
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
@@ -189,6 +197,13 @@ namespace NYR.API.Data
                 .HasOne(wi => wi.ProductVariation)
                 .WithMany()
                 .HasForeignKey(wi => wi.ProductVariationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure Scanner relationships
+            modelBuilder.Entity<Scanner>()
+                .HasOne(s => s.Location)
+                .WithMany()
+                .HasForeignKey(s => s.LocationId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

@@ -65,10 +65,11 @@ builder.Services.AddScoped<IBrandRepository, BrandRepository>();
 builder.Services.AddScoped<ISupplierRepository, SupplierRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductVariationRepository, ProductVariationRepository>();
-builder.Services.AddScoped<IVanRepository, VanRepository>();
-builder.Services.AddScoped<IWarehouseRepository, WarehouseRepository>();
-builder.Services.AddScoped<IWarehouseInventoryRepository, WarehouseInventoryRepository>();
-builder.Services.AddScoped<IDriverAvailabilityRepository, DriverAvailabilityRepository>();
+    builder.Services.AddScoped<IVanRepository, VanRepository>();
+    builder.Services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+    builder.Services.AddScoped<IWarehouseInventoryRepository, WarehouseInventoryRepository>();
+    builder.Services.AddScoped<IDriverAvailabilityRepository, DriverAvailabilityRepository>();
+    builder.Services.AddScoped<IScannerRepository, ScannerRepository>();
 
 // Service Registration
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -81,10 +82,11 @@ builder.Services.AddScoped<IBrandService, BrandService>();
 builder.Services.AddScoped<ISupplierService, SupplierService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
-builder.Services.AddScoped<IVanService, VanService>();
-builder.Services.AddScoped<IWarehouseService, WarehouseService>();
-builder.Services.AddScoped<IWarehouseInventoryService, WarehouseInventoryService>();
-builder.Services.AddScoped<IDriverAvailabilityService, DriverAvailabilityService>();
+    builder.Services.AddScoped<IVanService, VanService>();
+    builder.Services.AddScoped<IWarehouseService, WarehouseService>();
+    builder.Services.AddScoped<IWarehouseInventoryService, WarehouseInventoryService>();
+    builder.Services.AddScoped<IDriverAvailabilityService, DriverAvailabilityService>();
+    builder.Services.AddScoped<IScannerService, ScannerService>();
 
 // JWT Authentication Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

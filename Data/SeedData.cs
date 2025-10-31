@@ -362,6 +362,55 @@ namespace NYR.API.Data
 				await context.SaveChangesAsync();
 			}
 
+            // Seed Scanners
+            if (!await context.Scanners.AnyAsync())
+            {
+                var locations = await context.Locations.ToListAsync();
+                if (locations.Any())
+                {
+                    var scanners = new List<Scanner>();
+                    
+                    var firstLocation = locations.First();
+                    scanners.Add(new Scanner
+                    {
+                        ScannerId = "SCAN-001",
+                        ScannerName = "Main Office Scanner",
+                        ScannerPIN = "1234",
+                        LocationId = firstLocation.Id,
+                        IsActive = true
+                    });
+
+                    if (locations.Count > 1)
+                    {
+                        var secondLocation = locations.Skip(1).First();
+                        scanners.Add(new Scanner
+                        {
+                            ScannerId = "SCAN-002",
+                            ScannerName = "Warehouse Scanner",
+                            ScannerPIN = "5678",
+                            LocationId = secondLocation.Id,
+                            IsActive = true
+                        });
+                    }
+
+                    if (locations.Count > 2)
+                    {
+                        var thirdLocation = locations.Skip(2).First();
+                        scanners.Add(new Scanner
+                        {
+                            ScannerId = "SCAN-003",
+                            ScannerName = "HQ Scanner",
+                            ScannerPIN = "9012",
+                            LocationId = thirdLocation.Id,
+                            IsActive = true
+                        });
+                    }
+
+                    await context.Scanners.AddRangeAsync(scanners);
+                    await context.SaveChangesAsync();
+                }
+            }
+
             // Seed Admin User
             if (!await context.Users.AnyAsync())
             {

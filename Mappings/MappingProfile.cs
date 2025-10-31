@@ -140,6 +140,17 @@ namespace NYR.API.Mappings
             CreateMap<UpdateDriverAvailabilityDto, DriverAvailability>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+            // Scanner mappings
+            CreateMap<Scanner, ScannerDto>()
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName));
+            CreateMap<CreateScannerDto, Scanner>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+            CreateMap<UpdateScannerDto, Scanner>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
         }
     }
 }
