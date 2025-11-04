@@ -45,6 +45,33 @@ namespace NYR.API.Controllers
         }
 
         /// <summary>
+        /// Add multiple inventory items to a warehouse for a single product
+        /// </summary>
+        /// /// <param name="addBulkInventoryDto">Bulk inventory details to add</param>
+        /// <returns>List of created inventory items</returns>
+        [HttpPost("add-bulk-inventory")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<ActionResult<IEnumerable<WarehouseInventoryDto>>> AddBulkInventory([FromBody] AddBulkInventoryDto addBulkInventoryDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var inventoryItems = await _warehouseInventoryService.AddBulkInventoryAsync(addBulkInventoryDto);
+                return Ok(inventoryItems);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        /// <summary>
         /// Get list of warehouses with inventory summary
         /// </summary>
         /// <returns>List of warehouses with product counts and total quantities</returns>

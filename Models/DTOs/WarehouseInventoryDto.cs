@@ -43,6 +43,32 @@ namespace NYR.API.Models.DTOs
         public string? Notes { get; set; }
     }
 
+    public class AddBulkInventoryDto
+    {
+        [Required]
+        public int WarehouseId { get; set; }
+
+        [Required]
+        public int ProductId { get; set; }
+
+        [Required]
+        [MinLength(1, ErrorMessage = "At least one inventory item is required")]
+        public List<BulkInventoryItemDto> InventoryItems { get; set; } = new List<BulkInventoryItemDto>();
+    }
+
+    public class BulkInventoryItemDto
+    {
+        [Required]
+        public int ProductVariationId { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
+        public int Quantity { get; set; }
+
+        [MaxLength(500)]
+        public string? Notes { get; set; }
+    }
+
     public class WarehouseListDto
     {
         public int Id { get; set; }

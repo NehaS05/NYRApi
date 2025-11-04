@@ -5,6 +5,7 @@ namespace NYR.API.Services.Interfaces
     public interface IWarehouseInventoryService
     {
         Task<WarehouseInventoryDto> AddInventoryAsync(AddInventoryDto addInventoryDto);
+        Task<IEnumerable<WarehouseInventoryDto>> AddBulkInventoryAsync(AddBulkInventoryDto addBulkInventoryDto);
         Task<IEnumerable<WarehouseListDto>> GetWarehouseListAsync();
         Task<IEnumerable<WarehouseInventoryDetailDto>> GetWarehouseInventoryDetailsAsync(int warehouseId);
         Task<WarehouseInventoryDto?> GetInventoryByIdAsync(int id);

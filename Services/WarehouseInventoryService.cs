@@ -81,6 +81,72 @@ namespace NYR.API.Services
             }
         }
 
+        public async Task<IEnumerable<WarehouseInventoryDto>> AddBulkInventoryAsync(AddBulkInventoryDto addBulkInventoryDto)
+        {
+            // Validate warehouse exists
+            var warehouse = await _warehouseRepository.GetByIdAsync(addBulkInventoryDto.WarehouseId);
+            if (warehouse == null)
+                throw new ArgumentException("Warehouse not found");
+
+            // Validate product exists
+            var product = await _productRepository.GetByIdAsync(addBulkInventoryDto.ProductId);
+            if (product == null)
+                throw new ArgumentException("Product not found");
+
+            var results = new List<WarehouseInventoryDto>();
+
+            foreach (var item in addBulkInventoryDto.InventoryItems)
+            {
+                // Validate product variation exists
+                var productVariation = await _productVariationRepository.GetByIdAsync(item.ProductVariationId);
+                if (productVariation == null)
+                    throw new ArgumentException($"Product variation with ID {item.ProductVariationId} not found");
+
+                // Check if inventory already exists for this warehouse and product variation
+                var existingInventory = await _warehouseInventoryRepository
+                    .GetByWarehouseAndProductVariationAsync(addBulkInventoryDto.WarehouseId, item.ProductVariationId);
+
+                if (existingInventory != null)
+                {
+                    // Update existing inventory quantity
+                    existingInventory.Quantity += item.Quantity;
+                    existingInventory.UpdatedAt = DateTime.UtcNow;
+                    if (!string.IsNullOrEmpty(item.Notes))
+                    {
+                        existingInventory.Notes = item.Notes;
+                    }
+
+                    await _warehouseInventoryRepository.UpdateAsync(existingInventory);
+                    var updatedInventoryDto = await GetInventoryByIdAsync(existingInventory.Id);
+                    if (updatedInventoryDto != null)
+                    {
+                        results.Add(updatedInventoryDto);
+                    }
+                }
+                else
+                {
+                    // Create new inventory entry
+                    var newInventory = new WarehouseInventory
+                    {
+                        WarehouseId = addBulkInventoryDto.WarehouseId,
+                        ProductId = addBulkInventoryDto.ProductId,
+                        ProductVariationId = item.ProductVariationId,
+                        Quantity = item.Quantity,
+                        Notes = item.Notes
+                    };
+
+                    var createdInventory = await _warehouseInventoryRepository.AddAsync(newInventory);
+                    var createdInventoryDto = await GetInventoryByIdAsync(createdInventory.Id);
+                    if (createdInventoryDto != null)
+                    {
+                        results.Add(createdInventoryDto);
+                    }
+                }
+            }
+
+            return results;
+        }
+
         public async Task<IEnumerable<WarehouseListDto>> GetWarehouseListAsync()
         {
             var warehouses = await _warehouseRepository.GetAllAsync();
