@@ -38,10 +38,10 @@ namespace NYR.API.Services
             if (location == null)
                 throw new ArgumentException("Invalid location ID");
 
-            // Check if ScannerId already exists
-            var existingScanner = await _scannerRepository.GetByScannerIdAsync(createScannerDto.ScannerId);
+            // Check if SerialNo already exists
+            var existingScanner = await _scannerRepository.GetBySerialNoAsync(createScannerDto.SerialNo);
             if (existingScanner != null)
-                throw new ArgumentException("Scanner ID already exists");
+                throw new ArgumentException("Serial Number already exists");
 
             var scanner = _mapper.Map<Scanner>(createScannerDto);
             var createdScanner = await _scannerRepository.AddAsync(scanner);
@@ -59,10 +59,10 @@ namespace NYR.API.Services
             if (location == null)
                 throw new ArgumentException("Invalid location ID");
 
-            // Check if ScannerId already exists for another scanner
-            var existingScanner = await _scannerRepository.GetByScannerIdAsync(updateScannerDto.ScannerId);
+            // Check if SerialNo already exists for another scanner
+            var existingScanner = await _scannerRepository.GetBySerialNoAsync(updateScannerDto.SerialNo);
             if (existingScanner != null && existingScanner.Id != id)
-                throw new ArgumentException("Scanner ID already exists");
+                throw new ArgumentException("Serial Number already exists");
 
             _mapper.Map(updateScannerDto, scanner);
             scanner.UpdatedAt = DateTime.UtcNow;

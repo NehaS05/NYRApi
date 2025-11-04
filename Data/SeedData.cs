@@ -373,7 +373,7 @@ namespace NYR.API.Data
                     var firstLocation = locations.First();
                     scanners.Add(new Scanner
                     {
-                        ScannerId = "SCAN-001",
+                        SerialNo = "SCAN-001",
                         ScannerName = "Main Office Scanner",
                         ScannerPIN = "1234",
                         LocationId = firstLocation.Id,
@@ -385,7 +385,7 @@ namespace NYR.API.Data
                         var secondLocation = locations.Skip(1).First();
                         scanners.Add(new Scanner
                         {
-                            ScannerId = "SCAN-002",
+                            SerialNo = "SCAN-002",
                             ScannerName = "Warehouse Scanner",
                             ScannerPIN = "5678",
                             LocationId = secondLocation.Id,
@@ -398,7 +398,7 @@ namespace NYR.API.Data
                         var thirdLocation = locations.Skip(2).First();
                         scanners.Add(new Scanner
                         {
-                            ScannerId = "SCAN-003",
+                            SerialNo = "SCAN-003",
                             ScannerName = "HQ Scanner",
                             ScannerPIN = "9012",
                             LocationId = thirdLocation.Id,

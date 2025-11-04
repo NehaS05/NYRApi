@@ -7,7 +7,7 @@ namespace NYR.API.Repositories.Interfaces
         Task<Scanner?> GetScannerWithLocationAsync(int id);
         Task<IEnumerable<Scanner>> GetScannersByLocationAsync(int locationId);
         Task<IEnumerable<Scanner>> SearchScannersAsync(string searchTerm);
-        Task<Scanner?> GetByScannerIdAsync(string scannerId);
+        Task<Scanner?> GetBySerialNoAsync(string serialNo);
     }
 }
 

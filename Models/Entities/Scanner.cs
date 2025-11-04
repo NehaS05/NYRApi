@@ -10,7 +10,7 @@ namespace NYR.API.Models.Entities
 
         [Required]
         [MaxLength(100)]
-        public string ScannerId { get; set; } = string.Empty;
+        public string SerialNo { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(200)]
@@ -19,6 +19,9 @@ namespace NYR.API.Models.Entities
         [Required]
         [MaxLength(50)]
         public string ScannerPIN { get; set; } = string.Empty;
+
+        [MaxLength(500)]
+        public string? ScannerUrl { get; set; }
 
         [Required]
         public int LocationId { get; set; }

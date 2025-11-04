@@ -30,18 +30,18 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(s => s.Location)
-                .Where(s => s.ScannerId.Contains(searchTerm) ||
+                .Where(s => s.SerialNo.Contains(searchTerm) ||
                            s.ScannerName.Contains(searchTerm) ||
                            s.ScannerPIN.Contains(searchTerm) ||
                            s.Location.LocationName.Contains(searchTerm))
                 .ToListAsync();
         }
 
-        public async Task<Scanner?> GetByScannerIdAsync(string scannerId)
+        public async Task<Scanner?> GetBySerialNoAsync(string serialNo)
         {
             return await _dbSet
                 .Include(s => s.Location)
-                .FirstOrDefaultAsync(s => s.ScannerId == scannerId);
+                .FirstOrDefaultAsync(s => s.SerialNo == serialNo);
         }
 
         public override async Task<IEnumerable<Scanner>> GetAllAsync()

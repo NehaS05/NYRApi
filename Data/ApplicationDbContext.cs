@@ -120,7 +120,7 @@ namespace NYR.API.Data
             // Configure Scanner entity
             modelBuilder.Entity<Scanner>(entity =>
             {
-                entity.HasIndex(e => e.ScannerId).IsUnique();
+                entity.HasIndex(e => e.SerialNo).IsUnique();
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
 
