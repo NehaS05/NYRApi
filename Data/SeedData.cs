@@ -411,6 +411,82 @@ namespace NYR.API.Data
                 }
             }
 
+            // Seed Variations
+            if (!await context.Variations.AnyAsync())
+            {
+                var variations = new List<Variation>
+                {
+                    new Variation
+                    {
+                        Name = "Size",
+                        ValueType = "Dropdown",
+                        IsActive = true,
+                        Options = new List<VariationOption>
+                        {
+                            new VariationOption { Name = "Small", Value = "S", IsActive = true },
+                            new VariationOption { Name = "Medium", Value = "M", IsActive = true },
+                            new VariationOption { Name = "Large", Value = "L", IsActive = true },
+                            new VariationOption { Name = "Extra Large", Value = "XL", IsActive = true },
+                            new VariationOption { Name = "XXL", Value = "XXL", IsActive = true }
+                        }
+                    },
+                    new Variation
+                    {
+                        Name = "Color",
+                        ValueType = "Dropdown",
+                        IsActive = true,
+                        Options = new List<VariationOption>
+                        {
+                            new VariationOption { Name = "Black", Value = "BLK", IsActive = true },
+                            new VariationOption { Name = "White", Value = "WHT", IsActive = true },
+                            new VariationOption { Name = "Blue", Value = "BLU", IsActive = true },
+                            new VariationOption { Name = "Red", Value = "RED", IsActive = true },
+                            new VariationOption { Name = "Green", Value = "GRN", IsActive = true },
+                            new VariationOption { Name = "Gray", Value = "GRY", IsActive = true }
+                        }
+                    },
+                    new Variation
+                    {
+                        Name = "Material",
+                        ValueType = "Dropdown",
+                        IsActive = true,
+                        Options = new List<VariationOption>
+                        {
+                            new VariationOption { Name = "Cotton", Value = "Cotton", IsActive = true },
+                            new VariationOption { Name = "Polyester", Value = "Polyester", IsActive = true },
+                            new VariationOption { Name = "Nylon", Value = "Nylon", IsActive = true },
+                            new VariationOption { Name = "Leather", Value = "Leather", IsActive = true },
+                            new VariationOption { Name = "Plastic", Value = "Plastic", IsActive = true }
+                        }
+                    },
+                    new Variation
+                    {
+                        Name = "Weight",
+                        ValueType = "TextInput",
+                        IsActive = true,
+                        Options = new List<VariationOption>
+                        {
+                            new VariationOption { Name = "Weight (kg)", Value = null, IsActive = true }
+                        }
+                    },
+                    new Variation
+                    {
+                        Name = "Dimensions",
+                        ValueType = "TextInput",
+                        IsActive = true,
+                        Options = new List<VariationOption>
+                        {
+                            new VariationOption { Name = "Length (cm)", Value = null, IsActive = true },
+                            new VariationOption { Name = "Width (cm)", Value = null, IsActive = true },
+                            new VariationOption { Name = "Height (cm)", Value = null, IsActive = true }
+                        }
+                    }
+                };
+
+                await context.Variations.AddRangeAsync(variations);
+                await context.SaveChangesAsync();
+            }
+
             // Seed Admin User
             if (!await context.Users.AnyAsync())
             {

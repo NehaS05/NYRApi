@@ -151,6 +151,19 @@ namespace NYR.API.Mappings
             CreateMap<UpdateScannerDto, Scanner>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+            // Variation mappings
+            CreateMap<Variation, VariationDto>();
+            CreateMap<VariationOption, VariationOptionDto>();
+            CreateMap<CreateVariationDto, Variation>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.Options, opt => opt.Ignore());
+            CreateMap<UpdateVariationDto, Variation>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.Options, opt => opt.Ignore());
         }
     }
 }

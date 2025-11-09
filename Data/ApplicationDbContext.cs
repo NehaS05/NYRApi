@@ -23,6 +23,8 @@ namespace NYR.API.Data
         public DbSet<WarehouseInventory> WarehouseInventories { get; set; }
         public DbSet<DriverAvailability> DriverAvailabilities { get; set; }
         public DbSet<Scanner> Scanners { get; set; }
+        public DbSet<Variation> Variations { get; set; }
+        public DbSet<VariationOption> VariationOptions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -124,6 +126,19 @@ namespace NYR.API.Data
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
 
+            // Configure Variation entity
+            modelBuilder.Entity<Variation>(entity =>
+            {
+                entity.HasIndex(e => e.Name).IsUnique();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure VariationOption entity
+            modelBuilder.Entity<VariationOption>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
             // Configure relationships
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Role)
@@ -205,6 +220,13 @@ namespace NYR.API.Data
                 .WithMany()
                 .HasForeignKey(s => s.LocationId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure Variation relationships
+            modelBuilder.Entity<VariationOption>()
+                .HasOne(vo => vo.Variation)
+                .WithMany(v => v.Options)
+                .HasForeignKey(vo => vo.VariationId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
