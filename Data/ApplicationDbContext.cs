@@ -89,7 +89,6 @@ namespace NYR.API.Data
             modelBuilder.Entity<ProductVariation>(entity =>
             {
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-                entity.Property(e => e.PriceAdjustment).HasPrecision(18, 2);
             });
 
 			// Configure Van entity

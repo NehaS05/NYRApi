@@ -22,13 +22,6 @@ namespace NYR.API.Models.Entities
         [MaxLength(100)]
         public string VariationValue { get; set; } = string.Empty; // Small, Red, Cotton, etc.
 
-        [MaxLength(50)]
-        public string? SKU { get; set; }
-
-        public decimal? PriceAdjustment { get; set; } = 0; // Additional cost for this variation
-
-        public int? StockQuantity { get; set; }
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

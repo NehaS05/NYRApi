@@ -288,10 +288,10 @@ namespace NYR.API.Data
 					// Add size variations
 					productVariations.AddRange(new List<ProductVariation>
 					{
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Small", SKU = $"{product.BarcodeSKU}-S", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Medium", SKU = $"{product.BarcodeSKU}-M", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Large", SKU = $"{product.BarcodeSKU}-L", PriceAdjustment = 5.00m, StockQuantity = 0, IsActive = true },
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Extra Large", SKU = $"{product.BarcodeSKU}-XL", PriceAdjustment = 10.00m, StockQuantity = 0, IsActive = true }
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Small", IsActive = true },
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Medium", IsActive = true },
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Large", IsActive = true },
+						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Extra Large", IsActive = true }
 					});
 
 					// Add color variations for first product
@@ -299,9 +299,9 @@ namespace NYR.API.Data
 					{
 						productVariations.AddRange(new List<ProductVariation>
 						{
-							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Black", SKU = $"{product.BarcodeSKU}-BLK", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
-							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "White", SKU = $"{product.BarcodeSKU}-WHT", PriceAdjustment = 0, StockQuantity = 0, IsActive = true },
-							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Blue", SKU = $"{product.BarcodeSKU}-BLU", PriceAdjustment = 0, StockQuantity = 0, IsActive = true }
+							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Black", IsActive = true },
+							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "White", IsActive = true },
+							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Blue", IsActive = true }
 						});
 					}
 				}
