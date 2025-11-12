@@ -25,6 +25,8 @@ namespace NYR.API.Data
         public DbSet<Scanner> Scanners { get; set; }
         public DbSet<Variation> Variations { get; set; }
         public DbSet<VariationOption> VariationOptions { get; set; }
+        public DbSet<TransferInventory> TransferInventories { get; set; }
+        public DbSet<TransferInventoryItem> TransferInventoryItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -226,6 +228,49 @@ namespace NYR.API.Data
                 .WithMany(v => v.Options)
                 .HasForeignKey(vo => vo.VariationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure TransferInventory entity
+            modelBuilder.Entity<TransferInventory>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure TransferInventoryItem entity
+            modelBuilder.Entity<TransferInventoryItem>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure TransferInventory relationships
+            modelBuilder.Entity<TransferInventory>()
+                .HasOne(t => t.Customer)
+                .WithMany()
+                .HasForeignKey(t => t.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TransferInventory>()
+                .HasOne(t => t.Location)
+                .WithMany()
+                .HasForeignKey(t => t.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TransferInventoryItem>()
+                .HasOne(ti => ti.TransferInventory)
+                .WithMany(t => t.Items)
+                .HasForeignKey(ti => ti.TransferInventoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TransferInventoryItem>()
+                .HasOne(ti => ti.Product)
+                .WithMany()
+                .HasForeignKey(ti => ti.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TransferInventoryItem>()
+                .HasOne(ti => ti.ProductVariation)
+                .WithMany()
+                .HasForeignKey(ti => ti.ProductVariationId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

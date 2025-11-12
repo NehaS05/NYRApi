@@ -71,6 +71,7 @@ builder.Services.AddScoped<IProductVariationRepository, ProductVariationReposito
     builder.Services.AddScoped<IDriverAvailabilityRepository, DriverAvailabilityRepository>();
     builder.Services.AddScoped<IScannerRepository, ScannerRepository>();
     builder.Services.AddScoped<IVariationRepository, VariationRepository>();
+builder.Services.AddScoped<ITransferInventoryRepository, TransferInventoryRepository>();
 
 // Service Registration
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -89,6 +90,7 @@ builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
     builder.Services.AddScoped<IDriverAvailabilityService, DriverAvailabilityService>();
     builder.Services.AddScoped<IScannerService, ScannerService>();
     builder.Services.AddScoped<IVariationService, VariationService>();
+    builder.Services.AddScoped<ITransferInventoryService, TransferInventoryService>();
 
 // JWT Authentication Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
