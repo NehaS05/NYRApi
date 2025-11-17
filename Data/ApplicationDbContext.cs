@@ -25,6 +25,8 @@ namespace NYR.API.Data
         public DbSet<Scanner> Scanners { get; set; }
         public DbSet<Variation> Variations { get; set; }
         public DbSet<VariationOption> VariationOptions { get; set; }
+        public DbSet<RequestSupply> RequestSupplies { get; set; }
+        public DbSet<RequestSupplyItem> RequestSupplyItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -226,6 +228,37 @@ namespace NYR.API.Data
                 .WithMany(v => v.Options)
                 .HasForeignKey(vo => vo.VariationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure RequestSupply entity
+            modelBuilder.Entity<RequestSupply>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure RequestSupplyItem entity
+            modelBuilder.Entity<RequestSupplyItem>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure RequestSupply relationships
+            modelBuilder.Entity<RequestSupplyItem>()
+                .HasOne(rsi => rsi.RequestSupply)
+                .WithMany(rs => rs.Items)
+                .HasForeignKey(rsi => rsi.RequestSupplyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            //modelBuilder.Entity<RequestSupplyItem>()
+            //    .HasOne(rsi => rsi.Product)
+            //    .WithMany()
+            //    .HasForeignKey(rsi => rsi.ProductId)
+            //    .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RequestSupplyItem>()
+                .HasOne(rsi => rsi.Variation)
+                .WithMany()
+                .HasForeignKey(rsi => rsi.VariationId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

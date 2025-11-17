@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NYR.API.Data;
 
@@ -11,9 +12,11 @@ using NYR.API.Data;
 namespace NYR.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251109143228_AddRequestSupplyModule")]
+    partial class AddRequestSupplyModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -997,9 +1000,9 @@ namespace NYR.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NYR.API.Models.Entities.VariationOption", "Variation")
+                    b.HasOne("NYR.API.Models.Entities.VariationOption", "VariationOption")
                         .WithMany()
-                        .HasForeignKey("VariationId")
+                        .HasForeignKey("VariationOptionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1007,7 +1010,7 @@ namespace NYR.API.Migrations
 
                     b.Navigation("RequestSupply");
 
-                    b.Navigation("Variation");
+                    b.Navigation("VariationOption");
                 });
 
             modelBuilder.Entity("NYR.API.Models.Entities.Scanner", b =>

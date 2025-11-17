@@ -164,6 +164,29 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.Options, opt => opt.Ignore());
+
+            // RequestSupply mappings
+            CreateMap<RequestSupply, RequestSupplyDto>()
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+            CreateMap<CreateRequestSupplyDto, RequestSupply>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.Items, opt => opt.Ignore());
+            CreateMap<UpdateRequestSupplyDto, RequestSupply>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.Items, opt => opt.Ignore());
+
+            // RequestSupplyItem mappings (added)
+            CreateMap<RequestSupplyItem, RequestSupplyItemDto>()
+                .ForMember(dest => dest.VariationName, opt => opt.MapFrom(src => src.Variation != null ? src.Variation.Name : string.Empty));
+
+            CreateMap<CreateRequestSupplyItemDto, RequestSupplyItem>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+            CreateMap<UpdateRequestSupplyItemDto, RequestSupplyItem>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
         }
     }
 }
