@@ -72,7 +72,8 @@ namespace NYR.API.Repositories
             return await _dbSet
                 .Where(wi => wi.IsActive)
                 .GroupBy(wi => wi.WarehouseId)
-                .ToDictionaryAsync(g => g.Key, g => g.Count());
+                .Select(g => new { WarehouseId = g.Key, ProductCount = g.Select(x => x.ProductId).Distinct().Count() })
+                .ToDictionaryAsync(x => x.WarehouseId, x => x.ProductCount);
         }
 
         public async Task<Dictionary<int, int>> GetWarehouseQuantityTotalsAsync()

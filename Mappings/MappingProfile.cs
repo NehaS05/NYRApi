@@ -165,6 +165,29 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.Options, opt => opt.Ignore());
 
+            // TransferInventory mappings
+            CreateMap<TransferInventory, TransferInventoryDto>()
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer.CompanyName))
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.ContactPerson, opt => opt.MapFrom(src => src.Location.ContactPerson))
+                .ForMember(dest => dest.LocationNumber, opt => opt.MapFrom(src => src.Location.LocationPhone))
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+            CreateMap<CreateTransferInventoryDto, TransferInventory>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.TransferDate, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.Items, opt => opt.Ignore());
+
+            // TransferInventoryItem mappings
+            CreateMap<TransferInventoryItem, TransferInventoryItemDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationType : null))
+                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationValue : null));
+            CreateMap<CreateTransferInventoryItemDto, TransferInventoryItem>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
             // RequestSupply mappings
             CreateMap<RequestSupply, RequestSupplyDto>()
                 .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));

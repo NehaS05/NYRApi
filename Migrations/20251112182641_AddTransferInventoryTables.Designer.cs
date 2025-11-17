@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NYR.API.Data;
 
@@ -11,9 +12,11 @@ using NYR.API.Data;
 namespace NYR.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251112182641_AddTransferInventoryTables")]
+    partial class AddTransferInventoryTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -433,88 +436,6 @@ namespace NYR.API.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductVariations");
-                });
-
-            modelBuilder.Entity("NYR.API.Models.Entities.RequestSupply", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("EmailAddress")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("EmailTemplate")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("SuppliersName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("RequestSupplies");
-                });
-
-            modelBuilder.Entity("NYR.API.Models.Entities.RequestSupplyItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RequestSupplyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VariationId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RequestSupplyId");
-
-                    b.HasIndex("VariationId");
-
-                    b.ToTable("RequestSupplyItems");
                 });
 
             modelBuilder.Entity("NYR.API.Models.Entities.Role", b =>
@@ -1056,33 +977,6 @@ namespace NYR.API.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("NYR.API.Models.Entities.RequestSupplyItem", b =>
-                {
-                    b.HasOne("NYR.API.Models.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("NYR.API.Models.Entities.RequestSupply", "RequestSupply")
-                        .WithMany("Items")
-                        .HasForeignKey("RequestSupplyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NYR.API.Models.Entities.VariationOption", "Variation")
-                        .WithMany()
-                        .HasForeignKey("VariationId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("RequestSupply");
-
-                    b.Navigation("Variation");
-                });
-
             modelBuilder.Entity("NYR.API.Models.Entities.Scanner", b =>
                 {
                     b.HasOne("NYR.API.Models.Entities.Location", "Location")
@@ -1227,11 +1121,6 @@ namespace NYR.API.Migrations
             modelBuilder.Entity("NYR.API.Models.Entities.Product", b =>
                 {
                     b.Navigation("Variations");
-                });
-
-            modelBuilder.Entity("NYR.API.Models.Entities.RequestSupply", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("NYR.API.Models.Entities.Role", b =>
