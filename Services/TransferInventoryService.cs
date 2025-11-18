@@ -13,6 +13,7 @@ namespace NYR.API.Services
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
         private readonly IProductVariationRepository _productVariationRepository;
+        private readonly IWarehouseInventoryRepository _warehouseInventoryRepository;
         private readonly IMapper _mapper;
 
         public TransferInventoryService(
@@ -21,6 +22,7 @@ namespace NYR.API.Services
             ILocationRepository locationRepository,
             IProductRepository productRepository,
             IProductVariationRepository productVariationRepository,
+            IWarehouseInventoryRepository warehouseInventoryRepository,
             IMapper mapper)
         {
             _transferInventoryRepository = transferInventoryRepository;
@@ -28,6 +30,7 @@ namespace NYR.API.Services
             _locationRepository = locationRepository;
             _productRepository = productRepository;
             _productVariationRepository = productVariationRepository;
+            _warehouseInventoryRepository = warehouseInventoryRepository;
             _mapper = mapper;
         }
 
@@ -83,7 +86,7 @@ namespace NYR.API.Services
             if (location == null)
                 throw new ArgumentException("Invalid location ID");
 
-            // Validate products exist
+            // Validate products and warehouse inventory
             foreach (var item in createDto.Items)
             {
                 var product = await _productRepository.GetByIdAsync(item.ProductId);
@@ -95,6 +98,30 @@ namespace NYR.API.Services
                     var variation = await _productVariationRepository.GetByIdAsync(item.ProductVariationId.Value);
                     if (variation == null)
                         throw new ArgumentException($"Invalid product variation ID: {item.ProductVariationId}");
+
+                    // Check warehouse inventory availability
+                    if (item.WarehouseId.HasValue)
+                    {
+                        var warehouseInventory = await _warehouseInventoryRepository
+                            .FindAsync(wi => wi.WarehouseId == item.WarehouseId.Value 
+                                          && wi.ProductVariationId == item.ProductVariationId.Value);
+                        
+                        var inventoryItem = warehouseInventory.FirstOrDefault();
+                        if (inventoryItem == null)
+                        {
+                            throw new ArgumentException($"Product variation not found in warehouse inventory");
+                        }
+
+                        if (inventoryItem.Quantity < item.Quantity)
+                        {
+                            throw new ArgumentException($"Insufficient quantity in warehouse. Available: {inventoryItem.Quantity}, Requested: {item.Quantity}");
+                        }
+
+                        // Deduct quantity from warehouse inventory
+                        inventoryItem.Quantity -= item.Quantity;
+                        inventoryItem.UpdatedAt = DateTime.UtcNow;
+                        await _warehouseInventoryRepository.UpdateAsync(inventoryItem);
+                    }
                 }
             }
 
