@@ -15,6 +15,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Customer)
+                .Include(l => l.User)
                 .Where(l => l.CustomerId == customerId)
                 .ToListAsync();
         }
@@ -23,6 +24,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Customer)
+                .Include(l => l.User)
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
 
@@ -30,6 +32,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Customer)
+                .Include(l => l.User)
                 .Where(l => l.LocationName.Contains(searchTerm) ||
                            l.ContactPerson!.Contains(searchTerm) ||
                            l.Email!.Contains(searchTerm) ||
@@ -41,6 +44,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Customer)
+                .Include(l => l.User)
                 .ToListAsync();
         }
 
@@ -48,6 +52,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Customer)
+                .Include(l => l.User)
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
     }

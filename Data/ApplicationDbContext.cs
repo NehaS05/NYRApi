@@ -169,6 +169,12 @@ namespace NYR.API.Data
                 .HasForeignKey(l => l.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Location>()
+                .HasOne(l => l.User)
+                .WithMany()
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // Configure Product relationships
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)

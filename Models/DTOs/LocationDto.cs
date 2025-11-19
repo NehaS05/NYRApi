@@ -7,6 +7,8 @@ namespace NYR.API.Models.DTOs
         public int Id { get; set; }
         public int CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
+        public int? UserId { get; set; }
+        public string? UserName { get; set; }
         public string LocationName { get; set; } = string.Empty;
         public string AddressLine1 { get; set; } = string.Empty;
         public string? AddressLine2 { get; set; }
@@ -28,6 +30,8 @@ namespace NYR.API.Models.DTOs
     {
         [Required]
         public int CustomerId { get; set; }
+
+        public int? UserId { get; set; }
 
         [Required]
         [MaxLength(200)]
@@ -79,6 +83,8 @@ namespace NYR.API.Models.DTOs
     {
         [Required]
         public int CustomerId { get; set; }
+
+        public int? UserId { get; set; }
 
         [Required]
         [MaxLength(200)]

@@ -10,12 +10,14 @@ namespace NYR.API.Services
     {
         private readonly ILocationRepository _locationRepository;
         private readonly ICustomerRepository _customerRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IMapper mapper)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, IMapper mapper)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
+            _userRepository = userRepository;
             _mapper = mapper;
         }
 
@@ -38,6 +40,14 @@ namespace NYR.API.Services
             if (customer == null)
                 throw new ArgumentException("Invalid customer ID");
 
+            // Validate user exists if UserId is provided
+            if (createLocationDto.UserId.HasValue)
+            {
+                var user = await _userRepository.GetByIdAsync(createLocationDto.UserId.Value);
+                if (user == null)
+                    throw new ArgumentException("Invalid user ID");
+            }
+
             var location = _mapper.Map<Location>(createLocationDto);
             var createdLocation = await _locationRepository.AddAsync(location);
             return _mapper.Map<LocationDto>(createdLocation);
@@ -53,6 +63,14 @@ namespace NYR.API.Services
             var customer = await _customerRepository.GetByIdAsync(updateLocationDto.CustomerId);
             if (customer == null)
                 throw new ArgumentException("Invalid customer ID");
+
+            // Validate user exists if UserId is provided
+            if (updateLocationDto.UserId.HasValue)
+            {
+                var user = await _userRepository.GetByIdAsync(updateLocationDto.UserId.Value);
+                if (user == null)
+                    throw new ArgumentException("Invalid user ID");
+            }
 
             _mapper.Map(updateLocationDto, location);
             location.UpdatedAt = DateTime.UtcNow;
