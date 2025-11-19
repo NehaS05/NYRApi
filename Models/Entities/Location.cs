@@ -14,6 +14,11 @@ namespace NYR.API.Models.Entities
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; } = null!;
 
+        public int? UserId { get; set; }
+
+        [ForeignKey("UserId")]
+        public virtual User? User { get; set; }
+
         [Required]
         [MaxLength(200)]
         public string LocationName { get; set; } = string.Empty;
