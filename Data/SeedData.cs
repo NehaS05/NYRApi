@@ -708,6 +708,227 @@ namespace NYR.API.Data
                 }
             }
 
+            // Seed Van Inventories
+            if (!await context.VanInventories.AnyAsync())
+            {
+                var vans = await context.Vans.ToListAsync();
+                var locations = await context.Locations.ToListAsync();
+                var products = await context.Products.ToListAsync();
+                var productVariations = await context.ProductVariations.ToListAsync();
+
+                if (vans.Any() && locations.Any() && products.Any() && productVariations.Any())
+                {
+                    var vanInventories = new List<VanInventory>();
+
+                    // Van Inventory 1: Van Alpha to Acme Main Office
+                    var vanAlpha = vans.FirstOrDefault(v => v.VanNumber == "VAN-001");
+                    var acmeMainOffice = locations.FirstOrDefault(l => l.LocationName == "Acme Main Office");
+                    
+                    if (vanAlpha != null && acmeMainOffice != null)
+                    {
+                        var vanInventory1 = new VanInventory
+                        {
+                            VanId = vanAlpha.Id,
+                            LocationId = acmeMainOffice.Id,
+                            TransferDate = DateTime.UtcNow.AddDays(-7),
+                            IsActive = true,
+                            Items = new List<VanInventoryItem>()
+                        };
+
+                        // Add items to van inventory 1
+                        var product1 = products.FirstOrDefault(p => p.Name == "Pneumatic Walking Boot");
+                        if (product1 != null)
+                        {
+                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
+                            if (variation1 != null)
+                            {
+                                vanInventory1.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product1.Id,
+                                    ProductVariationId = variation1.Id,
+                                    Quantity = 10
+                                });
+                            }
+
+                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Large");
+                            if (variation2 != null)
+                            {
+                                vanInventory1.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product1.Id,
+                                    ProductVariationId = variation2.Id,
+                                    Quantity = 8
+                                });
+                            }
+
+                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Color" && v.VariationValue == "Black");
+                            if (variation3 != null)
+                            {
+                                vanInventory1.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product1.Id,
+                                    ProductVariationId = variation3.Id,
+                                    Quantity = 15
+                                });
+                            }
+                        }
+
+                        var product2 = products.FirstOrDefault(p => p.Name == "Knee Brace Support");
+                        if (product2 != null)
+                        {
+                            var variation4 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Small");
+                            if (variation4 != null)
+                            {
+                                vanInventory1.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product2.Id,
+                                    ProductVariationId = variation4.Id,
+                                    Quantity = 12
+                                });
+                            }
+                        }
+
+                        vanInventories.Add(vanInventory1);
+                    }
+
+                    // Van Inventory 2: Van Beta to Acme Warehouse
+                    var vanBeta = vans.FirstOrDefault(v => v.VanNumber == "VAN-002");
+                    var acmeWarehouse = locations.FirstOrDefault(l => l.LocationName == "Acme Warehouse");
+                    
+                    if (vanBeta != null && acmeWarehouse != null)
+                    {
+                        var vanInventory2 = new VanInventory
+                        {
+                            VanId = vanBeta.Id,
+                            LocationId = acmeWarehouse.Id,
+                            TransferDate = DateTime.UtcNow.AddDays(-4),
+                            IsActive = true,
+                            Items = new List<VanInventoryItem>()
+                        };
+
+                        // Add items to van inventory 2
+                        var product2 = products.FirstOrDefault(p => p.Name == "Knee Brace Support");
+                        if (product2 != null)
+                        {
+                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
+                            if (variation1 != null)
+                            {
+                                vanInventory2.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product2.Id,
+                                    ProductVariationId = variation1.Id,
+                                    Quantity = 20
+                                });
+                            }
+
+                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Large");
+                            if (variation2 != null)
+                            {
+                                vanInventory2.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product2.Id,
+                                    ProductVariationId = variation2.Id,
+                                    Quantity = 15
+                                });
+                            }
+                        }
+
+                        var product3 = products.FirstOrDefault(p => p.Name == "Wrist Support Band");
+                        if (product3 != null)
+                        {
+                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Small");
+                            if (variation3 != null)
+                            {
+                                vanInventory2.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product3.Id,
+                                    ProductVariationId = variation3.Id,
+                                    Quantity = 25
+                                });
+                            }
+
+                            var variation4 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
+                            if (variation4 != null)
+                            {
+                                vanInventory2.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product3.Id,
+                                    ProductVariationId = variation4.Id,
+                                    Quantity = 18
+                                });
+                            }
+                        }
+
+                        vanInventories.Add(vanInventory2);
+                    }
+
+                    // Van Inventory 3: Van Alpha to Beta Headquarters
+                    var betaHQ = locations.FirstOrDefault(l => l.LocationName == "Beta Headquarters");
+                    
+                    if (vanAlpha != null && betaHQ != null)
+                    {
+                        var vanInventory3 = new VanInventory
+                        {
+                            VanId = vanAlpha.Id,
+                            LocationId = betaHQ.Id,
+                            TransferDate = DateTime.UtcNow.AddDays(-2),
+                            IsActive = true,
+                            Items = new List<VanInventoryItem>()
+                        };
+
+                        // Add items to van inventory 3
+                        var product1 = products.FirstOrDefault(p => p.Name == "Pneumatic Walking Boot");
+                        if (product1 != null)
+                        {
+                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Small");
+                            if (variation1 != null)
+                            {
+                                vanInventory3.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product1.Id,
+                                    ProductVariationId = variation1.Id,
+                                    Quantity = 9
+                                });
+                            }
+
+                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Color" && v.VariationValue == "White");
+                            if (variation2 != null)
+                            {
+                                vanInventory3.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product1.Id,
+                                    ProductVariationId = variation2.Id,
+                                    Quantity = 14
+                                });
+                            }
+                        }
+
+                        var product3 = products.FirstOrDefault(p => p.Name == "Wrist Support Band");
+                        if (product3 != null)
+                        {
+                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Large");
+                            if (variation3 != null)
+                            {
+                                vanInventory3.Items.Add(new VanInventoryItem
+                                {
+                                    ProductId = product3.Id,
+                                    ProductVariationId = variation3.Id,
+                                    Quantity = 11
+                                });
+                            }
+                        }
+
+                        vanInventories.Add(vanInventory3);
+                    }
+
+                    if (vanInventories.Any())
+                    {
+                        await context.VanInventories.AddRangeAsync(vanInventories);
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+
             // Seed Admin User
             if (!await context.Users.AnyAsync())
             {

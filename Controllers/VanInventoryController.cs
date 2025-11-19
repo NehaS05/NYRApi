@@ -1,0 +1,84 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using NYR.API.Models.DTOs;
+using NYR.API.Services.Interfaces;
+
+namespace NYR.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class VanInventoryController : ControllerBase
+    {
+        private readonly IVanInventoryService _vanInventoryService;
+
+        public VanInventoryController(IVanInventoryService vanInventoryService)
+        {
+            _vanInventoryService = vanInventoryService;
+        }
+
+        [HttpGet("vans")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<IEnumerable<VanWithInventorySummaryDto>>> GetVansWithTransfers()
+        {
+            var vans = await _vanInventoryService.GetVansWithTransfersAsync();
+            return Ok(vans);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<IEnumerable<VanInventoryDto>>> GetAllTransfers()
+        {
+            var transfers = await _vanInventoryService.GetAllTransfersAsync();
+            return Ok(transfers);
+        }
+
+        [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<VanInventoryDto>> GetTransfer(int id)
+        {
+            var transfer = await _vanInventoryService.GetTransferByIdAsync(id);
+            if (transfer == null)
+                return NotFound();
+
+            return Ok(transfer);
+        }
+
+        [HttpGet("van/{vanId}/items")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<IEnumerable<VanInventoryItemDto>>> GetTransferItemsByVan(int vanId)
+        {
+            var items = await _vanInventoryService.GetTransferItemsByVanIdAsync(vanId);
+            return Ok(items);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<ActionResult<VanInventoryDto>> CreateTransfer([FromBody] CreateVanInventoryDto createDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var transfer = await _vanInventoryService.CreateTransferAsync(createDto);
+                return CreatedAtAction(nameof(GetTransfer), new { id = transfer.Id }, transfer);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> DeleteTransfer(int id)
+        {
+            var result = await _vanInventoryService.DeleteTransferAsync(id);
+            if (!result)
+                return NotFound();
+
+            return NoContent();
+        }
+    }
+}

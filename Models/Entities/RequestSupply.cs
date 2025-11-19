@@ -9,12 +9,16 @@ namespace NYR.API.Models.Entities
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(200)]
         public int ProductId { get; set; }
 
+        [ForeignKey("ProductId")]
+        public virtual Product Product { get; set; } = null!;
+
         [Required]
-        [MaxLength(500)]
         public int SupplierId { get; set; }
+
+        [ForeignKey("SupplierId")]
+        public virtual Supplier Supplier { get; set; } = null!;
 
         [Required]
         [MaxLength(500)]

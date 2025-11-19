@@ -1,0 +1,32 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace NYR.API.Models.Entities
+{
+    public class VanInventory
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public int VanId { get; set; }
+
+        [ForeignKey("VanId")]
+        public virtual Van Van { get; set; } = null!;
+
+        [Required]
+        public int LocationId { get; set; }
+
+        [ForeignKey("LocationId")]
+        public virtual Location Location { get; set; } = null!;
+
+        public DateTime TransferDate { get; set; } = DateTime.UtcNow;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public bool IsActive { get; set; } = true;
+
+        // Navigation properties
+        public virtual ICollection<VanInventoryItem> Items { get; set; } = new List<VanInventoryItem>();
+    }
+}

@@ -29,6 +29,8 @@ namespace NYR.API.Data
         public DbSet<TransferInventoryItem> TransferInventoryItems { get; set; }
         public DbSet<RequestSupply> RequestSupplies { get; set; }
         public DbSet<RequestSupplyItem> RequestSupplyItems { get; set; }
+        public DbSet<VanInventory> VanInventories { get; set; }
+        public DbSet<VanInventoryItem> VanInventoryItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -287,22 +289,71 @@ namespace NYR.API.Data
             });
 
             // Configure RequestSupply relationships
+            modelBuilder.Entity<RequestSupply>()
+                .HasOne(rs => rs.Product)
+                .WithMany()
+                .HasForeignKey(rs => rs.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RequestSupply>()
+                .HasOne(rs => rs.Supplier)
+                .WithMany()
+                .HasForeignKey(rs => rs.SupplierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<RequestSupplyItem>()
                 .HasOne(rsi => rsi.RequestSupply)
                 .WithMany(rs => rs.Items)
                 .HasForeignKey(rsi => rsi.RequestSupplyId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            //modelBuilder.Entity<RequestSupplyItem>()
-            //    .HasOne(rsi => rsi.Product)
-            //    .WithMany()
-            //    .HasForeignKey(rsi => rsi.ProductId)
-            //    .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<RequestSupplyItem>()
                 .HasOne(rsi => rsi.Variation)
                 .WithMany()
                 .HasForeignKey(rsi => rsi.VariationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure VanInventory entity
+            modelBuilder.Entity<VanInventory>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure VanInventoryItem entity
+            modelBuilder.Entity<VanInventoryItem>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure VanInventory relationships
+            modelBuilder.Entity<VanInventory>()
+                .HasOne(vi => vi.Van)
+                .WithMany()
+                .HasForeignKey(vi => vi.VanId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VanInventory>()
+                .HasOne(vi => vi.Location)
+                .WithMany()
+                .HasForeignKey(vi => vi.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VanInventoryItem>()
+                .HasOne(vii => vii.VanInventory)
+                .WithMany(vi => vi.Items)
+                .HasForeignKey(vii => vii.VanInventoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<VanInventoryItem>()
+                .HasOne(vii => vii.Product)
+                .WithMany()
+                .HasForeignKey(vii => vii.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<VanInventoryItem>()
+                .HasOne(vii => vii.ProductVariation)
+                .WithMany()
+                .HasForeignKey(vii => vii.ProductVariationId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
