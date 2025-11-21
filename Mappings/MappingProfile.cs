@@ -212,6 +212,29 @@ namespace NYR.API.Mappings
             CreateMap<UpdateRequestSupplyItemDto, RequestSupplyItem>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
 
+            // Routes mappings
+            CreateMap<Routes, RouteDto>()
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.RouteStops, opt => opt.MapFrom(src => src.RouteStops));
+            CreateMap<CreateRouteDto, Routes>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.RouteStops, opt => opt.Ignore());
+            CreateMap<UpdateRouteDto, Routes>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.RouteStops, opt => opt.Ignore());
+
+            // RouteStop mappings
+            CreateMap<RouteStop, RouteStopDto>();
+            CreateMap<CreateRouteStopDto, RouteStop>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
+            CreateMap<UpdateRouteStopDto, RouteStop>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
+
             // VanInventory mappings
             CreateMap<VanInventory, VanInventoryDto>()
                 .ForMember(dest => dest.VanName, opt => opt.MapFrom(src => src.Van.VanName))

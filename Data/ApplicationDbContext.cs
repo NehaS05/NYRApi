@@ -31,6 +31,8 @@ namespace NYR.API.Data
         public DbSet<RequestSupplyItem> RequestSupplyItems { get; set; }
         public DbSet<VanInventory> VanInventories { get; set; }
         public DbSet<VanInventoryItem> VanInventoryItems { get; set; }
+        public DbSet<Routes> Routes { get; set; }
+        public DbSet<RouteStop> RouteStops { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -361,6 +363,37 @@ namespace NYR.API.Data
                 .WithMany()
                 .HasForeignKey(vii => vii.ProductVariationId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure Routes entity
+            modelBuilder.Entity<Routes>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure RouteStop entity
+            modelBuilder.Entity<RouteStop>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure Routes relationships
+            modelBuilder.Entity<Routes>()
+                .HasOne(r => r.Location)
+                .WithMany()
+                .HasForeignKey(r => r.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Routes>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RouteStop>()
+                .HasOne(rs => rs.Route)
+                .WithMany(r => r.RouteStops)
+                .HasForeignKey(rs => rs.RouteId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
