@@ -1,6 +1,7 @@
 using AutoMapper;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
+using NYR.API.Repositories;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
 
@@ -12,19 +13,49 @@ namespace NYR.API.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ITransferInventoryRepository _transferInventoryRepository;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, IMapper mapper)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, IMapper mapper, ITransferInventoryRepository transferInventoryRepository)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+            _transferInventoryRepository = transferInventoryRepository;
         }
 
         public async Task<IEnumerable<LocationDto>> GetAllLocationsAsync()
         {
             var locations = await _locationRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<LocationDto>>(locations);
+        }
+        public async Task<IEnumerable<LocationDto>> GetAllLocationsWithInventoryAsync()
+        {
+            var locations = await _locationRepository.GetAllAsync();
+            var locationDtos = _mapper.Map<IEnumerable<LocationDto>>(locations).ToList();
+            
+            foreach (var locationDto in locationDtos)
+            {
+                try
+                {
+                    var transfers = await _transferInventoryRepository.GetByLocationIdAsync(locationDto.Id);
+                    if (transfers != null && transfers.Any())
+                    {
+                        var allItems = transfers.SelectMany(t => t.Items).ToList();
+                        if (allItems.Any())
+                        {
+                            locationDto.TransferItems = _mapper.Map<List<TransferInventoryItemDto>>(allItems);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // If there's an error loading transfer items for this location, just skip it
+                    locationDto.TransferItems = new List<TransferInventoryItemDto>();
+                }
+            }
+            
+            return locationDtos;
         }
 
         public async Task<LocationDto?> GetLocationByIdAsync(int id)
