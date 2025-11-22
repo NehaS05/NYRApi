@@ -72,7 +72,6 @@ namespace NYR.API.Services
             foreach (var stopDto in createRouteDto.RouteStops)
             {
                 var stop = _mapper.Map<RouteStop>(stopDto);
-                stop.Status = "Draft";
                 stop.RouteId = createdRoute.Id;
                 await _routeStopRepository.AddAsync(stop);
             }
@@ -163,6 +162,25 @@ namespace NYR.API.Services
         public async Task<IEnumerable<RouteDto>> GetRoutesByDeliveryDateAsync(DateTime deliveryDate)
         {
             var routes = await _routeRepository.GetByDeliveryDateAsync(deliveryDate);
+            return _mapper.Map<IEnumerable<RouteDto>>(routes);
+        }
+
+        public async Task<RouteDto?> UpdateRouteStatusAsync(int id, string status)
+        {
+            var route = await _routeRepository.GetByIdAsync(id);
+            if (route == null)
+                return null;
+
+            route.Status = status;
+            route.UpdatedAt = DateTime.UtcNow;
+            await _routeRepository.UpdateAsync(route);
+
+            return await GetRouteByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<RouteDto>> GetRoutesByStatusAsync(string status)
+        {
+            var routes = await _routeRepository.GetByStatusAsync(status);
             return _mapper.Map<IEnumerable<RouteDto>>(routes);
         }
     }

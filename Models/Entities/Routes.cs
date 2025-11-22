@@ -17,6 +17,9 @@ namespace NYR.API.Models.Entities
         [Required]
         public DateTime DeliveryDate { get; set; }
 
+        [MaxLength(50)]
+        public string Status { get; set; } = "Pending"; // Pending, InProgress, Completed, Cancelled
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

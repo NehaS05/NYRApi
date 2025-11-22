@@ -76,6 +76,19 @@ namespace NYR.API.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Routes>> GetByStatusAsync(string status)
+        {
+            return await _dbSet
+                .Include(r => r.User)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Location)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Customer)
+                .Where(r => r.Status == status && r.IsActive)
+                .OrderByDescending(r => r.DeliveryDate)
+                .ToListAsync();
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var route = await GetByIdAsync(id);

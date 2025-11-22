@@ -12,5 +12,7 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<RouteDto>> GetRoutesByLocationIdAsync(int locationId);
         Task<IEnumerable<RouteDto>> GetRoutesByUserIdAsync(int userId);
         Task<IEnumerable<RouteDto>> GetRoutesByDeliveryDateAsync(DateTime deliveryDate);
+        Task<RouteDto?> UpdateRouteStatusAsync(int id, string status);
+        Task<IEnumerable<RouteDto>> GetRoutesByStatusAsync(string status);
     }
 }

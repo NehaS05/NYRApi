@@ -55,6 +55,27 @@ namespace NYR.API.Controllers
             return Ok(routes);
         }
 
+        [HttpGet("by-status/{status}")]
+        public async Task<ActionResult<IEnumerable<RouteDto>>> GetRoutesByStatus(string status)
+        {
+            var routes = await _routeService.GetRoutesByStatusAsync(status);
+            return Ok(routes);
+        }
+
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<RouteDto>> UpdateRouteStatus(int id, [FromBody] UpdateStatusRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Status))
+                return BadRequest("Status is required");
+
+            var route = await _routeService.UpdateRouteStatusAsync(id, request.Status);
+            if (route == null)
+                return NotFound();
+
+            return Ok(route);
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult<RouteDto>> CreateRoute([FromBody] CreateRouteDto createRouteDto)
@@ -104,5 +125,10 @@ namespace NYR.API.Controllers
 
             return NoContent();
         }
+    }
+
+    public class UpdateStatusRequest
+    {
+        public string Status { get; set; } = string.Empty;
     }
 }

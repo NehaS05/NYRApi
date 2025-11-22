@@ -8,6 +8,7 @@ namespace NYR.API.Models.DTOs
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public DateTime DeliveryDate { get; set; }
+        public string Status { get; set; } = "Draft";
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public List<RouteStopDto> RouteStops { get; set; } = new List<RouteStopDto>();
@@ -25,7 +26,7 @@ namespace NYR.API.Models.DTOs
         public string Address { get; set; } = string.Empty;
         public string? ContactPhone { get; set; }
         public string? Notes { get; set; }
-        public string Status { get; set; } = "Pending";
+        public string Status { get; set; } = "Draft";
         public DateTime? CompletedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
@@ -38,6 +39,9 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public DateTime DeliveryDate { get; set; }
+
+        [MaxLength(50)]
+        public string Status { get; set; } = "Draft";
 
         public List<CreateRouteStopDto> RouteStops { get; set; } = new List<CreateRouteStopDto>();
     }
@@ -71,6 +75,9 @@ namespace NYR.API.Models.DTOs
         [Required]
         public DateTime DeliveryDate { get; set; }
 
+        [MaxLength(50)]
+        public string Status { get; set; } = "Draft";
+
         public bool IsActive { get; set; } = true;
 
         public List<UpdateRouteStopDto> RouteStops { get; set; } = new List<UpdateRouteStopDto>();
@@ -99,7 +106,7 @@ namespace NYR.API.Models.DTOs
         public string? Notes { get; set; }
 
         [MaxLength(50)]
-        public string Status { get; set; } = "Pending";
+        public string Status { get; set; } = "Draft";
 
         public DateTime? CompletedAt { get; set; }
 

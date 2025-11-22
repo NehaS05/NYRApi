@@ -9,6 +9,7 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<Routes>> GetByLocationIdAsync(int locationId);
         Task<IEnumerable<Routes>> GetByUserIdAsync(int userId);
         Task<IEnumerable<Routes>> GetByDeliveryDateAsync(DateTime deliveryDate);
+        Task<IEnumerable<Routes>> GetByStatusAsync(string status);
         Task<bool> DeleteAsync(int id);
     }
 }
