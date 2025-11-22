@@ -17,7 +17,6 @@ namespace NYR.API.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    LocationId = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     DeliveryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
@@ -27,12 +26,6 @@ namespace NYR.API.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Routes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Routes_Locations_LocationId",
-                        column: x => x.LocationId,
-                        principalTable: "Locations",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Routes_Users_UserId",
                         column: x => x.UserId,
@@ -48,6 +41,7 @@ namespace NYR.API.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RouteId = table.Column<int>(type: "int", nullable: false),
+                    LocationId = table.Column<int>(type: "int", nullable: false),
                     StopOrder = table.Column<int>(type: "int", nullable: false),
                     Address = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     CustomerName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
@@ -62,6 +56,12 @@ namespace NYR.API.Migrations
                 {
                     table.PrimaryKey("PK_RouteStops", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_RouteStops_Locations_LocationId",
+                        column: x => x.LocationId,
+                        principalTable: "Locations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
                         name: "FK_RouteStops_Routes_RouteId",
                         column: x => x.RouteId,
                         principalTable: "Routes",
@@ -70,14 +70,14 @@ namespace NYR.API.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Routes_LocationId",
-                table: "Routes",
-                column: "LocationId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Routes_UserId",
                 table: "Routes",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RouteStops_LocationId",
+                table: "RouteStops",
+                column: "LocationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RouteStops_RouteId",

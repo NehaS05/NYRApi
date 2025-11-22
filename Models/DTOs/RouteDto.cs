@@ -5,8 +5,6 @@ namespace NYR.API.Models.DTOs
     public class RouteDto
     {
         public int Id { get; set; }
-        public int LocationId { get; set; }
-        public string LocationName { get; set; } = string.Empty;
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
         public DateTime DeliveryDate { get; set; }
@@ -19,6 +17,8 @@ namespace NYR.API.Models.DTOs
     {
         public int Id { get; set; }
         public int RouteId { get; set; }
+        public int LocationId { get; set; }
+        public string LocationName { get; set; } = string.Empty;
         public int StopOrder { get; set; }
         public string Address { get; set; } = string.Empty;
         public string? CustomerName { get; set; }
@@ -33,9 +33,6 @@ namespace NYR.API.Models.DTOs
     public class CreateRouteDto
     {
         [Required]
-        public int LocationId { get; set; }
-
-        [Required]
         public int UserId { get; set; }
 
         [Required]
@@ -46,6 +43,9 @@ namespace NYR.API.Models.DTOs
 
     public class CreateRouteStopDto
     {
+        [Required]
+        public int LocationId { get; set; }
+
         [Required]
         public int StopOrder { get; set; }
 
@@ -66,9 +66,6 @@ namespace NYR.API.Models.DTOs
     public class UpdateRouteDto
     {
         [Required]
-        public int LocationId { get; set; }
-
-        [Required]
         public int UserId { get; set; }
 
         [Required]
@@ -82,6 +79,9 @@ namespace NYR.API.Models.DTOs
     public class UpdateRouteStopDto
     {
         public int? Id { get; set; }
+
+        [Required]
+        public int LocationId { get; set; }
 
         [Required]
         public int StopOrder { get; set; }

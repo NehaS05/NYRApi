@@ -14,9 +14,9 @@ namespace NYR.API.Repositories
         public async Task<IEnumerable<Routes>> GetAllWithDetailsAsync()
         {
             return await _dbSet
-                .Include(r => r.Location)
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Location)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
         }
@@ -24,19 +24,19 @@ namespace NYR.API.Repositories
         public async Task<Routes?> GetByIdWithDetailsAsync(int id)
         {
             return await _dbSet
-                .Include(r => r.Location)
                 .Include(r => r.User)
                 .Include(r => r.RouteStops.OrderBy(s => s.StopOrder))
+                    .ThenInclude(rs => rs.Location)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<IEnumerable<Routes>> GetByLocationIdAsync(int locationId)
         {
             return await _dbSet
-                .Include(r => r.Location)
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
-                .Where(r => r.LocationId == locationId && r.IsActive)
+                    .ThenInclude(rs => rs.Location)
+                .Where(r => r.RouteStops.Any(rs => rs.LocationId == locationId) && r.IsActive)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
         }
@@ -44,9 +44,9 @@ namespace NYR.API.Repositories
         public async Task<IEnumerable<Routes>> GetByUserIdAsync(int userId)
         {
             return await _dbSet
-                .Include(r => r.Location)
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Location)
                 .Where(r => r.UserId == userId && r.IsActive)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
@@ -58,9 +58,9 @@ namespace NYR.API.Repositories
             var endDate = startDate.AddDays(1);
 
             return await _dbSet
-                .Include(r => r.Location)
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Location)
                 .Where(r => r.DeliveryDate >= startDate && r.DeliveryDate < endDate && r.IsActive)
                 .OrderBy(r => r.DeliveryDate)
                 .ToListAsync();

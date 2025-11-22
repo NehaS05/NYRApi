@@ -42,15 +42,18 @@ namespace NYR.API.Services
 
         public async Task<RouteDto> CreateRouteAsync(CreateRouteDto createRouteDto)
         {
-            // Validate location exists
-            var location = await _locationRepository.GetByIdAsync(createRouteDto.LocationId);
-            if (location == null)
-                throw new ArgumentException("Invalid location ID");
-
             // Validate user exists
             var user = await _userRepository.GetByIdAsync(createRouteDto.UserId);
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
+
+            // Validate locations exist for all stops
+            foreach (var stopDto in createRouteDto.RouteStops)
+            {
+                var location = await _locationRepository.GetByIdAsync(stopDto.LocationId);
+                if (location == null)
+                    throw new ArgumentException($"Invalid location ID: {stopDto.LocationId}");
+            }
 
             var route = _mapper.Map<Routes>(createRouteDto);
             var createdRoute = await _routeRepository.AddAsync(route);
@@ -72,15 +75,18 @@ namespace NYR.API.Services
             if (route == null)
                 return null;
 
-            // Validate location exists
-            var location = await _locationRepository.GetByIdAsync(updateRouteDto.LocationId);
-            if (location == null)
-                throw new ArgumentException("Invalid location ID");
-
             // Validate user exists
             var user = await _userRepository.GetByIdAsync(updateRouteDto.UserId);
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
+
+            // Validate locations exist for all stops
+            foreach (var stopDto in updateRouteDto.RouteStops)
+            {
+                var location = await _locationRepository.GetByIdAsync(stopDto.LocationId);
+                if (location == null)
+                    throw new ArgumentException($"Invalid location ID: {stopDto.LocationId}");
+            }
 
             _mapper.Map(updateRouteDto, route);
             route.UpdatedAt = DateTime.UtcNow;

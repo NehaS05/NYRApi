@@ -9,12 +9,6 @@ namespace NYR.API.Models.Entities
         public int Id { get; set; }
 
         [Required]
-        public int LocationId { get; set; }
-
-        [ForeignKey("LocationId")]
-        public virtual Location Location { get; set; } = null!;
-
-        [Required]
         public int UserId { get; set; }
 
         [ForeignKey("UserId")]

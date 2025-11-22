@@ -378,12 +378,6 @@ namespace NYR.API.Data
 
             // Configure Routes relationships
             modelBuilder.Entity<Routes>()
-                .HasOne(r => r.Location)
-                .WithMany()
-                .HasForeignKey(r => r.LocationId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Routes>()
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
@@ -394,6 +388,12 @@ namespace NYR.API.Data
                 .WithMany(r => r.RouteStops)
                 .HasForeignKey(rs => rs.RouteId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RouteStop>()
+                .HasOne(rs => rs.Location)
+                .WithMany()
+                .HasForeignKey(rs => rs.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

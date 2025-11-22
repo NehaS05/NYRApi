@@ -15,6 +15,12 @@ namespace NYR.API.Models.Entities
         public virtual Routes Route { get; set; } = null!;
 
         [Required]
+        public int LocationId { get; set; }
+
+        [ForeignKey("LocationId")]
+        public virtual Location Location { get; set; } = null!;
+
+        [Required]
         public int StopOrder { get; set; }
 
         [Required]
