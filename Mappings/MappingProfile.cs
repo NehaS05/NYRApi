@@ -235,6 +235,18 @@ namespace NYR.API.Mappings
             CreateMap<UpdateRouteStopDto, RouteStop>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
 
+            // LocationInventoryData mappings
+            CreateMap<LocationInventoryData, LocationInventoryDataDto>()
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByUser.Name))
+                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedByUser != null ? src.UpdatedByUser.Name : null));
+            CreateMap<CreateLocationInventoryDataDto, LocationInventoryData>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+            CreateMap<UpdateLocationInventoryDataDto, LocationInventoryData>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedBy, opt => opt.Ignore());
+
             // VanInventory mappings
             CreateMap<VanInventory, VanInventoryDto>()
                 .ForMember(dest => dest.VanName, opt => opt.MapFrom(src => src.Van.VanName))

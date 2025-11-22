@@ -33,6 +33,7 @@ namespace NYR.API.Data
         public DbSet<VanInventoryItem> VanInventoryItems { get; set; }
         public DbSet<Routes> Routes { get; set; }
         public DbSet<RouteStop> RouteStops { get; set; }
+        public DbSet<LocationInventoryData> LocationInventoryData { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -393,6 +394,37 @@ namespace NYR.API.Data
                 .HasOne(rs => rs.Location)
                 .WithMany()
                 .HasForeignKey(rs => rs.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure LocationInventoryData entity
+            modelBuilder.Entity<LocationInventoryData>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure LocationInventoryData relationships
+            modelBuilder.Entity<LocationInventoryData>()
+                .HasOne(l => l.Location)
+                .WithMany()
+                .HasForeignKey(l => l.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LocationInventoryData>()
+                .HasOne(l => l.Product)
+                .WithMany()
+                .HasForeignKey(l => l.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LocationInventoryData>()
+                .HasOne(l => l.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(l => l.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LocationInventoryData>()
+                .HasOne(l => l.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(l => l.UpdatedBy)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

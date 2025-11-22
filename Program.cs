@@ -77,6 +77,7 @@ builder.Services.AddScoped<IProductVariationRepository, ProductVariationReposito
     builder.Services.AddScoped<IRequestSupplyItemRepository, RequestSupplyItemRepository>();
     builder.Services.AddScoped<IRouteRepository, RouteRepository>();
     builder.Services.AddScoped<IRouteStopRepository, RouteStopRepository>();
+    builder.Services.AddScoped<ILocationInventoryDataRepository, LocationInventoryDataRepository>();
     builder.Services.AddScoped<IVanInventoryRepository, VanInventoryRepository>();
 
 // Service Registration
@@ -100,6 +101,7 @@ builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
     builder.Services.AddScoped<IRequestSupplyService, RequestSupplyService>();
     builder.Services.AddScoped<IVanInventoryService, VanInventoryService>();
     builder.Services.AddScoped<IRouteService, RouteService>();
+    builder.Services.AddScoped<ILocationInventoryDataService, LocationInventoryDataService>();
 
 // JWT Authentication Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
