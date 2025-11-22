@@ -23,12 +23,14 @@ namespace NYR.API.Models.Entities
         [Required]
         public int StopOrder { get; set; }
 
+        public int? CustomerId { get; set; }
+
+        [ForeignKey("CustomerId")]
+        public virtual Customer? Customer { get; set; }
+
         [Required]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
-
-        [MaxLength(100)]
-        public string? CustomerName { get; set; }
 
         [MaxLength(20)]
         public string? ContactPhone { get; set; }

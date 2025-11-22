@@ -396,6 +396,12 @@ namespace NYR.API.Data
                 .HasForeignKey(rs => rs.LocationId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<RouteStop>()
+                .HasOne(rs => rs.Customer)
+                .WithMany()
+                .HasForeignKey(rs => rs.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Configure LocationInventoryData entity
             modelBuilder.Entity<LocationInventoryData>(entity =>
             {

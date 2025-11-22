@@ -12,6 +12,7 @@ namespace NYR.API.Services
         private readonly IRouteStopRepository _routeStopRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ICustomerRepository _customerRepository;
         private readonly IMapper _mapper;
 
         public RouteService(
@@ -19,12 +20,14 @@ namespace NYR.API.Services
             IRouteStopRepository routeStopRepository,
             ILocationRepository locationRepository,
             IUserRepository userRepository,
+            ICustomerRepository customerRepository,
             IMapper mapper)
         {
             _routeRepository = routeRepository;
             _routeStopRepository = routeStopRepository;
             _locationRepository = locationRepository;
             _userRepository = userRepository;
+            _customerRepository = customerRepository;
             _mapper = mapper;
         }
 
@@ -47,12 +50,19 @@ namespace NYR.API.Services
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
 
-            // Validate locations exist for all stops
+            // Validate locations and customers exist for all stops
             foreach (var stopDto in createRouteDto.RouteStops)
             {
                 var location = await _locationRepository.GetByIdAsync(stopDto.LocationId);
                 if (location == null)
                     throw new ArgumentException($"Invalid location ID: {stopDto.LocationId}");
+
+                if (stopDto.CustomerId.HasValue)
+                {
+                    var customer = await _customerRepository.GetByIdAsync(stopDto.CustomerId.Value);
+                    if (customer == null)
+                        throw new ArgumentException($"Invalid customer ID: {stopDto.CustomerId}");
+                }
             }
 
             var route = _mapper.Map<Routes>(createRouteDto);
@@ -62,6 +72,7 @@ namespace NYR.API.Services
             foreach (var stopDto in createRouteDto.RouteStops)
             {
                 var stop = _mapper.Map<RouteStop>(stopDto);
+                stop.Status = "Draft";
                 stop.RouteId = createdRoute.Id;
                 await _routeStopRepository.AddAsync(stop);
             }
@@ -80,12 +91,19 @@ namespace NYR.API.Services
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
 
-            // Validate locations exist for all stops
+            // Validate locations and customers exist for all stops
             foreach (var stopDto in updateRouteDto.RouteStops)
             {
                 var location = await _locationRepository.GetByIdAsync(stopDto.LocationId);
                 if (location == null)
                     throw new ArgumentException($"Invalid location ID: {stopDto.LocationId}");
+
+                if (stopDto.CustomerId.HasValue)
+                {
+                    var customer = await _customerRepository.GetByIdAsync(stopDto.CustomerId.Value);
+                    if (customer == null)
+                        throw new ArgumentException($"Invalid customer ID: {stopDto.CustomerId}");
+                }
             }
 
             _mapper.Map(updateRouteDto, route);

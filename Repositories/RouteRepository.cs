@@ -17,6 +17,8 @@ namespace NYR.API.Repositories
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
                     .ThenInclude(rs => rs.Location)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Customer)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
         }
@@ -27,6 +29,8 @@ namespace NYR.API.Repositories
                 .Include(r => r.User)
                 .Include(r => r.RouteStops.OrderBy(s => s.StopOrder))
                     .ThenInclude(rs => rs.Location)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Customer)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
@@ -36,6 +40,8 @@ namespace NYR.API.Repositories
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
                     .ThenInclude(rs => rs.Location)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Customer)
                 .Where(r => r.RouteStops.Any(rs => rs.LocationId == locationId) && r.IsActive)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
@@ -47,6 +53,8 @@ namespace NYR.API.Repositories
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
                     .ThenInclude(rs => rs.Location)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Customer)
                 .Where(r => r.UserId == userId && r.IsActive)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
@@ -61,6 +69,8 @@ namespace NYR.API.Repositories
                 .Include(r => r.User)
                 .Include(r => r.RouteStops)
                     .ThenInclude(rs => rs.Location)
+                .Include(r => r.RouteStops)
+                    .ThenInclude(rs => rs.Customer)
                 .Where(r => r.DeliveryDate >= startDate && r.DeliveryDate < endDate && r.IsActive)
                 .OrderBy(r => r.DeliveryDate)
                 .ToListAsync();

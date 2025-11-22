@@ -20,8 +20,9 @@ namespace NYR.API.Models.DTOs
         public int LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
         public int StopOrder { get; set; }
-        public string Address { get; set; } = string.Empty;
+        public int? CustomerId { get; set; }
         public string? CustomerName { get; set; }
+        public string Address { get; set; } = string.Empty;
         public string? ContactPhone { get; set; }
         public string? Notes { get; set; }
         public string Status { get; set; } = "Pending";
@@ -49,12 +50,11 @@ namespace NYR.API.Models.DTOs
         [Required]
         public int StopOrder { get; set; }
 
+        public int? CustomerId { get; set; }
+
         [Required]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
-
-        [MaxLength(100)]
-        public string? CustomerName { get; set; }
 
         [MaxLength(20)]
         public string? ContactPhone { get; set; }
@@ -86,12 +86,11 @@ namespace NYR.API.Models.DTOs
         [Required]
         public int StopOrder { get; set; }
 
+        public int? CustomerId { get; set; }
+
         [Required]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
-
-        [MaxLength(100)]
-        public string? CustomerName { get; set; }
 
         [MaxLength(20)]
         public string? ContactPhone { get; set; }
