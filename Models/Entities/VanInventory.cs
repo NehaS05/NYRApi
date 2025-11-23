@@ -22,6 +22,15 @@ namespace NYR.API.Models.Entities
 
         public DateTime TransferDate { get; set; } = DateTime.UtcNow;
 
+        public DateTime? DeliveryDate { get; set; }
+
+        [MaxLength(100)]
+        public string? DriverName { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = "Pending";
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

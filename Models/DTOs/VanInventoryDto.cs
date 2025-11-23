@@ -11,7 +11,10 @@ namespace NYR.API.Models.DTOs
         public string DriverName { get; set; } = string.Empty;
         public int LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
+        public string CustomerName { get; set; } = string.Empty;
         public DateTime TransferDate { get; set; }
+        public DateTime? DeliveryDate { get; set; }
+        public string Status { get; set; } = string.Empty;
         public List<VanInventoryItemDto> Items { get; set; } = new List<VanInventoryItemDto>();
     }
 
@@ -34,6 +37,11 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public int LocationId { get; set; }
+
+        public DateTime? DeliveryDate { get; set; }
+
+        [MaxLength(100)]
+        public string? DriverName { get; set; }
 
         [Required]
         [MinLength(1, ErrorMessage = "At least one item is required")]
@@ -63,3 +71,34 @@ namespace NYR.API.Models.DTOs
         public int TotalItems { get; set; }
     }
 }
+
+    public class TransferTrackingDto
+    {
+        public int Id { get; set; }
+        public int VanId { get; set; }
+        public string VanName { get; set; } = string.Empty;
+        public string VanNumber { get; set; } = string.Empty;
+        public int LocationId { get; set; }
+        public string LocationName { get; set; } = string.Empty;
+        public int CustomerId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public DateTime TransferDate { get; set; }
+        public DateTime? DeliveryDate { get; set; }
+        public string? DriverName { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public int TotalItems { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+    }
+
+    public class UpdateTransferStatusDto
+    {
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = string.Empty;
+
+        public DateTime? DeliveryDate { get; set; }
+
+        [MaxLength(100)]
+        public string? DriverName { get; set; }
+    }

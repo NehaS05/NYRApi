@@ -157,5 +157,70 @@ namespace NYR.API.Services
             await _vanInventoryRepository.UpdateAsync(vanInventory);
             return true;
         }
+
+        public async Task<IEnumerable<TransferTrackingDto>> GetAllTransfersTrackingAsync()
+        {
+            var vanInventories = await _vanInventoryRepository.GetAllWithDetailsAsync();
+            
+            var trackingList = vanInventories.Select(vi => new TransferTrackingDto
+            {
+                Id = vi.Id,
+                VanId = vi.VanId,
+                VanName = vi.Van.VanName,
+                VanNumber = vi.Van.VanNumber,
+                LocationId = vi.LocationId,
+                LocationName = vi.Location.LocationName,
+                CustomerId = vi.Location.CustomerId,
+                CustomerName = vi.Location.Customer.CompanyName,
+                TransferDate = vi.TransferDate,
+                DeliveryDate = vi.DeliveryDate,
+                DriverName = vi.DriverName ?? vi.Van.DefaultDriverName,
+                Status = vi.Status,
+                TotalItems = vi.Items.Sum(i => i.Quantity),
+                CreatedAt = vi.CreatedAt,
+                UpdatedAt = vi.UpdatedAt
+            }).ToList();
+
+            return trackingList;
+        }
+
+        public async Task<TransferTrackingDto?> UpdateTransferStatusAsync(int id, UpdateTransferStatusDto updateDto)
+        {
+            var vanInventory = await _vanInventoryRepository.GetByIdWithDetailsAsync(id);
+            if (vanInventory == null)
+                return null;
+
+            // Update status and related fields
+            vanInventory.Status = updateDto.Status;
+            vanInventory.DeliveryDate = updateDto.DeliveryDate;
+            
+            if (!string.IsNullOrEmpty(updateDto.DriverName))
+            {
+                vanInventory.DriverName = updateDto.DriverName;
+            }
+
+            vanInventory.UpdatedAt = DateTime.UtcNow;
+            await _vanInventoryRepository.UpdateAsync(vanInventory);
+
+            // Return updated tracking info
+            return new TransferTrackingDto
+            {
+                Id = vanInventory.Id,
+                VanId = vanInventory.VanId,
+                VanName = vanInventory.Van.VanName,
+                VanNumber = vanInventory.Van.VanNumber,
+                LocationId = vanInventory.LocationId,
+                LocationName = vanInventory.Location.LocationName,
+                CustomerId = vanInventory.Location.CustomerId,
+                CustomerName = vanInventory.Location.Customer.CompanyName,
+                TransferDate = vanInventory.TransferDate,
+                DeliveryDate = vanInventory.DeliveryDate,
+                DriverName = vanInventory.DriverName ?? vanInventory.Van.DefaultDriverName,
+                Status = vanInventory.Status,
+                TotalItems = vanInventory.Items.Sum(i => i.Quantity),
+                CreatedAt = vanInventory.CreatedAt,
+                UpdatedAt = vanInventory.UpdatedAt
+            };
+        }
     }
 }

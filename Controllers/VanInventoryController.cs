@@ -80,5 +80,27 @@ namespace NYR.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("tracking")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<IEnumerable<TransferTrackingDto>>> GetAllTransfersTracking()
+        {
+            var transfers = await _vanInventoryService.GetAllTransfersTrackingAsync();
+            return Ok(transfers);
+        }
+
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<TransferTrackingDto>> UpdateTransferStatus(int id, [FromBody] UpdateTransferStatusDto updateDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var transfer = await _vanInventoryService.UpdateTransferStatusAsync(id, updateDto);
+            if (transfer == null)
+                return NotFound();
+
+            return Ok(transfer);
+        }
     }
 }
