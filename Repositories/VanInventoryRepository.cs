@@ -16,6 +16,7 @@ namespace NYR.API.Repositories
             return await _dbSet
                 .Include(vi => vi.Van)
                 .Include(vi => vi.Location)
+                    .ThenInclude(l => l.Customer)
                 .Include(vi => vi.Items)
                     .ThenInclude(item => item.Product)
                 .Include(vi => vi.Items)
@@ -30,6 +31,7 @@ namespace NYR.API.Repositories
             return await _dbSet
                 .Include(vi => vi.Van)
                 .Include(vi => vi.Location)
+                    .ThenInclude(l => l.Customer)
                 .Include(vi => vi.Items)
                     .ThenInclude(item => item.Product)
                 .Include(vi => vi.Items)
@@ -42,6 +44,7 @@ namespace NYR.API.Repositories
             return await _dbSet
                 .Include(vi => vi.Van)
                 .Include(vi => vi.Location)
+                    .ThenInclude(l => l.Customer)
                 .Include(vi => vi.Items)
                     .ThenInclude(item => item.Product)
                 .Include(vi => vi.Items)
