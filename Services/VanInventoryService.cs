@@ -14,7 +14,7 @@ namespace NYR.API.Services
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
         private readonly IProductVariationRepository _productVariationRepository;
-        private readonly ITransferInventoryRepository _transferInventoryRepository;
+        private readonly IWarehouseInventoryRepository _warehouseInventoryRepository;
         private readonly IMapper _mapper;
 
         public VanInventoryService(
@@ -23,7 +23,7 @@ namespace NYR.API.Services
             ILocationRepository locationRepository,
             IProductRepository productRepository,
             IProductVariationRepository productVariationRepository,
-            ITransferInventoryRepository transferInventoryRepository,
+            IWarehouseInventoryRepository warehouseInventoryRepository,
             IMapper mapper)
         {
             _vanInventoryRepository = vanInventoryRepository;
@@ -31,7 +31,7 @@ namespace NYR.API.Services
             _locationRepository = locationRepository;
             _productRepository = productRepository;
             _productVariationRepository = productVariationRepository;
-            _transferInventoryRepository = transferInventoryRepository;
+            _warehouseInventoryRepository = warehouseInventoryRepository;
             _mapper = mapper;
         }
 
@@ -79,16 +79,15 @@ namespace NYR.API.Services
             if (van == null)
                 throw new ArgumentException("Van not found");
 
-            // Validate Location exists
-            var location = await _locationRepository.GetByIdAsync(createDto.LocationId);
-            if (location == null)
-                throw new ArgumentException("Location not found");
+            // Validate Location exists (if provided)
+            if (createDto.LocationId.HasValue)
+            {
+                var location = await _locationRepository.GetByIdAsync(createDto.LocationId.Value);
+                if (location == null)
+                    throw new ArgumentException("Location not found");
+            }
 
-            // Get all transfer inventory items for this location
-            var transferInventories = await _transferInventoryRepository.GetByLocationIdAsync(createDto.LocationId);
-            var transferInventoryItems = transferInventories.SelectMany(t => t.Items).ToList();
-
-            // Validate all products and variations exist, and check/deduct from transfer inventory
+            // Validate all products and variations exist, and check/deduct from warehouse inventory
             foreach (var item in createDto.Items)
             {
                 var product = await _productRepository.GetByIdAsync(item.ProductId);
@@ -102,30 +101,25 @@ namespace NYR.API.Services
                 if (variation.ProductId != item.ProductId)
                     throw new ArgumentException($"Product variation {item.ProductVariationId} does not belong to product {item.ProductId}");
 
-                // Find the corresponding transfer inventory item
-                var transferItem = transferInventoryItems.FirstOrDefault(ti => 
-                    ti.ProductId == item.ProductId && 
-                    ti.ProductVariationId == item.ProductVariationId);
+                // Find the corresponding warehouse inventory item
+                var warehouseItem = await _warehouseInventoryRepository.GetByWarehouseAndProductVariationAsync(
+                    createDto.WarehouseId, 
+                    item.ProductVariationId);
 
-                if (transferItem == null)
+                if (warehouseItem == null)
                 {
-                    throw new ArgumentException($"Product variation not found in location inventory");
+                    throw new ArgumentException($"Product variation not found in warehouse inventory");
                 }
 
-                if (transferItem.Quantity < item.Quantity)
+                if (warehouseItem.Quantity < item.Quantity)
                 {
-                    throw new ArgumentException($"Insufficient quantity in location. Available: {transferItem.Quantity}, Requested: {item.Quantity}");
+                    throw new ArgumentException($"Insufficient quantity in warehouse. Available: {warehouseItem.Quantity}, Requested: {item.Quantity}");
                 }
 
-                // Deduct quantity from transfer inventory
-                transferItem.Quantity -= item.Quantity;
-            }
-
-            // Save all updated transfer inventory items and update parent entities
-            foreach (var transferInventory in transferInventories)
-            {
-                transferInventory.UpdatedAt = DateTime.UtcNow;
-                await _transferInventoryRepository.UpdateAsync(transferInventory);
+                // Deduct quantity from warehouse inventory
+                warehouseItem.Quantity -= item.Quantity;
+                warehouseItem.UpdatedAt = DateTime.UtcNow;
+                await _warehouseInventoryRepository.UpdateAsync(warehouseItem);
             }
 
             // Create VanInventory entity
