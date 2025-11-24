@@ -9,7 +9,7 @@ namespace NYR.API.Models.DTOs
         public string VanName { get; set; } = string.Empty;
         public string VanNumber { get; set; } = string.Empty;
         public string DriverName { get; set; } = string.Empty;
-        public int LocationId { get; set; }
+        public int? LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public DateTime TransferDate { get; set; }
@@ -36,7 +36,10 @@ namespace NYR.API.Models.DTOs
         public int VanId { get; set; }
 
         [Required]
-        public int LocationId { get; set; }
+        public int WarehouseId { get; set; }
+
+        // Optional for future phase - delivery location
+        public int? LocationId { get; set; }
 
         public DateTime? DeliveryDate { get; set; }
 
@@ -78,9 +81,9 @@ namespace NYR.API.Models.DTOs
         public int VanId { get; set; }
         public string VanName { get; set; } = string.Empty;
         public string VanNumber { get; set; } = string.Empty;
-        public int LocationId { get; set; }
+        public int? LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
-        public int CustomerId { get; set; }
+        public int? CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public DateTime TransferDate { get; set; }
         public DateTime? DeliveryDate { get; set; }

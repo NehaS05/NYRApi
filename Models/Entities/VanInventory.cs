@@ -14,11 +14,11 @@ namespace NYR.API.Models.Entities
         [ForeignKey("VanId")]
         public virtual Van Van { get; set; } = null!;
 
-        [Required]
-        public int LocationId { get; set; }
+        // Optional for future phase - delivery location
+        public int? LocationId { get; set; }
 
         [ForeignKey("LocationId")]
-        public virtual Location Location { get; set; } = null!;
+        public virtual Location? Location { get; set; }
 
         public DateTime TransferDate { get; set; } = DateTime.UtcNow;
 
