@@ -34,6 +34,8 @@ namespace NYR.API.Data
         public DbSet<Routes> Routes { get; set; }
         public DbSet<RouteStop> RouteStops { get; set; }
         public DbSet<LocationInventoryData> LocationInventoryData { get; set; }
+        public DbSet<RestockRequest> RestockRequests { get; set; }
+        public DbSet<RestockRequestItem> RestockRequestItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -431,6 +433,49 @@ namespace NYR.API.Data
                 .HasOne(l => l.UpdatedByUser)
                 .WithMany()
                 .HasForeignKey(l => l.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure RestockRequest entity
+            modelBuilder.Entity<RestockRequest>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure RestockRequestItem entity
+            modelBuilder.Entity<RestockRequestItem>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure RestockRequest relationships
+            modelBuilder.Entity<RestockRequest>()
+                .HasOne(rr => rr.Customer)
+                .WithMany()
+                .HasForeignKey(rr => rr.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RestockRequest>()
+                .HasOne(rr => rr.Location)
+                .WithMany()
+                .HasForeignKey(rr => rr.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RestockRequestItem>()
+                .HasOne(rri => rri.RestockRequest)
+                .WithMany(rr => rr.Items)
+                .HasForeignKey(rri => rri.RestockRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RestockRequestItem>()
+                .HasOne(rri => rri.Product)
+                .WithMany()
+                .HasForeignKey(rri => rri.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RestockRequestItem>()
+                .HasOne(rri => rri.ProductVariation)
+                .WithMany()
+                .HasForeignKey(rri => rri.ProductVariationId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

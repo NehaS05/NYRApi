@@ -272,6 +272,29 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => src.ProductVariation.VariationValue));
             CreateMap<CreateVanInventoryItemDto, VanInventoryItem>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+            // RestockRequest mappings
+            CreateMap<RestockRequest, RestockRequestDto>()
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer.CompanyName))
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
+
+            CreateMap<CreateRestockRequestDto, RestockRequest>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.RequestDate, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Restock Request"))
+                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
+                .ForMember(dest => dest.Items, opt => opt.Ignore());
+
+            // RestockRequestItem mappings
+            CreateMap<RestockRequestItem, RestockRequestItemDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationType : null))
+                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationValue : null));
+
+            CreateMap<CreateRestockRequestItemDto, RestockRequestItem>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
         }
     }
 }
