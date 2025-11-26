@@ -67,6 +67,8 @@ namespace NYR.API.Services
                     LocationName = g.First().Location.LocationName,
                     CustomerId = g.Key.CustomerId,
                     CustomerName = g.First().Customer.CompanyName,
+                    ContactPerson = g.First().Location.ContactPerson,
+                    LocationNumber = g.First().Location.LocationPhone,
                     TotalRequests = g.Count(),
                     TotalItems = g.Sum(r => r.Items.Sum(i => i.Quantity))
                 })

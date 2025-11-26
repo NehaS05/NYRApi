@@ -36,6 +36,7 @@ namespace NYR.API.Data
         public DbSet<LocationInventoryData> LocationInventoryData { get; set; }
         public DbSet<RestockRequest> RestockRequests { get; set; }
         public DbSet<RestockRequestItem> RestockRequestItems { get; set; }
+        public DbSet<FollowupRequest> FollowupRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -476,6 +477,25 @@ namespace NYR.API.Data
                 .HasOne(rri => rri.ProductVariation)
                 .WithMany()
                 .HasForeignKey(rri => rri.ProductVariationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure FollowupRequest entity
+            modelBuilder.Entity<FollowupRequest>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure FollowupRequest relationships
+            modelBuilder.Entity<FollowupRequest>()
+                .HasOne(fr => fr.Customer)
+                .WithMany()
+                .HasForeignKey(fr => fr.CustomerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FollowupRequest>()
+                .HasOne(fr => fr.Location)
+                .WithMany()
+                .HasForeignKey(fr => fr.LocationId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }

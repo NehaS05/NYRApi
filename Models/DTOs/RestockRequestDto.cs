@@ -59,6 +59,8 @@ namespace NYR.API.Models.DTOs
         public string LocationName { get; set; } = string.Empty;
         public int CustomerId { get; set; }
         public string CustomerName { get; set; } = string.Empty;
+        public string? ContactPerson { get; set; }
+        public string? LocationNumber { get; set; }
         public int TotalRequests { get; set; }
         public int TotalItems { get; set; }
     }

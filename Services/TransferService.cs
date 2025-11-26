@@ -8,19 +8,23 @@ namespace NYR.API.Services
     {
         private readonly IVanInventoryRepository _vanInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
+        private readonly IFollowupRequestRepository _followupRequestRepository;
 
         public TransferService(
             IVanInventoryRepository vanInventoryRepository,
-            IRestockRequestRepository restockRequestRepository)
+            IRestockRequestRepository restockRequestRepository,
+            IFollowupRequestRepository followupRequestRepository)
         {
             _vanInventoryRepository = vanInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
+            _followupRequestRepository = followupRequestRepository;
         }
 
         public async Task<IEnumerable<TransferDto>> GetAllTransfersAsync()
         {
             var vanTransfers = await _vanInventoryRepository.GetAllWithDetailsAsync();
             var restockRequests = await _restockRequestRepository.GetAllWithDetailsAsync();
+            var followupRequests = await _followupRequestRepository.GetAllWithDetailsAsync();
 
             var transfers = new List<TransferDto>();
 
@@ -53,9 +57,26 @@ namespace NYR.API.Services
                 DeliveryDate = null,
                 RequestDate = rr.RequestDate,
                 DriverName = null,
-                Status = rr.Status,
+                Status = rr.Status == "Restock Request" ? "Restock Requested" : rr.Status,
                 TotalItems = rr.Items?.Sum(i => i.Quantity) ?? 0,
                 CreatedAt = rr.CreatedAt
+            }));
+
+            // Map followup requests
+            transfers.AddRange(followupRequests.Select(fr => new TransferDto
+            {
+                Id = fr.Id,
+                Type = "FollowupRequest",
+                LocationId = fr.LocationId,
+                LocationName = fr.Location.LocationName,
+                CustomerId = fr.CustomerId,
+                CustomerName = fr.Customer.CompanyName,
+                DeliveryDate = null,
+                RequestDate = fr.FollowupDate,
+                DriverName = null,
+                Status = fr.Status,
+                TotalItems = 0,
+                CreatedAt = fr.CreatedAt
             }));
 
             return transfers.OrderByDescending(t => t.RequestDate);
@@ -270,6 +291,8 @@ namespace NYR.API.Services
             else if (type.Equals("RestockRequest", StringComparison.OrdinalIgnoreCase))
             {
                 var restockRequests = await _restockRequestRepository.GetAllWithDetailsAsync();
+                var followupRequests = await _followupRequestRepository.GetAllWithDetailsAsync();
+
                 transfers.AddRange(restockRequests.Select(rr => new TransferDto
                 {
                     Id = rr.Id,
@@ -281,9 +304,25 @@ namespace NYR.API.Services
                     DeliveryDate = null,
                     RequestDate = rr.RequestDate,
                     DriverName = null,
-                    Status = rr.Status,
+                    Status = rr.Status == "Restock Request" ? "Restock Requested" : rr.Status,
                     TotalItems = rr.Items?.Sum(i => i.Quantity) ?? 0,
                     CreatedAt = rr.CreatedAt
+                }));
+
+                transfers.AddRange(followupRequests.Select(fr => new TransferDto
+                {
+                    Id = fr.Id,
+                    Type = "FollowupRequest",
+                    LocationId = fr.LocationId,
+                    LocationName = fr.Location.LocationName,
+                    CustomerId = fr.CustomerId,
+                    CustomerName = fr.Customer.CompanyName,
+                    DeliveryDate = null,
+                    RequestDate = fr.FollowupDate,
+                    DriverName = null,
+                    Status = fr.Status,
+                    TotalItems = 0,
+                    CreatedAt = fr.CreatedAt
                 }));
             }
 

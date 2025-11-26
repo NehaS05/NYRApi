@@ -81,6 +81,7 @@ builder.Services.AddScoped<IProductVariationRepository, ProductVariationReposito
     builder.Services.AddScoped<ILocationInventoryDataRepository, LocationInventoryDataRepository>();
     builder.Services.AddScoped<IVanInventoryRepository, VanInventoryRepository>();
     builder.Services.AddScoped<IRestockRequestRepository, RestockRequestRepository>();
+    builder.Services.AddScoped<IFollowupRequestRepository, FollowupRequestRepository>();
 
 // Service Registration
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -105,6 +106,7 @@ builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
     builder.Services.AddScoped<IRouteService, RouteService>();
     builder.Services.AddScoped<ILocationInventoryDataService, LocationInventoryDataService>();
     builder.Services.AddScoped<IRestockRequestService, RestockRequestService>();
+    builder.Services.AddScoped<IFollowupRequestService, FollowupRequestService>();
     builder.Services.AddScoped<ITransferService, TransferService>();
 
 // Configure Spoke API Settings
