@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NYR.API.Data;
 using NYR.API.Mappings;
+using NYR.API.Models.Configuration;
 using NYR.API.Repositories;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services;
@@ -105,6 +106,12 @@ builder.Services.AddScoped<IProductVariationService, ProductVariationService>();
     builder.Services.AddScoped<ILocationInventoryDataService, LocationInventoryDataService>();
     builder.Services.AddScoped<IRestockRequestService, RestockRequestService>();
     builder.Services.AddScoped<ITransferService, TransferService>();
+
+// Configure Spoke API Settings
+builder.Services.Configure<SpokeApiSettings>(builder.Configuration.GetSection("SpokeApi"));
+
+// Register HttpClient for Spoke API
+builder.Services.AddHttpClient<ISpokeApiService, SpokeApiService>();
 
 // JWT Authentication Configuration
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
