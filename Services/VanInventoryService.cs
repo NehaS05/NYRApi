@@ -40,15 +40,17 @@ namespace NYR.API.Services
             var vans = await _vanRepository.GetAllAsync();
             var vanInventories = await _vanInventoryRepository.GetAllWithDetailsAsync();
 
-            var summary = vans.Where(v => v.IsActive).Select(van => new VanWithInventorySummaryDto
-            {
-                VanId = van.Id,
-                VanName = van.VanName,
-                VanNumber = van.VanNumber,
-                DriverName = van.DefaultDriverName,
-                TotalTransfers = vanInventories.Count(vi => vi.VanId == van.Id),
-                TotalItems = vanInventories.Where(vi => vi.VanId == van.Id).Sum(vi => vi.Items.Sum(i => i.Quantity))
-            }).ToList();
+            var summary = vans
+                .Where(v => v.IsActive && vanInventories.Any(vi => vi.VanId == v.Id))
+                .Select(van => new VanWithInventorySummaryDto
+                {
+                    VanId = van.Id,
+                    VanName = van.VanName,
+                    VanNumber = van.VanNumber,
+                    DriverName = van.DefaultDriverName,
+                    TotalTransfers = vanInventories.Count(vi => vi.VanId == van.Id),
+                    TotalItems = vanInventories.Where(vi => vi.VanId == van.Id).Sum(vi => vi.Items.Sum(i => i.Quantity))
+                }).ToList();
 
             return summary;
         }

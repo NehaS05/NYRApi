@@ -153,19 +153,21 @@ namespace NYR.API.Services
             var productCounts = await _warehouseInventoryRepository.GetWarehouseProductCountsAsync();
             var quantityTotals = await _warehouseInventoryRepository.GetWarehouseQuantityTotalsAsync();
 
-            var warehouseList = warehouses.Select(w => new WarehouseListDto
-            {
-                Id = w.Id,
-                Name = w.Name,
-                AddressLine1 = w.AddressLine1,
-                AddressLine2 = w.AddressLine2,
-                City = w.City,
-                State = w.State,
-                ZipCode = w.ZipCode,
-                IsActive = w.IsActive,
-                TotalProducts = productCounts.GetValueOrDefault(w.Id, 0),
-                TotalQuantity = quantityTotals.GetValueOrDefault(w.Id, 0)
-            }).ToList();
+            var warehouseList = warehouses
+                .Where(w => productCounts.ContainsKey(w.Id) && productCounts[w.Id] > 0)
+                .Select(w => new WarehouseListDto
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    AddressLine1 = w.AddressLine1,
+                    AddressLine2 = w.AddressLine2,
+                    City = w.City,
+                    State = w.State,
+                    ZipCode = w.ZipCode,
+                    IsActive = w.IsActive,
+                    TotalProducts = productCounts.GetValueOrDefault(w.Id, 0),
+                    TotalQuantity = quantityTotals.GetValueOrDefault(w.Id, 0)
+                }).ToList();
 
             return warehouseList;
         }
