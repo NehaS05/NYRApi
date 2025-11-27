@@ -13,6 +13,7 @@ namespace NYR.API.Models.DTOs
         public DateTime? DeliveryDate { get; set; }
         public DateTime RequestDate { get; set; }
         public string? DriverName { get; set; }
+        public int? DriverId { get; set; }
         public string Status { get; set; } = string.Empty;
         public int TotalItems { get; set; }
         public DateTime CreatedAt { get; set; }

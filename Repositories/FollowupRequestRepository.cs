@@ -15,7 +15,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(fr => fr.Customer)
-                .Include(fr => fr.Location)
+                .Include(fr => fr.Location).ThenInclude(ii => ii.User)
                 .Where(fr => fr.IsActive)
                 .OrderByDescending(fr => fr.FollowupDate)
                 .ToListAsync();

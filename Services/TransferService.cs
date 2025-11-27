@@ -303,7 +303,8 @@ namespace NYR.API.Services
                     CustomerName = rr.Customer.CompanyName,
                     DeliveryDate = null,
                     RequestDate = rr.RequestDate,
-                    DriverName = null,
+                    DriverName = rr.Location.User.Name,
+                    DriverId = rr.Location.UserId,
                     Status = rr.Status == "Restock Request" ? "Restock Requested" : rr.Status,
                     TotalItems = rr.Items?.Sum(i => i.Quantity) ?? 0,
                     CreatedAt = rr.CreatedAt
@@ -319,7 +320,8 @@ namespace NYR.API.Services
                     CustomerName = fr.Customer.CompanyName,
                     DeliveryDate = null,
                     RequestDate = fr.FollowupDate,
-                    DriverName = null,
+                    DriverName = fr.Location.UserId != null ? fr.Location.User.Name : null,
+                    DriverId = fr.Location.UserId,
                     Status = fr.Status,
                     TotalItems = 0,
                     CreatedAt = fr.CreatedAt
