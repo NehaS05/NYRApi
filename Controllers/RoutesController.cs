@@ -18,10 +18,16 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<RouteDto>>> GetAllRoutes()
+        public async Task<ActionResult<IEnumerable<RouteDto>>> GetAllRoutes([FromQuery] int? driverId = null)
         {
-            var routes = await _routeService.GetAllRoutesAsync();
-            return Ok(routes);
+            if (driverId.HasValue)
+            {
+                var routes = await _routeService.GetRoutesByUserIdAsync(driverId.Value);
+                return Ok(routes);
+            }
+            
+            var allRoutes = await _routeService.GetAllRoutesAsync();
+            return Ok(allRoutes);
         }
 
         [HttpGet("{id}")]
