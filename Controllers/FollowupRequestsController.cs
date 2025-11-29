@@ -46,12 +46,12 @@ namespace NYR.API.Controllers
         /// /// Get followup requests by location ID
         /// </summary>
         /// [HttpGet("location/{locationId}")]
-        [Authorize(Roles = "Admin,Staff")]
-        public async Task<ActionResult<IEnumerable<FollowupRequestDto>>> GetFollowupRequestsByLocation(int locationId)
-        {
-            var followupRequests = await _followupRequestService.GetFollowupRequestsByLocationIdAsync(locationId);
-            return Ok(followupRequests);
-        }
+        // [Authorize(Roles = "Admin,Staff")]
+        // public async Task<ActionResult<IEnumerable<FollowupRequestDto>>> GetFollowupRequestsByLocation(int locationId)
+        // {
+        //     var followupRequests = await _followupRequestService.GetFollowupRequestsByLocationIdAsync(locationId);
+        //     return Ok(followupRequests);
+        // }
 
         /// <summary>
         /// /// Get followup requests by customer ID
