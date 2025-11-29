@@ -8,6 +8,11 @@ namespace NYR.API.Models.DTOs
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
+        public string? AddressLine1 { get; set; }
+        public string? AddressLine2 { get; set; }
+        public string? City { get; set; }
+        public string? State { get; set; }
+        public string? ZipCode { get; set; }
         public int RoleId { get; set; }
         public string RoleName { get; set; } = string.Empty;
         public int? CustomerId { get; set; }
@@ -34,6 +39,21 @@ namespace NYR.API.Models.DTOs
         [MaxLength(20)]
         public string PhoneNumber { get; set; } = string.Empty;
 
+        [MaxLength(255)]
+        public string? AddressLine1 { get; set; }
+
+        [MaxLength(255)]
+        public string? AddressLine2 { get; set; }
+
+        [MaxLength(100)]
+        public string? City { get; set; }
+
+        [MaxLength(50)]
+        public string? State { get; set; }
+
+        [MaxLength(20)]
+        public string? ZipCode { get; set; }
+
         [Required]
         [MinLength(6)]
         public string Password { get; set; } = string.Empty;
@@ -59,6 +79,21 @@ namespace NYR.API.Models.DTOs
         [Required]
         [MaxLength(20)]
         public string PhoneNumber { get; set; } = string.Empty;
+
+        [MaxLength(255)]
+        public string? AddressLine1 { get; set; }
+
+        [MaxLength(255)]
+        public string? AddressLine2 { get; set; }
+
+        [MaxLength(100)]
+        public string? City { get; set; }
+
+        [MaxLength(50)]
+        public string? State { get; set; }
+
+        [MaxLength(20)]
+        public string? ZipCode { get; set; }
 
         [Required]
         public int RoleId { get; set; }

@@ -21,6 +21,21 @@ namespace NYR.API.Models.Entities
         [MaxLength(20)]
         public string PhoneNumber { get; set; } = string.Empty;
 
+        [MaxLength(255)]
+        public string? AddressLine1 { get; set; }
+
+        [MaxLength(255)]
+        public string? AddressLine2 { get; set; }
+
+        [MaxLength(100)]
+        public string? City { get; set; }
+
+        [MaxLength(50)]
+        public string? State { get; set; }
+
+        [MaxLength(20)]
+        public string? ZipCode { get; set; }
+
         [Required]
         [MaxLength(255)]
         public string PasswordHash { get; set; } = string.Empty;
