@@ -184,7 +184,7 @@ namespace NYR.API.Services
         {
             // Validate user exists and is a driver
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null || user.RoleId != 3)
+            if (user == null || user.RoleId != 4)
                 throw new ArgumentException("User not found or not a driver");
 
             // Delete existing availabilities
