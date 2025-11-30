@@ -9,15 +9,21 @@ namespace NYR.API.Services
         private readonly IVanInventoryRepository _vanInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
         private readonly IFollowupRequestRepository _followupRequestRepository;
+        private readonly ITransferInventoryRepository _transferInventoryRepository;
+        private readonly AutoMapper.IMapper _mapper;
 
         public TransferService(
             IVanInventoryRepository vanInventoryRepository,
             IRestockRequestRepository restockRequestRepository,
-            IFollowupRequestRepository followupRequestRepository)
+            IFollowupRequestRepository followupRequestRepository,
+            ITransferInventoryRepository transferInventoryRepository,
+            AutoMapper.IMapper mapper)
         {
             _vanInventoryRepository = vanInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
             _followupRequestRepository = followupRequestRepository;
+            _transferInventoryRepository = transferInventoryRepository;
+            _mapper = mapper;
         }
 
         public async Task<IEnumerable<TransferDto>> GetAllTransfersAsync()
@@ -303,7 +309,7 @@ namespace NYR.API.Services
                     CustomerName = rr.Customer.CompanyName,
                     DeliveryDate = null,
                     RequestDate = rr.RequestDate,
-                    DriverName = rr.Location.User.Name,
+                    DriverName = rr.Location.User?.Name,
                     DriverId = rr.Location.UserId,
                     Status = rr.Status == "Restock Request" ? "Restock Requested" : rr.Status,
                     TotalItems = rr.Items?.Sum(i => i.Quantity) ?? 0,
@@ -320,15 +326,45 @@ namespace NYR.API.Services
                     CustomerName = fr.Customer.CompanyName,
                     DeliveryDate = null,
                     RequestDate = fr.FollowupDate,
-                    DriverName = fr.Location.UserId != null ? fr.Location.User.Name : null,
+                    DriverName = fr.Location.User?.Name,
                     DriverId = fr.Location.UserId,
                     Status = fr.Status,
                     TotalItems = 0,
                     CreatedAt = fr.CreatedAt
                 }));
+                
+                // Load shipping inventory for RestockRequest types
+                foreach (var transfer in transfers.Where(x => x.Type == "RestockRequest"))
+                {
+                    await LoadShippingInventoryForTransfer(transfer);
+                }
             }
 
             return transfers.OrderByDescending(t => t.RequestDate);
+        }
+        
+        private async Task LoadShippingInventoryForTransfer(TransferDto transfer)
+        {
+            if (transfer.LocationId.HasValue)
+            {
+                try
+                {
+                    var transferInventories = await _transferInventoryRepository.GetByLocationIdAsync(transfer.LocationId.Value);
+                    if (transferInventories != null && transferInventories.Any())
+                    {
+                        var allItems = transferInventories.SelectMany(t => t.Items).ToList();
+                        if (allItems.Any())
+                        {
+                            transfer.ShippingInventory = _mapper.Map<List<TransferInventoryItemDto>>(allItems);
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // If there's an error loading shipping inventory, just skip it
+                    transfer.ShippingInventory = new List<TransferInventoryItemDto>();
+                }
+            }
         }
 
         public async Task<TransferSummaryDto> GetTransfersSummaryAsync()
