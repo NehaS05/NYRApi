@@ -18,6 +18,7 @@ namespace NYR.API.Models.DTOs
         public int TotalItems { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<TransferInventoryItemDto> ShippingInventory { get; set; } = new List<TransferInventoryItemDto>();
+        public string LocationAddress { get; set; } = string.Empty;
     }
 
     public class TransferSummaryDto

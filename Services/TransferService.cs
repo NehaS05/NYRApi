@@ -291,7 +291,8 @@ namespace NYR.API.Services
                     DriverName = vt.DriverName ?? vt.Van?.DefaultDriverName,
                     Status = vt.Status,
                     TotalItems = vt.Items?.Sum(i => i.Quantity) ?? 0,
-                    CreatedAt = vt.CreatedAt
+                    CreatedAt = vt.CreatedAt,
+                    LocationAddress = vt.Location.AddressLine1 + ", " + vt.Location.AddressLine2 + ", " + vt.Location.City + ", " + vt.Location.State + ", " + vt.Location.ZipCode
                 }));
             }
             else if (type.Equals("RestockRequest", StringComparison.OrdinalIgnoreCase))
@@ -313,7 +314,8 @@ namespace NYR.API.Services
                     DriverId = rr.Location.UserId,
                     Status = rr.Status == "Restock Request" ? "Restock Requested" : rr.Status,
                     TotalItems = rr.Items?.Sum(i => i.Quantity) ?? 0,
-                    CreatedAt = rr.CreatedAt
+                    CreatedAt = rr.CreatedAt,
+                    LocationAddress = rr.Location.AddressLine1 + ", " + rr.Location.AddressLine2 + ", " + rr.Location.City + ", " + rr.Location.State + ", " + rr.Location.ZipCode
                 }));
 
                 transfers.AddRange(followupRequests.Select(fr => new TransferDto
@@ -330,13 +332,15 @@ namespace NYR.API.Services
                     DriverId = fr.Location.UserId,
                     Status = fr.Status,
                     TotalItems = 0,
-                    CreatedAt = fr.CreatedAt
+                    CreatedAt = fr.CreatedAt,
+                    LocationAddress = fr.Location.AddressLine1 + ", " + fr.Location.AddressLine2 + ", " + fr.Location.City + ", " + fr.Location.State + ", " + fr.Location.ZipCode
                 }));
                 
                 // Load shipping inventory for RestockRequest types
                 foreach (var transfer in transfers.Where(x => x.Type == "RestockRequest"))
                 {
                     await LoadShippingInventoryForTransfer(transfer);
+                    
                 }
             }
 
@@ -345,18 +349,26 @@ namespace NYR.API.Services
         
         private async Task LoadShippingInventoryForTransfer(TransferDto transfer)
         {
-            if (transfer.LocationId.HasValue)
+            if (transfer.Type == "RestockRequest")
             {
                 try
                 {
-                    var transferInventories = await _transferInventoryRepository.GetByLocationIdAsync(transfer.LocationId.Value);
-                    if (transferInventories != null && transferInventories.Any())
+                    // Load RestockRequest by ID to get its items
+                    var restockRequest = await _restockRequestRepository.GetByIdWithDetailsAsync(transfer.Id);
+                    if (restockRequest != null && restockRequest.Items != null && restockRequest.Items.Any())
                     {
-                        var allItems = transferInventories.SelectMany(t => t.Items).ToList();
-                        if (allItems.Any())
+                        // Map RestockRequestItems to TransferInventoryItemDto
+                        transfer.ShippingInventory = restockRequest.Items.Select(item => new TransferInventoryItemDto
                         {
-                            transfer.ShippingInventory = _mapper.Map<List<TransferInventoryItemDto>>(allItems);
-                        }
+                            Id = item.Id,
+                            ProductId = item.ProductId,
+                            ProductName = item.Product?.Name ?? "Unknown",
+                            SkuCode = item.Product?.BarcodeSKU,
+                            ProductVariationId = item.ProductVariationId,
+                            VariationType = item.ProductVariation?.VariationType,
+                            VariationValue = item.ProductVariation?.VariationValue,
+                            Quantity = item.Quantity
+                        }).ToList();
                     }
                 }
                 catch (Exception)
