@@ -14,6 +14,8 @@ namespace NYR.API.Services
         private readonly IUserRepository _userRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
+        private readonly IRestockRequestRepository _restockRequestRepository;
+        private readonly IFollowupRequestRepository _followupRequestRepository;
         private readonly IMapper _mapper;
 
         public RouteService(
@@ -23,6 +25,8 @@ namespace NYR.API.Services
             IUserRepository userRepository,
             ICustomerRepository customerRepository,
             ITransferInventoryRepository transferInventoryRepository,
+            IRestockRequestRepository restockRequestRepository,
+            IFollowupRequestRepository followupRequestRepository,
             IMapper mapper)
         {
             _routeRepository = routeRepository;
@@ -31,6 +35,8 @@ namespace NYR.API.Services
             _userRepository = userRepository;
             _customerRepository = customerRepository;
             _transferInventoryRepository = transferInventoryRepository;
+            _restockRequestRepository = restockRequestRepository;
+            _followupRequestRepository = followupRequestRepository;
             _mapper = mapper;
         }
 
@@ -38,7 +44,7 @@ namespace NYR.API.Services
         {
             var routes = await _routeRepository.GetAllWithDetailsAsync();
             var routeDtos = _mapper.Map<IEnumerable<RouteDto>>(routes).ToList();
-            
+            routeDtos = routeDtos.Where(r => r.IsActive).ToList();
             // Load shipping inventory for each route stop
             foreach (var routeDto in routeDtos)
             {
@@ -90,7 +96,7 @@ namespace NYR.API.Services
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
 
-            // Validate locations and customers exist for all stops
+            // Validate locations, customers, restock requests, and followup requests exist for all stops
             foreach (var stopDto in createRouteDto.RouteStops)
             {
                 var location = await _locationRepository.GetByIdAsync(stopDto.LocationId);
@@ -103,17 +109,63 @@ namespace NYR.API.Services
                     if (customer == null)
                         throw new ArgumentException($"Invalid customer ID: {stopDto.CustomerId}");
                 }
+
+                if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
+                {
+                    var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
+                    if (restockRequest == null)
+                        throw new ArgumentException($"Invalid restock request ID: {stopDto.RestockRequestId}");
+                }
+                else if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value == 0)
+                {
+                    // Convert 0 to null
+                    stopDto.RestockRequestId = null;
+                }
+
+                if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value > 0)
+                {
+                    var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
+                    if (followupRequest == null)
+                        throw new ArgumentException($"Invalid followup request ID: {stopDto.FollowupRequestId}");
+                }
+                else if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value == 0)
+                {
+                    // Convert 0 to null
+                    stopDto.FollowupRequestId = null;
+                }
             }
 
             var route = _mapper.Map<Routes>(createRouteDto);
             var createdRoute = await _routeRepository.AddAsync(route);
 
-            // Create route stops
+            // Create route stops and update associated request statuses
             foreach (var stopDto in createRouteDto.RouteStops)
             {
                 var stop = _mapper.Map<RouteStop>(stopDto);
                 stop.RouteId = createdRoute.Id;
                 await _routeStopRepository.AddAsync(stop);
+
+                // Update RestockRequest status to "Draft" if associated
+                if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
+                {
+                    var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
+                    if (restockRequest != null)
+                    {
+                        restockRequest.Status = "Draft";
+                        await _restockRequestRepository.UpdateAsync(restockRequest);
+                    }
+                }
+
+                // Update FollowupRequest status to "Draft" if associated
+                if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value > 0)
+                {
+                    var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
+                    if (followupRequest != null)
+                    {
+                        followupRequest.Status = "Draft";
+                        await _followupRequestRepository.UpdateAsync(followupRequest);
+                    }
+                }
             }
 
             return await GetRouteByIdAsync(createdRoute.Id) ?? throw new Exception("Failed to retrieve created route");
@@ -130,7 +182,7 @@ namespace NYR.API.Services
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
 
-            // Validate locations and customers exist for all stops
+            // Validate locations, customers, restock requests, and followup requests exist for all stops
             foreach (var stopDto in updateRouteDto.RouteStops)
             {
                 var location = await _locationRepository.GetByIdAsync(stopDto.LocationId);
@@ -142,6 +194,30 @@ namespace NYR.API.Services
                     var customer = await _customerRepository.GetByIdAsync(stopDto.CustomerId.Value);
                     if (customer == null)
                         throw new ArgumentException($"Invalid customer ID: {stopDto.CustomerId}");
+                }
+
+                if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
+                {
+                    var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
+                    if (restockRequest == null)
+                        throw new ArgumentException($"Invalid restock request ID: {stopDto.RestockRequestId}");
+                }
+                else if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value == 0)
+                {
+                    // Convert 0 to null
+                    stopDto.RestockRequestId = null;
+                }
+
+                if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value > 0)
+                {
+                    var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
+                    if (followupRequest == null)
+                        throw new ArgumentException($"Invalid followup request ID: {stopDto.FollowupRequestId}");
+                }
+                else if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value == 0)
+                {
+                    // Convert 0 to null
+                    stopDto.FollowupRequestId = null;
                 }
             }
 
@@ -159,7 +235,7 @@ namespace NYR.API.Services
                 await _routeStopRepository.DeleteAsync(stop.Id);
             }
 
-            // Add or update stops
+            // Add or update stops and update associated request statuses
             foreach (var stopDto in updateRouteDto.RouteStops)
             {
                 if (stopDto.Id.HasValue)
@@ -176,6 +252,28 @@ namespace NYR.API.Services
                     var newStop = _mapper.Map<RouteStop>(stopDto);
                     newStop.RouteId = id;
                     await _routeStopRepository.AddAsync(newStop);
+                }
+
+                // Update RestockRequest status to "Draft" if associated
+                if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
+                {
+                    var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
+                    if (restockRequest != null && restockRequest.Status != "Draft")
+                    {
+                        restockRequest.Status = route.Status;
+                        await _restockRequestRepository.UpdateAsync(restockRequest);
+                    }
+                }
+
+                // Update FollowupRequest status to "Draft" if associated
+                if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value > 0)
+                {
+                    var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
+                    if (followupRequest != null && followupRequest.Status != "Draft")
+                    {
+                        followupRequest.Status = route.Status;
+                        await _followupRequestRepository.UpdateAsync(followupRequest);
+                    }
                 }
             }
 

@@ -28,6 +28,16 @@ namespace NYR.API.Models.Entities
         [ForeignKey("CustomerId")]
         public virtual Customer? Customer { get; set; }
 
+        public int? RestockRequestId { get; set; }
+
+        [ForeignKey("RestockRequestId")]
+        public virtual RestockRequest? RestockRequest { get; set; }
+
+        public int? FollowupRequestId { get; set; }
+
+        [ForeignKey("FollowupRequestId")]
+        public virtual FollowupRequest? FollowupRequest { get; set; }
+
         [Required]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;

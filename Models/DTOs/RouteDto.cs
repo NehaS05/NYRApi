@@ -23,6 +23,8 @@ namespace NYR.API.Models.DTOs
         public int StopOrder { get; set; }
         public int? CustomerId { get; set; }
         public string? CustomerName { get; set; }
+        public int? RestockRequestId { get; set; }
+        public int? FollowupRequestId { get; set; }
         public string Address { get; set; } = string.Empty;
         public string? ContactPhone { get; set; }
         public string? Notes { get; set; }
@@ -56,6 +58,10 @@ namespace NYR.API.Models.DTOs
         public int StopOrder { get; set; }
 
         public int? CustomerId { get; set; }
+
+        public int? RestockRequestId { get; set; }
+
+        public int? FollowupRequestId { get; set; }
 
         [Required]
         [MaxLength(500)]
@@ -95,6 +101,10 @@ namespace NYR.API.Models.DTOs
         public int StopOrder { get; set; }
 
         public int? CustomerId { get; set; }
+
+        public int? RestockRequestId { get; set; }
+
+        public int? FollowupRequestId { get; set; }
 
         [Required]
         [MaxLength(500)]
