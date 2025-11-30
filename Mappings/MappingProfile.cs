@@ -229,7 +229,22 @@ namespace NYR.API.Mappings
             // RouteStop mappings
             CreateMap<RouteStop, RouteStopDto>()
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
-                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.CompanyName : null));
+                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.CompanyName : null))
+                .ForMember(dest => dest.ShippingInventory, opt => opt.MapFrom(src => 
+                    src.RestockRequest != null && src.RestockRequest.Items != null 
+                        ? src.RestockRequest.Items.Select(item => new TransferInventoryItemDto
+                        {
+                            Id = item.Id,
+                            ProductId = item.ProductId,
+                            ProductName = item.Product != null ? item.Product.Name : "Unknown",
+                            SkuCode = item.Product != null ? item.Product.BarcodeSKU : null,
+                            ProductVariationId = item.ProductVariationId,
+                            VariationType = item.ProductVariation != null ? item.ProductVariation.VariationType : null,
+                            VariationValue = item.ProductVariation != null ? item.ProductVariation.VariationValue : null,
+                            Quantity = item.Quantity
+                        }).ToList()
+                        : new List<TransferInventoryItemDto>()
+                ));
             CreateMap<CreateRouteStopDto, RouteStop>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));

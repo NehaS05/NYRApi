@@ -13,7 +13,6 @@ namespace NYR.API.Services
         private readonly ILocationRepository _locationRepository;
         private readonly IUserRepository _userRepository;
         private readonly ICustomerRepository _customerRepository;
-        private readonly ITransferInventoryRepository _transferInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
         private readonly IFollowupRequestRepository _followupRequestRepository;
         private readonly IMapper _mapper;
@@ -24,7 +23,6 @@ namespace NYR.API.Services
             ILocationRepository locationRepository,
             IUserRepository userRepository,
             ICustomerRepository customerRepository,
-            ITransferInventoryRepository transferInventoryRepository,
             IRestockRequestRepository restockRequestRepository,
             IFollowupRequestRepository followupRequestRepository,
             IMapper mapper)
@@ -34,7 +32,6 @@ namespace NYR.API.Services
             _locationRepository = locationRepository;
             _userRepository = userRepository;
             _customerRepository = customerRepository;
-            _transferInventoryRepository = transferInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
             _followupRequestRepository = followupRequestRepository;
             _mapper = mapper;
@@ -45,12 +42,7 @@ namespace NYR.API.Services
             var routes = await _routeRepository.GetAllWithDetailsAsync();
             var routeDtos = _mapper.Map<IEnumerable<RouteDto>>(routes).ToList();
             routeDtos = routeDtos.Where(r => r.IsActive).ToList();
-            // Load shipping inventory for each route stop
-            foreach (var routeDto in routeDtos)
-            {
-                await LoadShippingInventoryForRouteStops(routeDto);
-            }
-            
+           
             return routeDtos;
         }
 
@@ -60,33 +52,8 @@ namespace NYR.API.Services
             if (route == null) return null;
             
             var routeDto = _mapper.Map<RouteDto>(route);
-            await LoadShippingInventoryForRouteStops(routeDto);
             
             return routeDto;
-        }
-        
-        private async Task LoadShippingInventoryForRouteStops(RouteDto routeDto)
-        {
-            foreach (var stop in routeDto.RouteStops)
-            {
-                try
-                {
-                    var transfers = await _transferInventoryRepository.GetByLocationIdAsync(stop.LocationId);
-                    if (transfers != null && transfers.Any())
-                    {
-                        var allItems = transfers.SelectMany(t => t.Items).ToList();
-                        if (allItems.Any())
-                        {
-                            stop.ShippingInventory = _mapper.Map<List<TransferInventoryItemDto>>(allItems);
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    // If there's an error loading shipping inventory, just skip it
-                    stop.ShippingInventory = new List<TransferInventoryItemDto>();
-                }
-            }
         }
 
         public async Task<RouteDto> CreateRouteAsync(CreateRouteDto createRouteDto)
@@ -294,14 +261,7 @@ namespace NYR.API.Services
         public async Task<IEnumerable<RouteDto>> GetRoutesByUserIdAsync(int userId)
         {
             var routes = await _routeRepository.GetByUserIdAsync(userId);
-            var routeDtos = _mapper.Map<IEnumerable<RouteDto>>(routes).ToList();
-            
-            foreach (var routeDto in routeDtos)
-            {
-                await LoadShippingInventoryForRouteStops(routeDto);
-            }
-            
-            return routeDtos;
+            return _mapper.Map<IEnumerable<RouteDto>>(routes);
         }
 
         public async Task<IEnumerable<RouteDto>> GetRoutesByDeliveryDateAsync(DateTime deliveryDate)
