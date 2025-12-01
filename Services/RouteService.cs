@@ -195,12 +195,12 @@ namespace NYR.API.Services
             // Update route stops
             var existingStops = await _routeStopRepository.GetByRouteIdAsync(id);
 
-            // Remove stops not in the update
-            var stopsToRemove = existingStops.Where(es => !updateRouteDto.RouteStops.Any(s => s.Id == es.Id)).ToList();
-            foreach (var stop in stopsToRemove)
-            {
-                await _routeStopRepository.DeleteAsync(stop.Id);
-            }
+            // Remove stops not in the update  //No need to delete for now
+            //var stopsToRemove = existingStops.Where(es => !updateRouteDto.RouteStops.Any(s => s.Id == es.Id)).ToList();
+            //foreach (var stop in stopsToRemove)
+            //{
+            //    await _routeStopRepository.DeleteAsync(stop.Id);
+            //}
 
             // Add or update stops and update associated request statuses
             foreach (var stopDto in updateRouteDto.RouteStops)
@@ -221,22 +221,22 @@ namespace NYR.API.Services
                     await _routeStopRepository.AddAsync(newStop);
                 }
 
-                // Update RestockRequest status to "Draft" if associated
+                // Update RestockRequest status if associated
                 if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
                 {
                     var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
-                    if (restockRequest != null && restockRequest.Status != "Draft")
+                    if (restockRequest != null)
                     {
                         restockRequest.Status = route.Status;
                         await _restockRequestRepository.UpdateAsync(restockRequest);
                     }
                 }
 
-                // Update FollowupRequest status to "Draft" if associated
+                // Update FollowupRequest status if associated
                 if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value > 0)
                 {
                     var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
-                    if (followupRequest != null && followupRequest.Status != "Draft")
+                    if (followupRequest != null)
                     {
                         followupRequest.Status = route.Status;
                         await _followupRequestRepository.UpdateAsync(followupRequest);
