@@ -91,26 +91,24 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name))
                 .ForMember(dest => dest.BrandName, opt => opt.MapFrom(src => src.Brand.Name))
                 .ForMember(dest => dest.SupplierName, opt => opt.MapFrom(src => src.Supplier.Name))
-                .ForMember(dest => dest.Variations, opt => opt.MapFrom(src => src.Variations));
+                .ForMember(dest => dest.Variants, opt => opt.MapFrom(src => src.Variants));
             CreateMap<CreateProductDto, Product>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
-                .ForMember(dest => dest.Variations, opt => opt.Ignore());
+                .ForMember(dest => dest.Variants, opt => opt.Ignore());
             CreateMap<UpdateProductDto, Product>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.Variations, opt => opt.Ignore());
+                .ForMember(dest => dest.Variants, opt => opt.Ignore());
 
-            // ProductVariation mappings
-            CreateMap<ProductVariation, ProductVariationDto>();
-            CreateMap<CreateProductVariationDto, ProductVariation>()
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
-            CreateMap<UpdateProductVariationDto, ProductVariation>()
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+            // ProductVariant mappings
+            CreateMap<ProductVariant, ProductVariantDto>()
+                .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src => src.Attributes));
+            CreateMap<ProductVariantAttribute, ProductVariantAttributeDto>()
+                .ForMember(dest => dest.VariationName, opt => opt.MapFrom(src => src.Variation.Name))
+                .ForMember(dest => dest.VariationOptionName, opt => opt.MapFrom(src => src.VariationOption.Name))
+                .ForMember(dest => dest.VariationOptionValue, opt => opt.MapFrom(src => src.VariationOption.Value));
 
 			// Van mappings
 			CreateMap<Van, VanDto>();
@@ -184,8 +182,15 @@ namespace NYR.API.Mappings
             CreateMap<TransferInventoryItem, TransferInventoryItemDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
                 .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
-                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationType : null))
-                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationValue : null));
+                .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
+                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => 
+                    src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
+                    ? src.ProductVariant.Attributes.First().Variation.Name 
+                    : null))
+                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => 
+                    src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
+                    ? src.ProductVariant.Attributes.First().VariationOption.Name 
+                    : null));
             CreateMap<CreateTransferInventoryItemDto, TransferInventoryItem>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
 
@@ -238,9 +243,12 @@ namespace NYR.API.Mappings
                             ProductId = item.ProductId,
                             ProductName = item.Product != null ? item.Product.Name : "Unknown",
                             SkuCode = item.Product != null ? item.Product.BarcodeSKU : null,
-                            ProductVariationId = item.ProductVariationId,
-                            VariationType = item.ProductVariation != null ? item.ProductVariation.VariationType : null,
-                            VariationValue = item.ProductVariation != null ? item.ProductVariation.VariationValue : null,
+                            ProductVariantId = item.ProductVariantId,
+                            VariantName = item.ProductVariant != null ? item.ProductVariant.VariantName : null,
+                            VariationType = item.ProductVariant != null && item.ProductVariant.Attributes.Any() 
+                                ? item.ProductVariant.Attributes.First().Variation.Name : null,
+                            VariationValue = item.ProductVariant != null && item.ProductVariant.Attributes.Any() 
+                                ? item.ProductVariant.Attributes.First().VariationOption.Name : null,
                             Quantity = item.Quantity
                         }).ToList()
                         : new List<TransferInventoryItemDto>()
@@ -283,8 +291,15 @@ namespace NYR.API.Mappings
             CreateMap<VanInventoryItem, VanInventoryItemDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
                 .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
-                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => src.ProductVariation.VariationType))
-                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => src.ProductVariation.VariationValue));
+                .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
+                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => 
+                    src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
+                    ? src.ProductVariant.Attributes.First().Variation.Name 
+                    : null))
+                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => 
+                    src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
+                    ? src.ProductVariant.Attributes.First().VariationOption.Name 
+                    : null));
             CreateMap<CreateVanInventoryItemDto, VanInventoryItem>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
 
@@ -305,8 +320,15 @@ namespace NYR.API.Mappings
             CreateMap<RestockRequestItem, RestockRequestItemDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
                 .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
-                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationType : null))
-                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => src.ProductVariation != null ? src.ProductVariation.VariationValue : null));
+                .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
+                .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => 
+                    src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
+                    ? src.ProductVariant.Attributes.First().Variation.Name 
+                    : null))
+                .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => 
+                    src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
+                    ? src.ProductVariant.Attributes.First().VariationOption.Name 
+                    : null));
 
             CreateMap<CreateRestockRequestItemDto, RestockRequestItem>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));

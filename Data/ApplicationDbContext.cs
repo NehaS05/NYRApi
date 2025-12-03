@@ -17,7 +17,8 @@ namespace NYR.API.Data
         public DbSet<Brand> Brands { get; set; }
         public DbSet<Supplier> Suppliers { get; set; }
         public DbSet<Product> Products { get; set; }
-        public DbSet<ProductVariation> ProductVariations { get; set; }
+        public DbSet<ProductVariant> ProductVariants { get; set; }
+        public DbSet<ProductVariantAttribute> ProductVariantAttributes { get; set; }
 		public DbSet<Van> Vans { get; set; }
 		public DbSet<Warehouse> Warehouses { get; set; }
         public DbSet<WarehouseInventory> WarehouseInventories { get; set; }
@@ -97,12 +98,6 @@ namespace NYR.API.Data
                 entity.Property(e => e.Price).HasPrecision(18, 2);
             });
 
-            // Configure ProductVariation entity
-            modelBuilder.Entity<ProductVariation>(entity =>
-            {
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            });
-
 			// Configure Van entity
 			modelBuilder.Entity<Van>(entity =>
 			{
@@ -121,7 +116,7 @@ namespace NYR.API.Data
             modelBuilder.Entity<WarehouseInventory>(entity =>
             {
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-                entity.HasIndex(e => new { e.WarehouseId, e.ProductVariationId }).IsUnique();
+                entity.HasIndex(e => new { e.WarehouseId, e.ProductId, e.ProductVariantId }).IsUnique();
             });
 
             // Configure DriverAvailability entity
@@ -200,11 +195,42 @@ namespace NYR.API.Data
                 .HasForeignKey(p => p.SupplierId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<ProductVariation>()
-                .HasOne(v => v.Product)
-                .WithMany(p => p.Variations)
-                .HasForeignKey(v => v.ProductId)
+            // Configure ProductVariant relationships
+            modelBuilder.Entity<ProductVariant>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.Price).HasPrecision(18, 2);
+            });
+
+            modelBuilder.Entity<ProductVariant>()
+                .HasOne(pv => pv.Product)
+                .WithMany(p => p.Variants)
+                .HasForeignKey(pv => pv.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Configure ProductVariantAttribute relationships
+            modelBuilder.Entity<ProductVariantAttribute>(entity =>
+            {
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            modelBuilder.Entity<ProductVariantAttribute>()
+                .HasOne(pva => pva.ProductVariant)
+                .WithMany(pv => pv.Attributes)
+                .HasForeignKey(pva => pva.ProductVariantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProductVariantAttribute>()
+                .HasOne(pva => pva.Variation)
+                .WithMany()
+                .HasForeignKey(pva => pva.VariationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProductVariantAttribute>()
+                .HasOne(pva => pva.VariationOption)
+                .WithMany()
+                .HasForeignKey(pva => pva.VariationOptionId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<DriverAvailability>()
                 .HasOne(d => d.User)
@@ -226,9 +252,9 @@ namespace NYR.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<WarehouseInventory>()
-                .HasOne(wi => wi.ProductVariation)
+                .HasOne(wi => wi.ProductVariant)
                 .WithMany()
-                .HasForeignKey(wi => wi.ProductVariationId)
+                .HasForeignKey(wi => wi.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure Scanner relationships
@@ -283,9 +309,9 @@ namespace NYR.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<TransferInventoryItem>()
-                .HasOne(ti => ti.ProductVariation)
+                .HasOne(ti => ti.ProductVariant)
                 .WithMany()
-                .HasForeignKey(ti => ti.ProductVariationId)
+                .HasForeignKey(ti => ti.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure RequestSupply entity
@@ -363,9 +389,9 @@ namespace NYR.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<VanInventoryItem>()
-                .HasOne(vii => vii.ProductVariation)
+                .HasOne(vii => vii.ProductVariant)
                 .WithMany()
-                .HasForeignKey(vii => vii.ProductVariationId)
+                .HasForeignKey(vii => vii.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure Routes entity
@@ -486,9 +512,16 @@ namespace NYR.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<RestockRequestItem>()
-                .HasOne(rri => rri.ProductVariation)
+                .HasOne(rri => rri.ProductVariant)
                 .WithMany()
-                .HasForeignKey(rri => rri.ProductVariationId)
+                .HasForeignKey(rri => rri.ProductVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure LocationInventoryData relationships for ProductVariant
+            modelBuilder.Entity<LocationInventoryData>()
+                .HasOne(l => l.ProductVariant)
+                .WithMany()
+                .HasForeignKey(l => l.ProductVariantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Configure FollowupRequest entity

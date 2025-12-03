@@ -23,7 +23,11 @@ namespace NYR.API.Models.DTOs
         public bool IsUniversal { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
-        public List<ProductVariationDto> Variations { get; set; } = new List<ProductVariationDto>();
+        
+        /// <summary>
+        /// Product variants - unique combinations of variations
+        /// </summary>
+        public List<ProductVariantDto> Variants { get; set; } = new List<ProductVariantDto>();
     }
 
     public class CreateProductDto
@@ -66,8 +70,11 @@ namespace NYR.API.Models.DTOs
         public bool ShowInCatalogue { get; set; } = true;
 
         public bool IsUniversal { get; set; } = false;
-
-        public List<CreateProductVariationDto> Variations { get; set; } = new List<CreateProductVariationDto>();
+        
+        /// <summary>
+        /// Product variants to create - unique combinations of variations
+        /// </summary>
+        public List<CreateProductVariantDto> Variants { get; set; } = new List<CreateProductVariantDto>();
     }
 
     public class UpdateProductDto
@@ -112,7 +119,10 @@ namespace NYR.API.Models.DTOs
         public bool IsUniversal { get; set; } = false;
 
         public bool IsActive { get; set; } = true;
-
-        public List<UpdateProductVariationDto> Variations { get; set; } = new List<UpdateProductVariationDto>();
+        
+        /// <summary>
+        /// Product variants to update - unique combinations of variations
+        /// </summary>
+        public List<CreateProductVariantDto> Variants { get; set; } = new List<CreateProductVariantDto>();
     }
 }

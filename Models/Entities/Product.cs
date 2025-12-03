@@ -61,6 +61,13 @@ namespace NYR.API.Models.Entities
         public bool IsActive { get; set; } = true;
 
         // Navigation properties
-        public virtual ICollection<ProductVariation> Variations { get; set; } = new List<ProductVariation>();
+        /// <summary>
+        /// Product variants - unique combinations of variations
+        /// Example: A T-shirt product might have variants like:
+        /// - Cotton, XL, Black
+        /// - Cotton, XXL, Black
+        /// - Polyester, XL, White
+        /// </summary>
+        public virtual ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();
     }
 }

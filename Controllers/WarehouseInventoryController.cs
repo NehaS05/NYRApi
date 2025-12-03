@@ -178,7 +178,7 @@ namespace NYR.API.Controllers
         [HttpGet("exists")]
         public async Task<ActionResult<bool>> CheckInventoryExists(int warehouseId, int productVariationId)
         {
-            var exists = await _warehouseInventoryService.ExistsByWarehouseAndProductVariationAsync(warehouseId, productVariationId);
+            var exists = await _warehouseInventoryService.ExistsByWarehouseAndProductVariantAsync(warehouseId, productVariationId);
             return Ok(exists);
         }
     }

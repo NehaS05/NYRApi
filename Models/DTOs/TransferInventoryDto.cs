@@ -23,7 +23,8 @@ namespace NYR.API.Models.DTOs
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string? SkuCode { get; set; }
-        public int? ProductVariationId { get; set; }
+        public int? ProductVariantId { get; set; }
+        public string? VariantName { get; set; }
         public string? VariationType { get; set; }
         public string? VariationValue { get; set; }
         public int Quantity { get; set; }
@@ -46,7 +47,7 @@ namespace NYR.API.Models.DTOs
         [Required]
         public int ProductId { get; set; }
 
-        public int? ProductVariationId { get; set; }
+        public int? ProductVariantId { get; set; }
 
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be at least 1")]

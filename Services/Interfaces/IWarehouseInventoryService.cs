@@ -13,6 +13,6 @@ namespace NYR.API.Services.Interfaces
         Task<bool> DeleteInventoryAsync(int id);
         Task<IEnumerable<WarehouseInventoryDto>> GetInventoryByWarehouseAsync(int warehouseId);
         Task<IEnumerable<WarehouseInventoryDto>> GetInventoryByProductAsync(int productId);
-        Task<bool> ExistsByWarehouseAndProductVariationAsync(int warehouseId, int productVariationId);
+        Task<bool> ExistsByWarehouseAndProductVariantAsync(int warehouseId, int? productVariantId);
     }
 }

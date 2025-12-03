@@ -277,62 +277,31 @@ namespace NYR.API.Data
 				}
 			}
 
-			// Seed Product Variations
-			if (!await context.ProductVariations.AnyAsync())
-			{
-				var products = await context.Products.ToListAsync();
-				var productVariations = new List<ProductVariation>();
-
-				foreach (var product in products)
-				{
-					// Add size variations
-					productVariations.AddRange(new List<ProductVariation>
-					{
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Small", IsActive = true },
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Medium", IsActive = true },
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Large", IsActive = true },
-						new ProductVariation { ProductId = product.Id, VariationType = "Size", VariationValue = "Extra Large", IsActive = true }
-					});
-
-					// Add color variations for first product
-					if (product.Name == "Pneumatic Walking Boot")
-					{
-						productVariations.AddRange(new List<ProductVariation>
-						{
-							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Black", IsActive = true },
-							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "White", IsActive = true },
-							new ProductVariation { ProductId = product.Id, VariationType = "Color", VariationValue = "Blue", IsActive = true }
-						});
-					}
-				}
-
-				await context.ProductVariations.AddRangeAsync(productVariations);
-				await context.SaveChangesAsync();
-			}
+			// Note: ProductVariation seeding removed - using ProductVariant system instead
 
 			// Seed Warehouse Inventory
 			if (!await context.WarehouseInventories.AnyAsync())
 			{
 				var warehouses = await context.Warehouses.ToListAsync();
-				var productVariations = await context.ProductVariations.ToListAsync();
+				var products = await context.Products.ToListAsync();
 
 				var warehouseInventories = new List<WarehouseInventory>();
 
-				// Add inventory to first warehouse
-				if (warehouses.Any() && productVariations.Any())
+				// Add inventory to first warehouse (without variants for now)
+				if (warehouses.Any() && products.Any())
 				{
 					var firstWarehouse = warehouses.First();
-					var selectedVariations = productVariations.Take(8).ToList(); // Take first 8 variations
+					var selectedProducts = products.Where(p => p.IsUniversal).Take(5).ToList();
 
-					foreach (var variation in selectedVariations)
+					foreach (var product in selectedProducts)
 					{
 						warehouseInventories.Add(new WarehouseInventory
 						{
 							WarehouseId = firstWarehouse.Id,
-							ProductId = variation.ProductId,
-							ProductVariationId = variation.Id,
-							Quantity = new Random().Next(5, 50),
-							Notes = $"Initial stock for {variation.VariationType}: {variation.VariationValue}",
+							ProductId = product.Id,
+							ProductVariantId = null,
+							Quantity = new Random().Next(10, 100),
+							Notes = $"Initial stock for {product.Name}",
 							IsActive = true
 						});
 					}
@@ -341,17 +310,17 @@ namespace NYR.API.Data
 					if (warehouses.Count > 1)
 					{
 						var secondWarehouse = warehouses[1];
-						var secondVariations = productVariations.Skip(4).Take(6).ToList();
+						var secondProducts = products.Where(p => p.IsUniversal).Skip(2).Take(4).ToList();
 
-						foreach (var variation in secondVariations)
+						foreach (var product in secondProducts)
 						{
 							warehouseInventories.Add(new WarehouseInventory
 							{
 								WarehouseId = secondWarehouse.Id,
-								ProductId = variation.ProductId,
-								ProductVariationId = variation.Id,
-								Quantity = new Random().Next(3, 30),
-								Notes = $"Initial stock for {variation.VariationType}: {variation.VariationValue}",
+								ProductId = product.Id,
+								ProductVariantId = null,
+								Quantity = new Random().Next(5, 50),
+								Notes = $"Initial stock for {product.Name}",
 								IsActive = true
 							});
 						}
@@ -488,14 +457,15 @@ namespace NYR.API.Data
             }
 
             // Seed Transfer Inventories
+            // Note: Temporarily disabled - needs to be updated to use ProductVariant system
+            /*
             if (!await context.TransferInventories.AnyAsync())
             {
                 var customers = await context.Customers.ToListAsync();
                 var locations = await context.Locations.ToListAsync();
                 var products = await context.Products.ToListAsync();
-                var productVariations = await context.ProductVariations.ToListAsync();
 
-                if (customers.Any() && locations.Any() && products.Any() && productVariations.Any())
+                if (customers.Any() && locations.Any() && products.Any())
                 {
                     var transferInventories = new List<TransferInventory>();
 
@@ -518,50 +488,37 @@ namespace NYR.API.Data
                         var product1 = products.FirstOrDefault(p => p.Name == "Pneumatic Walking Boot");
                         if (product1 != null)
                         {
-                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
-                            if (variation1 != null)
+                            // Note: Removed ProductVariation lookups - using universal products
+                            transfer1.Items.Add(new TransferInventoryItem
                             {
-                                transfer1.Items.Add(new TransferInventoryItem
-                                {
-                                    ProductId = product1.Id,
-                                    ProductVariationId = variation1.Id,
-                                    Quantity = 15
-                                });
-                            }
+                                ProductId = product1.Id,
+                                ProductVariantId = null,
+                                Quantity = 15
+                            });
 
-                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Large");
-                            if (variation2 != null)
+                            transfer1.Items.Add(new TransferInventoryItem
                             {
-                                transfer1.Items.Add(new TransferInventoryItem
-                                {
-                                    ProductId = product1.Id,
-                                    ProductVariationId = variation2.Id,
-                                    Quantity = 10
-                                });
-                            }
+                                ProductId = product1.Id,
+                                ProductVariantId = null,
+                                Quantity = 10
+                            });
 
-                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Color" && v.VariationValue == "Black");
-                            if (variation3 != null)
+                            transfer1.Items.Add(new TransferInventoryItem
                             {
-                                transfer1.Items.Add(new TransferInventoryItem
-                                {
-                                    ProductId = product1.Id,
-                                    ProductVariationId = variation3.Id,
-                                    Quantity = 20
-                                });
-                            }
+                                ProductId = product1.Id,
+                                ProductVariantId = null,
+                                Quantity = 20
+                            });
                         }
 
                         var product2 = products.FirstOrDefault(p => p.Name == "Knee Brace Support");
                         if (product2 != null)
                         {
-                            var variation4 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Small");
-                            if (variation4 != null)
-                            {
+                            // Variation lookup removed
                                 transfer1.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product2.Id,
-                                    ProductVariationId = variation4.Id,
+                                    ProductVariantId = null,
                                     Quantity = 8
                                 });
                             }
@@ -588,24 +545,20 @@ namespace NYR.API.Data
                         var product2 = products.FirstOrDefault(p => p.Name == "Knee Brace Support");
                         if (product2 != null)
                         {
-                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
-                            if (variation1 != null)
-                            {
+                            // Variation lookup removed
                                 transfer2.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product2.Id,
-                                    ProductVariationId = variation1.Id,
+                                    ProductVariantId = null,
                                     Quantity = 25
                                 });
                             }
 
-                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Large");
-                            if (variation2 != null)
-                            {
+                            // Variation lookup removed
                                 transfer2.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product2.Id,
-                                    ProductVariationId = variation2.Id,
+                                    ProductVariantId = null,
                                     Quantity = 18
                                 });
                             }
@@ -614,24 +567,20 @@ namespace NYR.API.Data
                         var product3 = products.FirstOrDefault(p => p.Name == "Wrist Support Band");
                         if (product3 != null)
                         {
-                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Small");
-                            if (variation3 != null)
-                            {
+                            // Variation lookup removed
                                 transfer2.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product3.Id,
-                                    ProductVariationId = variation3.Id,
+                                    ProductVariantId = null,
                                     Quantity = 30
                                 });
                             }
 
-                            var variation4 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
-                            if (variation4 != null)
-                            {
+                            // Variation lookup removed
                                 transfer2.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product3.Id,
-                                    ProductVariationId = variation4.Id,
+                                    ProductVariantId = null,
                                     Quantity = 22
                                 });
                             }
@@ -659,24 +608,20 @@ namespace NYR.API.Data
                         var product1 = products.FirstOrDefault(p => p.Name == "Pneumatic Walking Boot");
                         if (product1 != null)
                         {
-                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Small");
-                            if (variation1 != null)
-                            {
+                            // Variation lookup removed
                                 transfer3.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation1.Id,
+                                    ProductVariantId = null,
                                     Quantity = 12
                                 });
                             }
 
-                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Color" && v.VariationValue == "White");
-                            if (variation2 != null)
-                            {
+                            // Variation lookup removed
                                 transfer3.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation2.Id,
+                                    ProductVariantId = null,
                                     Quantity = 16
                                 });
                             }
@@ -685,13 +630,11 @@ namespace NYR.API.Data
                         var product3 = products.FirstOrDefault(p => p.Name == "Wrist Support Band");
                         if (product3 != null)
                         {
-                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Large");
-                            if (variation3 != null)
-                            {
+                            // Variation lookup removed
                                 transfer3.Items.Add(new TransferInventoryItem
                                 {
                                     ProductId = product3.Id,
-                                    ProductVariationId = variation3.Id,
+                                    ProductVariantId = null,
                                     Quantity = 14
                                 });
                             }
@@ -707,8 +650,11 @@ namespace NYR.API.Data
                     }
                 }
             }
+            */
 
             // Seed Van Inventories
+            // Note: Temporarily disabled - needs to be updated to use ProductVariant system
+            /*
             if (!await context.VanInventories.AnyAsync())
             {
                 var vans = await context.Vans.ToListAsync();
@@ -739,35 +685,29 @@ namespace NYR.API.Data
                         var product1 = products.FirstOrDefault(p => p.Name == "Pneumatic Walking Boot");
                         if (product1 != null)
                         {
-                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
-                            if (variation1 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory1.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation1.Id,
+                                    ProductVariantId = null,
                                     Quantity = 10
                                 });
                             }
 
-                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Large");
-                            if (variation2 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory1.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation2.Id,
+                                    ProductVariantId = null,
                                     Quantity = 8
                                 });
                             }
 
-                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Color" && v.VariationValue == "Black");
-                            if (variation3 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory1.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation3.Id,
+                                    ProductVariantId = null,
                                     Quantity = 15
                                 });
                             }
@@ -776,13 +716,11 @@ namespace NYR.API.Data
                         var product2 = products.FirstOrDefault(p => p.Name == "Knee Brace Support");
                         if (product2 != null)
                         {
-                            var variation4 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Small");
-                            if (variation4 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory1.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product2.Id,
-                                    ProductVariationId = variation4.Id,
+                                    ProductVariantId = null,
                                     Quantity = 12
                                 });
                             }
@@ -810,24 +748,20 @@ namespace NYR.API.Data
                         var product2 = products.FirstOrDefault(p => p.Name == "Knee Brace Support");
                         if (product2 != null)
                         {
-                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
-                            if (variation1 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory2.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product2.Id,
-                                    ProductVariationId = variation1.Id,
+                                    ProductVariantId = null,
                                     Quantity = 20
                                 });
                             }
 
-                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product2.Id && v.VariationType == "Size" && v.VariationValue == "Large");
-                            if (variation2 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory2.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product2.Id,
-                                    ProductVariationId = variation2.Id,
+                                    ProductVariantId = null,
                                     Quantity = 15
                                 });
                             }
@@ -836,24 +770,20 @@ namespace NYR.API.Data
                         var product3 = products.FirstOrDefault(p => p.Name == "Wrist Support Band");
                         if (product3 != null)
                         {
-                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Small");
-                            if (variation3 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory2.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product3.Id,
-                                    ProductVariationId = variation3.Id,
+                                    ProductVariantId = null,
                                     Quantity = 25
                                 });
                             }
 
-                            var variation4 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Medium");
-                            if (variation4 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory2.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product3.Id,
-                                    ProductVariationId = variation4.Id,
+                                    ProductVariantId = null,
                                     Quantity = 18
                                 });
                             }
@@ -880,24 +810,20 @@ namespace NYR.API.Data
                         var product1 = products.FirstOrDefault(p => p.Name == "Pneumatic Walking Boot");
                         if (product1 != null)
                         {
-                            var variation1 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Size" && v.VariationValue == "Small");
-                            if (variation1 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory3.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation1.Id,
+                                    ProductVariantId = null,
                                     Quantity = 9
                                 });
                             }
 
-                            var variation2 = productVariations.FirstOrDefault(v => v.ProductId == product1.Id && v.VariationType == "Color" && v.VariationValue == "White");
-                            if (variation2 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory3.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product1.Id,
-                                    ProductVariationId = variation2.Id,
+                                    ProductVariantId = null,
                                     Quantity = 14
                                 });
                             }
@@ -906,13 +832,11 @@ namespace NYR.API.Data
                         var product3 = products.FirstOrDefault(p => p.Name == "Wrist Support Band");
                         if (product3 != null)
                         {
-                            var variation3 = productVariations.FirstOrDefault(v => v.ProductId == product3.Id && v.VariationType == "Size" && v.VariationValue == "Large");
-                            if (variation3 != null)
-                            {
+                            // Variation lookup removed
                                 vanInventory3.Items.Add(new VanInventoryItem
                                 {
                                     ProductId = product3.Id,
-                                    ProductVariationId = variation3.Id,
+                                    ProductVariantId = null,
                                     Quantity = 11
                                 });
                             }
@@ -928,6 +852,7 @@ namespace NYR.API.Data
                     }
                 }
             }
+            */
 
             // Seed Admin User
             if (!await context.Users.AnyAsync())
@@ -968,3 +893,4 @@ namespace NYR.API.Data
         }
     }
 }
+

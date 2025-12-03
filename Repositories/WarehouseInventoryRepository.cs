@@ -17,7 +17,12 @@ namespace NYR.API.Repositories
                 .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
                 .Include(wi => wi.Warehouse)
                 .Include(wi => wi.Product)
-                .Include(wi => wi.ProductVariation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .ToListAsync();
         }
 
@@ -27,15 +32,20 @@ namespace NYR.API.Repositories
                 .Where(wi => wi.ProductId == productId && wi.IsActive)
                 .Include(wi => wi.Warehouse)
                 .Include(wi => wi.Product)
-                .Include(wi => wi.ProductVariation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .ToListAsync();
         }
 
-        public async Task<WarehouseInventory?> GetByWarehouseAndProductVariationAsync(int warehouseId, int productVariationId)
+        public async Task<WarehouseInventory?> GetByWarehouseAndProductVariantAsync(int warehouseId, int productVariantId)
         {
             return await _dbSet
                 .FirstOrDefaultAsync(wi => wi.WarehouseId == warehouseId && 
-                                         wi.ProductVariationId == productVariationId && 
+                                         wi.ProductVariantId == productVariantId && 
                                          wi.IsActive);
         }
 
@@ -45,7 +55,12 @@ namespace NYR.API.Repositories
                 .Where(wi => wi.IsActive)
                 .Include(wi => wi.Warehouse)
                 .Include(wi => wi.Product)
-                .Include(wi => wi.ProductVariation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .ToListAsync();
         }
 
@@ -55,15 +70,20 @@ namespace NYR.API.Repositories
                 .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
                 .Include(wi => wi.Warehouse)
                 .Include(wi => wi.Product)
-                .Include(wi => wi.ProductVariation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .ToListAsync();
         }
 
-        public async Task<bool> ExistsByWarehouseAndProductVariationAsync(int warehouseId, int productVariationId)
+        public async Task<bool> ExistsByWarehouseAndProductVariantAsync(int warehouseId, int productVariantId)
         {
             return await _dbSet
                 .AnyAsync(wi => wi.WarehouseId == warehouseId && 
-                              wi.ProductVariationId == productVariationId && 
+                              wi.ProductVariantId == productVariantId && 
                               wi.IsActive);
         }
 

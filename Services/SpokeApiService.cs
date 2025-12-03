@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NYR.API.Models.Configuration;
 using NYR.API.Models.DTOs;
@@ -36,7 +36,7 @@ namespace NYR.API.Services
             {
                 _logger.LogInformation("Optimizing plan {PlanId}", planId);
 
-                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // 👉 replace with actual key
+                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // ?? replace with actual key
                 var basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{apiKey}:"));
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Post, $"https://api.getcircuit.com/public/v0.2b/plans/{planId}:optimize");
@@ -191,7 +191,7 @@ namespace NYR.API.Services
 
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
                 // API Key Authentication  (Basic Auth: key as username, blank password)
-                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // 👉 replace with actual key
+                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // ?? replace with actual key
                 var basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{apiKey}:")); ;
                 // NOTE: prefer per-request headers rather than DefaultRequestHeaders when using a shared HttpClient.
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://api.getcircuit.com/public/v0.2b/plans")
@@ -262,7 +262,7 @@ namespace NYR.API.Services
                 var json = JsonConvert.SerializeObject(stopsData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // 👉 replace with actual key
+                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // ?? replace with actual key
                 var basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{apiKey}:")); ;
                 // NOTE: prefer per-request headers rather than DefaultRequestHeaders when using a shared HttpClient.
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "https://api.getcircuit.com/public/v0.2b/plans")
@@ -311,7 +311,7 @@ namespace NYR.API.Services
             {
                 _logger.LogInformation("Retrieving list of drivers from Circuit");
 
-                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // 👉 replace with actual key
+                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // ?? replace with actual key
                 var basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{apiKey}:"));
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, "https://api.getcircuit.com/public/v0.2b/drivers");
@@ -359,7 +359,7 @@ namespace NYR.API.Services
             {
                 _logger.LogInformation("Retrieving stops for plan {PlanId}", planId);
 
-                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // 👉 replace with actual key
+                var apiKey = "cpMWZhCWoyfUH4YV2O0w"; // ?? replace with actual key
                 var basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{apiKey}:"));
 
                 using var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"https://api.getcircuit.com/public/v0.2b/plans/{planId}/stops");
