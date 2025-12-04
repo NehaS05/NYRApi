@@ -87,6 +87,9 @@ namespace NYR.API.Models.DTOs
         public int Id { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public string ProductSKU { get; set; } = string.Empty;
+        public string? VariantName { get; set; }
+        public string? VariantSku { get; set; }
+        // Legacy fields (deprecated)
         public string VariationType { get; set; } = string.Empty;
         public string VariationValue { get; set; } = string.Empty;
         public string? VariationSKU { get; set; }

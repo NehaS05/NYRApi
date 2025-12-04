@@ -195,6 +195,8 @@ namespace NYR.API.Services
                 Id = wi.Id,
                 ProductName = wi.Product.Name,
                 ProductSKU = wi.Product.BarcodeSKU ?? string.Empty,
+                VariantName = wi.ProductVariant?.VariantName,
+                VariantSku = wi.ProductVariant?.SKU,
                 VariationType = wi.ProductVariant?.Attributes.FirstOrDefault()?.Variation.Name ?? string.Empty,
                 VariationValue = wi.ProductVariant?.Attributes.FirstOrDefault()?.VariationOption.Name ?? string.Empty,
                 VariationSKU = string.Empty,
