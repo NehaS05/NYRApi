@@ -26,6 +26,8 @@ namespace NYR.API.Models.DTOs
         public int? RestockRequestId { get; set; }
         public int? FollowupRequestId { get; set; }
         public string Address { get; set; } = string.Empty;
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public string? ContactPhone { get; set; }
         public string? Notes { get; set; }
         public string Status { get; set; } = "Draft";
@@ -66,6 +68,10 @@ namespace NYR.API.Models.DTOs
         [Required]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
+
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
 
         [MaxLength(20)]
         public string? ContactPhone { get; set; }
@@ -109,6 +115,10 @@ namespace NYR.API.Models.DTOs
         [Required]
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
+
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
 
         [MaxLength(20)]
         public string? ContactPhone { get; set; }

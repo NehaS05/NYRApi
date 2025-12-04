@@ -42,6 +42,10 @@ namespace NYR.API.Models.Entities
         [MaxLength(500)]
         public string Address { get; set; } = string.Empty;
 
+        public double? Latitude { get; set; }
+
+        public double? Longitude { get; set; }
+
         [MaxLength(20)]
         public string? ContactPhone { get; set; }
 

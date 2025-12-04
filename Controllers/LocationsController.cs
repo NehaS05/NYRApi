@@ -18,7 +18,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Customer,Staff")]
+        [Authorize(Roles = "Admin,Customer,Staff,Driver")]
         public async Task<ActionResult<IEnumerable<LocationDto>>> GetAllLocations()
         {
             var locations = await _locationService.GetAllLocationsAsync();
