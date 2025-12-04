@@ -12,7 +12,7 @@ namespace NYR.API.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
-        private readonly IProductVariationRepository _productVariationRepository;
+        private readonly IGenericRepository<ProductVariant> _productVariantRepository;
         private readonly IMapper _mapper;
 
         public RestockRequestService(
@@ -20,14 +20,14 @@ namespace NYR.API.Services
             ICustomerRepository customerRepository,
             ILocationRepository locationRepository,
             IProductRepository productRepository,
-            IProductVariationRepository productVariationRepository,
+            IGenericRepository<ProductVariant> productVariantRepository,
             IMapper mapper)
         {
             _restockRequestRepository = restockRequestRepository;
             _customerRepository = customerRepository;
             _locationRepository = locationRepository;
             _productRepository = productRepository;
-            _productVariationRepository = productVariationRepository;
+            _productVariantRepository = productVariantRepository;
             _mapper = mapper;
         }
 
@@ -96,14 +96,14 @@ namespace NYR.API.Services
                 if (product == null)
                     throw new ArgumentException($"Product with ID {item.ProductId} not found");
 
-                if (item.ProductVariationId.HasValue)
+                if (item.ProductVariantId.HasValue)
                 {
-                    var variation = await _productVariationRepository.GetByIdAsync(item.ProductVariationId.Value);
-                    if (variation == null)
-                        throw new ArgumentException($"Product variation with ID {item.ProductVariationId} not found");
+                    var variant = await _productVariantRepository.GetByIdAsync(item.ProductVariantId.Value);
+                    if (variant == null)
+                        throw new ArgumentException($"Product variant with ID {item.ProductVariantId} not found");
 
-                    if (variation.ProductId != item.ProductId)
-                        throw new ArgumentException($"Product variation {item.ProductVariationId} does not belong to product {item.ProductId}");
+                    if (variant.ProductId != item.ProductId)
+                        throw new ArgumentException($"Product variant {item.ProductVariantId} does not belong to product {item.ProductId}");
                 }
             }
 
@@ -122,7 +122,7 @@ namespace NYR.API.Services
             restockRequest.Items = createDto.Items.Select(itemDto => new RestockRequestItem
             {
                 ProductId = itemDto.ProductId,
-                ProductVariationId = itemDto.ProductVariationId,
+                ProductVariantId = itemDto.ProductVariantId,
                 Quantity = itemDto.Quantity,
                 CreatedAt = DateTime.UtcNow
             }).ToList();

@@ -19,7 +19,13 @@ namespace NYR.API.Repositories
                 .Include(t => t.Items)
                     .ThenInclude(i => i.Product)
                 .Include(t => t.Items)
-                    .ThenInclude(i => i.ProductVariation)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.Variation)
+                .Include(t => t.Items)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.VariationOption)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();
         }
@@ -32,7 +38,13 @@ namespace NYR.API.Repositories
                 .Include(t => t.Items)
                     .ThenInclude(i => i.Product)
                 .Include(t => t.Items)
-                    .ThenInclude(i => i.ProductVariation)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.Variation)
+                .Include(t => t.Items)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.VariationOption)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
@@ -40,7 +52,12 @@ namespace NYR.API.Repositories
         {
             return await _context.Set<TransferInventoryItem>()
                 .Include(i => i.Product)
-                .Include(i => i.ProductVariation)
+                .Include(i => i.ProductVariant)
+                    .ThenInclude(pv => pv!.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(i => i.ProductVariant)
+                    .ThenInclude(pv => pv!.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .Where(i => i.TransferInventoryId == transferId)
                 .ToListAsync();
         }
@@ -53,7 +70,13 @@ namespace NYR.API.Repositories
                 .Include(t => t.Items)
                     .ThenInclude(i => i.Product)
                 .Include(t => t.Items)
-                    .ThenInclude(i => i.ProductVariation)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.Variation)
+                .Include(t => t.Items)
+                    .ThenInclude(i => i.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.VariationOption)
                 .Where(t => t.LocationId == locationId)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToListAsync();

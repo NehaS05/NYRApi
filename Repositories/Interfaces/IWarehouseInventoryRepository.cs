@@ -6,10 +6,10 @@ namespace NYR.API.Repositories.Interfaces
     {
         Task<IEnumerable<WarehouseInventory>> GetByWarehouseIdAsync(int warehouseId);
         Task<IEnumerable<WarehouseInventory>> GetByProductIdAsync(int productId);
-        Task<WarehouseInventory?> GetByWarehouseAndProductVariationAsync(int warehouseId, int productVariationId);
+        Task<WarehouseInventory?> GetByWarehouseAndProductVariantAsync(int warehouseId, int productVariantId);
         Task<IEnumerable<WarehouseInventory>> GetInventoryWithDetailsAsync();
         Task<IEnumerable<WarehouseInventory>> GetInventoryByWarehouseWithDetailsAsync(int warehouseId);
-        Task<bool> ExistsByWarehouseAndProductVariationAsync(int warehouseId, int productVariationId);
+        Task<bool> ExistsByWarehouseAndProductVariantAsync(int warehouseId, int productVariantId);
         Task<Dictionary<int, int>> GetWarehouseProductCountsAsync();
         Task<Dictionary<int, int>> GetWarehouseQuantityTotalsAsync();
     }

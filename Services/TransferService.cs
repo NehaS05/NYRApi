@@ -364,9 +364,10 @@ namespace NYR.API.Services
                             ProductId = item.ProductId,
                             ProductName = item.Product?.Name ?? "Unknown",
                             SkuCode = item.Product?.BarcodeSKU,
-                            ProductVariationId = item.ProductVariationId,
-                            VariationType = item.ProductVariation?.VariationType,
-                            VariationValue = item.ProductVariation?.VariationValue,
+                            ProductVariantId = item.ProductVariantId,
+                            VariantName = item.ProductVariant?.VariantName,
+                            VariationType = item.ProductVariant?.Attributes.FirstOrDefault()?.Variation.Name,
+                            VariationValue = item.ProductVariant?.Attributes.FirstOrDefault()?.VariationOption.Name,
                             Quantity = item.Quantity
                         }).ToList();
                     }

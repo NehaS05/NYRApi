@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NYR.API.Data;
 
@@ -11,9 +12,11 @@ using NYR.API.Data;
 namespace NYR.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251202204318_AddProductVariantSystemWithDataCleanup")]
+    partial class AddProductVariantSystemWithDataCleanup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -847,14 +850,8 @@ namespace NYR.API.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("float");
-
                     b.Property<int>("LocationId")
                         .HasColumnType("int");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("float");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)

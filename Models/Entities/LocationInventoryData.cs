@@ -23,9 +23,20 @@ namespace NYR.API.Models.Entities
         [Required]
         public int Quantity { get; set; }
 
+        /// <summary>
+        /// The specific product variant (combination of variations)
+        /// Nullable for universal products that don't have variants
+        /// </summary>
+        public int? ProductVariantId { get; set; }
+
+        [ForeignKey("ProductVariantId")]
+        public virtual ProductVariant? ProductVariant { get; set; }
+
+        [Obsolete("Use ProductVariant instead. Kept for backward compatibility.")]
         [MaxLength(100)]
         public string? VariationType { get; set; }
 
+        [Obsolete("Use ProductVariant instead. Kept for backward compatibility.")]
         [MaxLength(100)]
         public string? VariationValue { get; set; }
 

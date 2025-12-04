@@ -17,7 +17,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
@@ -27,7 +32,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .Where(p => p.CategoryId == categoryId && p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -39,7 +49,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .Where(p => p.BrandId == brandId && p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -51,7 +66,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .Where(p => p.SupplierId == supplierId && p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -63,7 +83,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .Where(p => p.ShowInCatalogue && p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -75,7 +100,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .Where(p => p.IsUniversal && p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -87,7 +117,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .FirstOrDefaultAsync(p => p.BarcodeSKU == barcode || 
                                         p.BarcodeSKU2 == barcode || 
                                         p.BarcodeSKU3 == barcode || 
@@ -100,7 +135,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
         }
@@ -111,7 +151,12 @@ namespace NYR.API.Repositories
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Include(p => p.Supplier)
-                .Include(p => p.Variations)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
     }

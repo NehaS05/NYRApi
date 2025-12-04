@@ -11,20 +11,20 @@ namespace NYR.API.Services
         private readonly IWarehouseInventoryRepository _warehouseInventoryRepository;
         private readonly IGenericRepository<Warehouse> _warehouseRepository;
         private readonly IGenericRepository<Product> _productRepository;
-        private readonly IGenericRepository<ProductVariation> _productVariationRepository;
+        private readonly IGenericRepository<ProductVariant> _productVariantRepository;
         private readonly IMapper _mapper;
 
         public WarehouseInventoryService(
             IWarehouseInventoryRepository warehouseInventoryRepository,
             IGenericRepository<Warehouse> warehouseRepository,
             IGenericRepository<Product> productRepository,
-            IGenericRepository<ProductVariation> productVariationRepository,
+            IGenericRepository<ProductVariant> productVariantRepository,
             IMapper mapper)
         {
             _warehouseInventoryRepository = warehouseInventoryRepository;
             _warehouseRepository = warehouseRepository;
             _productRepository = productRepository;
-            _productVariationRepository = productVariationRepository;
+            _productVariantRepository = productVariantRepository;
             _mapper = mapper;
         }
 
@@ -40,14 +40,21 @@ namespace NYR.API.Services
             if (product == null)
                 throw new ArgumentException("Product not found");
 
-            // Validate product variation exists
-            var productVariation = await _productVariationRepository.GetByIdAsync(addInventoryDto.ProductVariationId);
-            if (productVariation == null)
-                throw new ArgumentException("Product variation not found");
+            // Validate product variant exists (if specified)
+            if (addInventoryDto.ProductVariantId.HasValue)
+            {
+                var productVariant = await _productVariantRepository.GetByIdAsync(addInventoryDto.ProductVariantId.Value);
+                if (productVariant == null)
+                    throw new ArgumentException("Product variant not found");
+            }
 
-            // Check if inventory already exists for this warehouse and product variation
-            var existingInventory = await _warehouseInventoryRepository
-                .GetByWarehouseAndProductVariationAsync(addInventoryDto.WarehouseId, addInventoryDto.ProductVariationId);
+            // Check if inventory already exists for this warehouse and product variant
+            WarehouseInventory? existingInventory = null;
+            if (addInventoryDto.ProductVariantId.HasValue)
+            {
+                existingInventory = await _warehouseInventoryRepository
+                    .GetByWarehouseAndProductVariantAsync(addInventoryDto.WarehouseId, addInventoryDto.ProductVariantId.Value);
+            }
 
             if (existingInventory != null)
             {
@@ -70,7 +77,7 @@ namespace NYR.API.Services
                 {
                     WarehouseId = addInventoryDto.WarehouseId,
                     ProductId = addInventoryDto.ProductId,
-                    ProductVariationId = addInventoryDto.ProductVariationId,
+                    ProductVariantId = addInventoryDto.ProductVariantId,
                     Quantity = addInventoryDto.Quantity,
                     Notes = addInventoryDto.Notes
                 };
@@ -97,14 +104,21 @@ namespace NYR.API.Services
 
             foreach (var item in addBulkInventoryDto.InventoryItems)
             {
-                // Validate product variation exists
-                var productVariation = await _productVariationRepository.GetByIdAsync(item.ProductVariationId);
-                if (productVariation == null)
-                    throw new ArgumentException($"Product variation with ID {item.ProductVariationId} not found");
+                // Validate product variant exists
+                if (item.ProductVariantId.HasValue)
+                {
+                    var productVariant = await _productVariantRepository.GetByIdAsync(item.ProductVariantId.Value);
+                    if (productVariant == null)
+                        throw new ArgumentException($"Product variant with ID {item.ProductVariantId} not found");
+                }
 
-                // Check if inventory already exists for this warehouse and product variation
-                var existingInventory = await _warehouseInventoryRepository
-                    .GetByWarehouseAndProductVariationAsync(addBulkInventoryDto.WarehouseId, item.ProductVariationId);
+                // Check if inventory already exists for this warehouse and product variant
+                WarehouseInventory? existingInventory = null;
+                if (item.ProductVariantId.HasValue)
+                {
+                    existingInventory = await _warehouseInventoryRepository
+                        .GetByWarehouseAndProductVariantAsync(addBulkInventoryDto.WarehouseId, item.ProductVariantId.Value);
+                }
 
                 if (existingInventory != null)
                 {
@@ -130,7 +144,7 @@ namespace NYR.API.Services
                     {
                         WarehouseId = addBulkInventoryDto.WarehouseId,
                         ProductId = addBulkInventoryDto.ProductId,
-                        ProductVariationId = item.ProductVariationId,
+                        ProductVariantId = item.ProductVariantId,
                         Quantity = item.Quantity,
                         Notes = item.Notes
                     };
@@ -181,8 +195,10 @@ namespace NYR.API.Services
                 Id = wi.Id,
                 ProductName = wi.Product.Name,
                 ProductSKU = wi.Product.BarcodeSKU ?? string.Empty,
-                VariationType = wi.ProductVariation.VariationType,
-                VariationValue = wi.ProductVariation.VariationValue,
+                VariantName = wi.ProductVariant?.VariantName,
+                VariantSku = wi.ProductVariant?.SKU,
+                VariationType = wi.ProductVariant?.Attributes.FirstOrDefault()?.Variation.Name ?? string.Empty,
+                VariationValue = wi.ProductVariant?.Attributes.FirstOrDefault()?.VariationOption.Name ?? string.Empty,
                 VariationSKU = string.Empty,
                 Quantity = wi.Quantity,
                 Notes = wi.Notes,
@@ -199,9 +215,13 @@ namespace NYR.API.Services
             // Load related entities
             var warehouse = await _warehouseRepository.GetByIdAsync(inventory.WarehouseId);
             var product = await _productRepository.GetByIdAsync(inventory.ProductId);
-            var productVariation = await _productVariationRepository.GetByIdAsync(inventory.ProductVariationId);
+            ProductVariant? productVariant = null;
+            if (inventory.ProductVariantId.HasValue)
+            {
+                productVariant = await _productVariantRepository.GetByIdAsync(inventory.ProductVariantId.Value);
+            }
 
-            if (warehouse == null || product == null || productVariation == null)
+            if (warehouse == null || product == null)
                 return null;
 
             return new WarehouseInventoryDto
@@ -216,9 +236,10 @@ namespace NYR.API.Services
                 ProductId = inventory.ProductId,
                 ProductName = product.Name,
                 ProductSKU = product.BarcodeSKU ?? string.Empty,
-                ProductVariationId = inventory.ProductVariationId,
-                VariationType = productVariation.VariationType,
-                VariationValue = productVariation.VariationValue,
+                ProductVariantId = inventory.ProductVariantId,
+                VariantName = productVariant?.VariantName,
+                VariationType = productVariant?.Attributes.FirstOrDefault()?.Variation.Name ?? string.Empty,
+                VariationValue = productVariant?.Attributes.FirstOrDefault()?.VariationOption.Name ?? string.Empty,
                 VariationSKU = string.Empty,
                 Quantity = inventory.Quantity,
                 Notes = inventory.Notes,
@@ -267,9 +288,10 @@ namespace NYR.API.Services
                 ProductId = wi.ProductId,
                 ProductName = wi.Product.Name,
                 ProductSKU = wi.Product.BarcodeSKU ?? string.Empty,
-                ProductVariationId = wi.ProductVariationId,
-                VariationType = wi.ProductVariation.VariationType,
-                VariationValue = wi.ProductVariation.VariationValue,
+                ProductVariantId = wi.ProductVariantId,
+                VariantName = wi.ProductVariant?.VariantName,
+                VariationType = wi.ProductVariant?.Attributes.FirstOrDefault()?.Variation.Name ?? string.Empty,
+                VariationValue = wi.ProductVariant?.Attributes.FirstOrDefault()?.VariationOption.Name ?? string.Empty,
                 VariationSKU = string.Empty,
                 Quantity = wi.Quantity,
                 Notes = wi.Notes,
@@ -294,9 +316,10 @@ namespace NYR.API.Services
                 ProductId = wi.ProductId,
                 ProductName = wi.Product.Name,
                 ProductSKU = wi.Product.BarcodeSKU ?? string.Empty,
-                ProductVariationId = wi.ProductVariationId,
-                VariationType = wi.ProductVariation.VariationType,
-                VariationValue = wi.ProductVariation.VariationValue,
+                ProductVariantId = wi.ProductVariantId,
+                VariantName = wi.ProductVariant?.VariantName,
+                VariationType = wi.ProductVariant?.Attributes.FirstOrDefault()?.Variation.Name ?? string.Empty,
+                VariationValue = wi.ProductVariant?.Attributes.FirstOrDefault()?.VariationOption.Name ?? string.Empty,
                 VariationSKU = string.Empty,
                 Quantity = wi.Quantity,
                 Notes = wi.Notes,
@@ -305,9 +328,10 @@ namespace NYR.API.Services
             }).ToList();
         }
 
-        public async Task<bool> ExistsByWarehouseAndProductVariationAsync(int warehouseId, int productVariationId)
+        public async Task<bool> ExistsByWarehouseAndProductVariantAsync(int warehouseId, int? ProductVariantId)
         {
-            return await _warehouseInventoryRepository.ExistsByWarehouseAndProductVariationAsync(warehouseId, productVariationId);
+            if (!ProductVariantId.HasValue) return false;
+            return await _warehouseInventoryRepository.ExistsByWarehouseAndProductVariantAsync(warehouseId, ProductVariantId.Value);
         }
     }
 }

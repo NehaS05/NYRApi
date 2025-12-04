@@ -9,7 +9,6 @@ namespace NYR.API.Services
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
-        private readonly IProductVariationRepository _variationRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IBrandRepository _brandRepository;
         private readonly ISupplierRepository _supplierRepository;
@@ -17,14 +16,12 @@ namespace NYR.API.Services
 
         public ProductService(
             IProductRepository productRepository,
-            IProductVariationRepository variationRepository,
             ICategoryRepository categoryRepository,
             IBrandRepository brandRepository,
             ISupplierRepository supplierRepository,
             IMapper mapper)
         {
             _productRepository = productRepository;
-            _variationRepository = variationRepository;
             _categoryRepository = categoryRepository;
             _brandRepository = brandRepository;
             _supplierRepository = supplierRepository;
@@ -63,16 +60,38 @@ namespace NYR.API.Services
             var product = _mapper.Map<Product>(createProductDto);
             var createdProduct = await _productRepository.AddAsync(product);
 
-            // Create variations if any
-            if (createProductDto.Variations.Any())
+            // Create variants if any (new system)
+            if (createProductDto.Variants != null && createProductDto.Variants.Any())
             {
-                foreach (var variationDto in createProductDto.Variations)
+                foreach (var variantDto in createProductDto.Variants)
                 {
-                    var variation = _mapper.Map<ProductVariation>(variationDto);
-                    variation.ProductId = createdProduct.Id;
-                    await _variationRepository.AddAsync(variation);
+                    var variant = new ProductVariant
+                    {
+                        ProductId = createdProduct.Id,
+                        VariantName = variantDto.VariantName,
+                        SKU = variantDto.SKU,
+                        Price = variantDto.Price,
+                        IsEnabled = variantDto.IsEnabled,
+                        CreatedAt = DateTime.UtcNow,
+                        IsActive = true
+                    };
+
+                    // Add variant attributes
+                    foreach (var attrDto in variantDto.Attributes)
+                    {
+                        variant.Attributes.Add(new ProductVariantAttribute
+                        {
+                            VariationId = attrDto.VariationId,
+                            VariationOptionId = attrDto.VariationOptionId,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    createdProduct.Variants.Add(variant);
                 }
+                await _productRepository.UpdateAsync(createdProduct);
             }
+
 
             return _mapper.Map<ProductDto>(createdProduct);
         }
@@ -103,24 +122,7 @@ namespace NYR.API.Services
 
             await _productRepository.UpdateAsync(product);
 
-            // Update variations
-            if (updateProductDto.Variations.Any())
-            {
-                // Remove existing variations
-                var existingVariations = await _variationRepository.GetVariationsByProductAsync(id);
-                foreach (var variation in existingVariations)
-                {
-                    await _variationRepository.DeleteAsync(variation);
-                }
 
-                // Add new variations
-                foreach (var variationDto in updateProductDto.Variations)
-                {
-                    var variation = _mapper.Map<ProductVariation>(variationDto);
-                    variation.ProductId = id;
-                    await _variationRepository.AddAsync(variation);
-                }
-            }
 
             return _mapper.Map<ProductDto>(product);
         }
@@ -131,13 +133,7 @@ namespace NYR.API.Services
             if (product == null)
                 return false;
 
-            // Delete associated variations first
-            var variations = await _variationRepository.GetVariationsByProductAsync(id);
-            foreach (var variation in variations)
-            {
-                await _variationRepository.DeleteAsync(variation);
-            }
-
+            // Note: ProductVariant deletion is handled by cascade delete in database
             await _productRepository.DeleteAsync(product);
             return true;
         }

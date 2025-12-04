@@ -12,7 +12,7 @@ namespace NYR.API.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
-        private readonly IProductVariationRepository _productVariationRepository;
+        private readonly IGenericRepository<ProductVariant> _productVariantRepository;
         private readonly IWarehouseInventoryRepository _warehouseInventoryRepository;
         private readonly IMapper _mapper;
 
@@ -21,7 +21,7 @@ namespace NYR.API.Services
             ICustomerRepository customerRepository,
             ILocationRepository locationRepository,
             IProductRepository productRepository,
-            IProductVariationRepository productVariationRepository,
+            IGenericRepository<ProductVariant> productVariantRepository,
             IWarehouseInventoryRepository warehouseInventoryRepository,
             IMapper mapper)
         {
@@ -29,7 +29,7 @@ namespace NYR.API.Services
             _customerRepository = customerRepository;
             _locationRepository = locationRepository;
             _productRepository = productRepository;
-            _productVariationRepository = productVariationRepository;
+            _productVariantRepository = productVariantRepository;
             _warehouseInventoryRepository = warehouseInventoryRepository;
             _mapper = mapper;
         }
@@ -93,23 +93,23 @@ namespace NYR.API.Services
                 if (product == null)
                     throw new ArgumentException($"Invalid product ID: {item.ProductId}");
 
-                if (item.ProductVariationId.HasValue)
+                if (item.ProductVariantId.HasValue)
                 {
-                    var variation = await _productVariationRepository.GetByIdAsync(item.ProductVariationId.Value);
-                    if (variation == null)
-                        throw new ArgumentException($"Invalid product variation ID: {item.ProductVariationId}");
+                    var variant = await _productVariantRepository.GetByIdAsync(item.ProductVariantId.Value);
+                    if (variant == null)
+                        throw new ArgumentException($"Invalid product variant ID: {item.ProductVariantId}");
 
                     // Check warehouse inventory availability
                     if (item.WarehouseId.HasValue)
                     {
                         var warehouseInventory = await _warehouseInventoryRepository
                             .FindAsync(wi => wi.WarehouseId == item.WarehouseId.Value 
-                                          && wi.ProductVariationId == item.ProductVariationId.Value);
+                                          && wi.ProductVariantId == item.ProductVariantId.Value);
                         
                         var inventoryItem = warehouseInventory.FirstOrDefault();
                         if (inventoryItem == null)
                         {
-                            throw new ArgumentException($"Product variation not found in warehouse inventory");
+                            throw new ArgumentException($"Product variant not found in warehouse inventory");
                         }
 
                         if (inventoryItem.Quantity < item.Quantity)
@@ -129,7 +129,7 @@ namespace NYR.API.Services
             transfer.Items = createDto.Items.Select(i => new TransferInventoryItem
             {
                 ProductId = i.ProductId,
-                ProductVariationId = i.ProductVariationId,
+                ProductVariantId = i.ProductVariantId,
                 Quantity = i.Quantity,
                 CreatedAt = DateTime.UtcNow
             }).ToList();

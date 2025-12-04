@@ -13,7 +13,7 @@ namespace NYR.API.Services
         private readonly IVanRepository _vanRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
-        private readonly IProductVariationRepository _productVariationRepository;
+        private readonly IGenericRepository<ProductVariant> _productVariantRepository;
         private readonly IWarehouseInventoryRepository _warehouseInventoryRepository;
         private readonly IMapper _mapper;
 
@@ -22,7 +22,7 @@ namespace NYR.API.Services
             IVanRepository vanRepository,
             ILocationRepository locationRepository,
             IProductRepository productRepository,
-            IProductVariationRepository productVariationRepository,
+            IGenericRepository<ProductVariant> productVariantRepository,
             IWarehouseInventoryRepository warehouseInventoryRepository,
             IMapper mapper)
         {
@@ -30,7 +30,7 @@ namespace NYR.API.Services
             _vanRepository = vanRepository;
             _locationRepository = locationRepository;
             _productRepository = productRepository;
-            _productVariationRepository = productVariationRepository;
+            _productVariantRepository = productVariantRepository;
             _warehouseInventoryRepository = warehouseInventoryRepository;
             _mapper = mapper;
         }
@@ -96,32 +96,35 @@ namespace NYR.API.Services
                 if (product == null)
                     throw new ArgumentException($"Product with ID {item.ProductId} not found");
 
-                var variation = await _productVariationRepository.GetByIdAsync(item.ProductVariationId);
-                if (variation == null)
-                    throw new ArgumentException($"Product variation with ID {item.ProductVariationId} not found");
-
-                if (variation.ProductId != item.ProductId)
-                    throw new ArgumentException($"Product variation {item.ProductVariationId} does not belong to product {item.ProductId}");
-
-                // Find the corresponding warehouse inventory item
-                var warehouseItem = await _warehouseInventoryRepository.GetByWarehouseAndProductVariationAsync(
-                    createDto.WarehouseId, 
-                    item.ProductVariationId);
-
-                if (warehouseItem == null)
+                if (item.ProductVariantId.HasValue)
                 {
-                    throw new ArgumentException($"Product variation not found in warehouse inventory");
-                }
+                    var variant = await _productVariantRepository.GetByIdAsync(item.ProductVariantId.Value);
+                    if (variant == null)
+                        throw new ArgumentException($"Product variant with ID {item.ProductVariantId} not found");
 
-                if (warehouseItem.Quantity < item.Quantity)
-                {
-                    throw new ArgumentException($"Insufficient quantity in warehouse. Available: {warehouseItem.Quantity}, Requested: {item.Quantity}");
-                }
+                    if (variant.ProductId != item.ProductId)
+                        throw new ArgumentException($"Product variant {item.ProductVariantId} does not belong to product {item.ProductId}");
 
-                // Deduct quantity from warehouse inventory
-                warehouseItem.Quantity -= item.Quantity;
-                warehouseItem.UpdatedAt = DateTime.UtcNow;
-                await _warehouseInventoryRepository.UpdateAsync(warehouseItem);
+                    // Find the corresponding warehouse inventory item
+                    var warehouseItem = await _warehouseInventoryRepository.GetByWarehouseAndProductVariantAsync(
+                        createDto.WarehouseId, 
+                        item.ProductVariantId.Value);
+
+                    if (warehouseItem == null)
+                    {
+                        throw new ArgumentException($"Product variant not found in warehouse inventory");
+                    }
+
+                    if (warehouseItem.Quantity < item.Quantity)
+                    {
+                        throw new ArgumentException($"Insufficient quantity in warehouse. Available: {warehouseItem.Quantity}, Requested: {item.Quantity}");
+                    }
+
+                    // Deduct quantity from warehouse inventory
+                    warehouseItem.Quantity -= item.Quantity;
+                    warehouseItem.UpdatedAt = DateTime.UtcNow;
+                    await _warehouseInventoryRepository.UpdateAsync(warehouseItem);
+                }
             }
 
             // Create VanInventory entity
@@ -131,7 +134,7 @@ namespace NYR.API.Services
             entity.Items = createDto.Items.Select(itemDto => new VanInventoryItem
             {
                 ProductId = itemDto.ProductId,
-                ProductVariationId = itemDto.ProductVariationId,
+                ProductVariantId = itemDto.ProductVariantId,
                 Quantity = itemDto.Quantity,
                 CreatedAt = DateTime.UtcNow
             }).ToList();

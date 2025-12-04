@@ -20,11 +20,14 @@ namespace NYR.API.Models.Entities
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; } = null!;
 
-        [Required]
-        public int ProductVariationId { get; set; }
+        /// <summary>
+        /// The specific product variant (combination of variations)
+        /// Nullable for universal products that don't have variants
+        /// </summary>
+        public int? ProductVariantId { get; set; }
 
-        [ForeignKey("ProductVariationId")]
-        public virtual ProductVariation ProductVariation { get; set; } = null!;
+        [ForeignKey("ProductVariantId")]
+        public virtual ProductVariant? ProductVariant { get; set; }
 
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "Quantity must be non-negative")]
