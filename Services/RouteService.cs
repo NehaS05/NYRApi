@@ -118,7 +118,7 @@ namespace NYR.API.Services
                     var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
                     if (restockRequest != null)
                     {
-                        restockRequest.Status = "Draft";
+                        restockRequest.Status = createRouteDto.Status == "In Progress" ? "In Transit" : restockRequest.Status;
                         await _restockRequestRepository.UpdateAsync(restockRequest);
                     }
                 }
@@ -129,7 +129,7 @@ namespace NYR.API.Services
                     var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
                     if (followupRequest != null)
                     {
-                        followupRequest.Status = "Draft";
+                        followupRequest.Status = createRouteDto.Status == "In Progress" ? "In Transit" : followupRequest.Status;
                         await _followupRequestRepository.UpdateAsync(followupRequest);
                     }
                 }
@@ -227,7 +227,8 @@ namespace NYR.API.Services
                     var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
                     if (restockRequest != null)
                     {
-                        restockRequest.Status = route.Status;
+                        var status = updateRouteDto.Status == "In Progress" ? updateRouteDto.Status : stopDto.Status;
+                        restockRequest.Status = MapRouteStatusToRequestStatus(status, "RestockRequest");
                         await _restockRequestRepository.UpdateAsync(restockRequest);
                     }
                 }
@@ -238,7 +239,8 @@ namespace NYR.API.Services
                     var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
                     if (followupRequest != null)
                     {
-                        followupRequest.Status = route.Status;
+                        var status = updateRouteDto.Status == "In Progress" ? updateRouteDto.Status : stopDto.Status;
+                        followupRequest.Status = MapRouteStatusToRequestStatus(status, "FollowupRequest");
                         await _followupRequestRepository.UpdateAsync(followupRequest);
                     }
                 }
@@ -287,6 +289,23 @@ namespace NYR.API.Services
         {
             var routes = await _routeRepository.GetByStatusAsync(status);
             return _mapper.Map<IEnumerable<RouteDto>>(routes);
+        }
+
+        /// <summary>
+        /// Maps route status to request status
+        /// </summary>
+        private string MapRouteStatusToRequestStatus(string routeStatus, string requestType)
+        {
+            //When Route Status is In Progress then make RestockRequest/FollowupRequest status as In Transit
+            //When Route Status is Completed then Delivered
+            //When Route Status is Not Delivered then Restock Request/Followup requested
+            return routeStatus switch
+            {
+                "In Progress" => "In Transit",
+                "Completed" => "Delivered",
+                "Not Delivered" => requestType == "RestockRequest" ? "Restock Request" : "Followup Requested",
+                _ => routeStatus
+            };
         }
     }
 }

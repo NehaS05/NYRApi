@@ -83,7 +83,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
         public async Task<ActionResult<RouteDto>> CreateRoute([FromBody] CreateRouteDto createRouteDto)
         {
             if (!ModelState.IsValid)
@@ -101,7 +101,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
         public async Task<ActionResult<RouteDto>> UpdateRoute(int id, [FromBody] UpdateRouteDto updateRouteDto)
         {
             if (!ModelState.IsValid)
