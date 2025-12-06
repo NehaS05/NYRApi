@@ -10,8 +10,7 @@ namespace NYR.API.Models.DTOs
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public int Quantity { get; set; }
-        public string? VariationType { get; set; }
-        public string? VariationValue { get; set; }
+        public string? VariationName { get; set; }
         public DateTime CreatedAt { get; set; }
         public int CreatedBy { get; set; }
         public string CreatedByName { get; set; } = string.Empty;
@@ -32,11 +31,8 @@ namespace NYR.API.Models.DTOs
         [Range(0, int.MaxValue, ErrorMessage = "Quantity must be non-negative")]
         public int Quantity { get; set; }
 
-        [MaxLength(100)]
-        public string? VariationType { get; set; }
-
-        [MaxLength(100)]
-        public string? VariationValue { get; set; }
+        [MaxLength(200)]
+        public string? VariationName { get; set; }
 
         [Required]
         public int CreatedBy { get; set; }
@@ -54,11 +50,8 @@ namespace NYR.API.Models.DTOs
         [Range(0, int.MaxValue, ErrorMessage = "Quantity must be non-negative")]
         public int Quantity { get; set; }
 
-        [MaxLength(100)]
-        public string? VariationType { get; set; }
-
-        [MaxLength(100)]
-        public string? VariationValue { get; set; }
+        [MaxLength(200)]
+        public string? VariationName { get; set; }
 
         [Required]
         public int UpdatedBy { get; set; }

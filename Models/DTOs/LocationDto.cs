@@ -26,6 +26,8 @@ namespace NYR.API.Models.DTOs
         public bool IsActive { get; set; }
         // Added: flattened transfer inventory items for this location
         public List<TransferInventoryItemDto> TransferItems { get; set; } = new List<TransferInventoryItemDto>();
+        // Added: location inventory data
+        public List<LocationInventoryDataDto> LocationInventoryData { get; set; } = new List<LocationInventoryDataDto>();
     }
 
     public class CreateLocationDto

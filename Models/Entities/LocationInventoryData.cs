@@ -32,13 +32,8 @@ namespace NYR.API.Models.Entities
         [ForeignKey("ProductVariantId")]
         public virtual ProductVariant? ProductVariant { get; set; }
 
-        [Obsolete("Use ProductVariant instead. Kept for backward compatibility.")]
-        [MaxLength(100)]
-        public string? VariationType { get; set; }
-
-        [Obsolete("Use ProductVariant instead. Kept for backward compatibility.")]
-        [MaxLength(100)]
-        public string? VariationValue { get; set; }
+        [MaxLength(200)]
+        public string? VariationName { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

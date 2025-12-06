@@ -56,7 +56,7 @@ namespace NYR.API.Repositories
                 .ToListAsync();
         }
 
-        public async Task<LocationInventoryData?> GetByLocationAndProductAsync(int locationId, int productId, string? variationType, string? variationValue)
+        public async Task<LocationInventoryData?> GetByLocationAndProductAsync(int locationId, int productId, int? productVariantId)
         {
             return await _dbSet
                 .Include(l => l.Location)
@@ -66,8 +66,20 @@ namespace NYR.API.Repositories
                 .FirstOrDefaultAsync(l => 
                     l.LocationId == locationId && 
                     l.ProductId == productId &&
-                    l.VariationType == variationType &&
-                    l.VariationValue == variationValue);
+                    l.ProductVariantId == productVariantId);
+        }
+
+        public async Task<LocationInventoryData?> GetByLocationAndProductVariationNameAsync(int locationId, int productId, string? variationName)
+        {
+            return await _dbSet
+                .Include(l => l.Location)
+                .Include(l => l.Product)
+                .Include(l => l.CreatedByUser)
+                .Include(l => l.UpdatedByUser)
+                .FirstOrDefaultAsync(l =>
+                    l.LocationId == locationId &&
+                    l.ProductId == productId &&
+                    l.VariationName == variationName);
         }
     }
 }

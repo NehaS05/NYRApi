@@ -70,11 +70,10 @@ namespace NYR.API.Services
                 throw new ArgumentException("Invalid user ID");
 
             // Check if inventory already exists for this combination
-            var existing = await _inventoryRepository.GetByLocationAndProductAsync(
+            var existing = await _inventoryRepository.GetByLocationAndProductVariationNameAsync(
                 createDto.LocationId, 
                 createDto.ProductId, 
-                createDto.VariationType, 
-                createDto.VariationValue);
+                createDto.VariationName);
 
             if (existing != null)
                 throw new ArgumentException("Inventory already exists for this location, product, and variation combination");

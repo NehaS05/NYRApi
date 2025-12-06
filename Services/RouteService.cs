@@ -15,6 +15,7 @@ namespace NYR.API.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
         private readonly IFollowupRequestRepository _followupRequestRepository;
+        private readonly ILocationInventoryDataRepository _locationInventoryDataRepository;
         private readonly IMapper _mapper;
 
         public RouteService(
@@ -25,6 +26,7 @@ namespace NYR.API.Services
             ICustomerRepository customerRepository,
             IRestockRequestRepository restockRequestRepository,
             IFollowupRequestRepository followupRequestRepository,
+            ILocationInventoryDataRepository locationInventoryDataRepository,
             IMapper mapper)
         {
             _routeRepository = routeRepository;
@@ -34,6 +36,7 @@ namespace NYR.API.Services
             _customerRepository = customerRepository;
             _restockRequestRepository = restockRequestRepository;
             _followupRequestRepository = followupRequestRepository;
+            _locationInventoryDataRepository = locationInventoryDataRepository;
             _mapper = mapper;
         }
 
@@ -229,12 +232,49 @@ namespace NYR.API.Services
                 // Update RestockRequest status if associated
                 if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
                 {
-                    var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
+                    var restockRequest = await _restockRequestRepository.GetByIdWithDetailsAsync(stopDto.RestockRequestId.Value);
                     if (restockRequest != null)
                     {
                         var status = stopDto.Status;
                         restockRequest.Status = MapRouteStatusToRequestStatus(status, "RestockRequest");
                         await _restockRequestRepository.UpdateAsync(restockRequest);
+
+                        if (status == "Completed")
+                        {
+                            // Add restock items to LocationInventoryData Table
+                            foreach (var item in restockRequest.Items)
+                            {
+                                // Check if inventory already exists for this location/product/variant
+                                var existingInventory = await _locationInventoryDataRepository.GetByLocationAndProductAsync(
+                                    stopDto.LocationId, 
+                                    item.ProductId, 
+                                    item.ProductVariantId);
+
+                                if (existingInventory != null)
+                                {
+                                    // Update existing inventory quantity
+                                    existingInventory.Quantity += item.Quantity;
+                                    existingInventory.UpdatedBy = route.UserId;
+                                    existingInventory.UpdatedDate = DateTime.UtcNow;
+                                    await _locationInventoryDataRepository.UpdateAsync(existingInventory);
+                                }
+                                else
+                                {
+                                    // Create new inventory record
+                                    var locationInventory = new LocationInventoryData
+                                    {
+                                        LocationId = stopDto.LocationId,
+                                        ProductId = item.ProductId,
+                                        Quantity = item.Quantity,
+                                        ProductVariantId = item.ProductVariantId,
+                                        VariationName = item.ProductVariant?.VariantName,
+                                        CreatedBy = route.UserId,
+                                        CreatedAt = DateTime.UtcNow
+                                    };
+                                    await _locationInventoryDataRepository.AddAsync(locationInventory);
+                                }
+                            }
+                        }
                     }
                 }
 
