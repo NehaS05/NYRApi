@@ -93,7 +93,7 @@ namespace NYR.API.Models.DTOs
 
         public bool IsActive { get; set; } = true;
 
-        public List<UpdateRouteStopDto> RouteStops { get; set; } = new List<UpdateRouteStopDto>();
+        public List<UpdateRouteStopDto>? RouteStops { get; set; } = new List<UpdateRouteStopDto>();
     }
 
     public class UpdateRouteStopDto

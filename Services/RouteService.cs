@@ -188,6 +188,11 @@ namespace NYR.API.Services
                 }
             }
 
+            //Check any of the Route Stop is changed to Completed or Not Delivered then Make main Route to "In Progress"
+            var mainRouteStatus = updateRouteDto.RouteStops.Where(x => x.Status == "In Progress").ToList().Count > 0
+                ? "In Progress" : updateRouteDto.Status;
+            updateRouteDto.Status = mainRouteStatus;
+
             _mapper.Map(updateRouteDto, route);
             route.UpdatedAt = DateTime.UtcNow;
             await _routeRepository.UpdateAsync(route);
@@ -227,7 +232,7 @@ namespace NYR.API.Services
                     var restockRequest = await _restockRequestRepository.GetByIdAsync(stopDto.RestockRequestId.Value);
                     if (restockRequest != null)
                     {
-                        var status = updateRouteDto.Status == "In Progress" ? updateRouteDto.Status : stopDto.Status;
+                        var status = stopDto.Status;
                         restockRequest.Status = MapRouteStatusToRequestStatus(status, "RestockRequest");
                         await _restockRequestRepository.UpdateAsync(restockRequest);
                     }
@@ -239,7 +244,7 @@ namespace NYR.API.Services
                     var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
                     if (followupRequest != null)
                     {
-                        var status = updateRouteDto.Status == "In Progress" ? updateRouteDto.Status : stopDto.Status;
+                        var status = stopDto.Status;
                         followupRequest.Status = MapRouteStatusToRequestStatus(status, "FollowupRequest");
                         await _followupRequestRepository.UpdateAsync(followupRequest);
                     }
