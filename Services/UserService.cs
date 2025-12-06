@@ -13,6 +13,7 @@ namespace NYR.API.Services
         private readonly IRoleRepository _roleRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly ILocationRepository _locationRepository;
+        private readonly IWarehouseRepository _warehouseRepository;
         private readonly IDriverAvailabilityRepository _driverAvailabilityRepository;
         private readonly IMapper _mapper;
 
@@ -21,6 +22,7 @@ namespace NYR.API.Services
             IRoleRepository roleRepository,
             ICustomerRepository customerRepository,
             ILocationRepository locationRepository,
+            IWarehouseRepository warehouseRepository,
             IDriverAvailabilityRepository driverAvailabilityRepository,
             IMapper mapper)
         {
@@ -28,6 +30,7 @@ namespace NYR.API.Services
             _roleRepository = roleRepository;
             _customerRepository = customerRepository;
             _locationRepository = locationRepository;
+            _warehouseRepository = warehouseRepository;
             _driverAvailabilityRepository = driverAvailabilityRepository;
             _mapper = mapper;
         }
@@ -64,7 +67,7 @@ namespace NYR.API.Services
                 throw new ArgumentException("Invalid role ID");
 
             // Validate customer exists if provided
-            if (createUserDto.CustomerId.HasValue)
+            if (createUserDto.CustomerId.HasValue && createUserDto.CustomerId.Value > 0)
             {
                 var customer = await _customerRepository.GetByIdAsync(createUserDto.CustomerId.Value);
                 if (customer == null)
@@ -72,11 +75,19 @@ namespace NYR.API.Services
             }
 
             // Validate location exists if provided
-            if (createUserDto.LocationId.HasValue)
+            if (createUserDto.LocationId.HasValue && createUserDto.LocationId.Value > 0)
             {
                 var location = await _locationRepository.GetByIdAsync(createUserDto.LocationId.Value);
                 if (location == null)
                     throw new ArgumentException("Invalid location ID");
+            }
+
+            // Validate warehouse exists if provided
+            if (createUserDto.WarehouseId.HasValue && createUserDto.WarehouseId.Value > 0)
+            {
+                var warehouse = await _warehouseRepository.GetByIdAsync(createUserDto.WarehouseId.Value);
+                if (warehouse == null)
+                    throw new ArgumentException("Invalid warehouse ID");
             }
 
             // Check if email already exists
@@ -116,6 +127,14 @@ namespace NYR.API.Services
                 var location = await _locationRepository.GetByIdAsync(updateUserDto.LocationId.Value);
                 if (location == null)
                     throw new ArgumentException("Invalid location ID");
+            }
+
+            // Validate warehouse exists if provided
+            if (updateUserDto.WarehouseId.HasValue)
+            {
+                var warehouse = await _warehouseRepository.GetByIdAsync(updateUserDto.WarehouseId.Value);
+                if (warehouse == null)
+                    throw new ArgumentException("Invalid warehouse ID");
             }
 
             // Check if email already exists for another user

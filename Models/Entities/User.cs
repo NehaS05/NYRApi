@@ -56,6 +56,11 @@ namespace NYR.API.Models.Entities
         [ForeignKey("LocationId")]
         public virtual Location? Location { get; set; }
 
+        public int? WarehouseId { get; set; }
+
+        [ForeignKey("WarehouseId")]
+        public virtual Warehouse? Warehouse { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

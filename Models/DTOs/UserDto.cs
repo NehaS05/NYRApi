@@ -19,6 +19,8 @@ namespace NYR.API.Models.DTOs
         public string? CustomerName { get; set; }
         public int? LocationId { get; set; }
         public string? LocationName { get; set; }
+        public int? WarehouseId { get; set; }
+        public string? WarehouseName { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public IEnumerable<DriverAvailabilityDto>? DriverAvailabilities { get; set; }
@@ -63,6 +65,7 @@ namespace NYR.API.Models.DTOs
 
         public int? CustomerId { get; set; }
         public int? LocationId { get; set; }
+        public int? WarehouseId { get; set; }
     }
 
     public class UpdateUserDto
@@ -100,6 +103,7 @@ namespace NYR.API.Models.DTOs
 
         public int? CustomerId { get; set; }
         public int? LocationId { get; set; }
+        public int? WarehouseId { get; set; }
         public bool IsActive { get; set; } = true;
     }
 

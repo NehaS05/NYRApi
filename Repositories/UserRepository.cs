@@ -25,6 +25,7 @@ namespace NYR.API.Repositories
             return await _dbSet
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
+                .Include(u => u.Warehouse)
                 .Include(u => u.Location)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
