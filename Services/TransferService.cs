@@ -10,6 +10,7 @@ namespace NYR.API.Services
         private readonly IRestockRequestRepository _restockRequestRepository;
         private readonly IFollowupRequestRepository _followupRequestRepository;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
+        private readonly ILocationInventoryDataRepository _locationInventoryDataRepository;
         private readonly AutoMapper.IMapper _mapper;
 
         public TransferService(
@@ -17,12 +18,14 @@ namespace NYR.API.Services
             IRestockRequestRepository restockRequestRepository,
             IFollowupRequestRepository followupRequestRepository,
             ITransferInventoryRepository transferInventoryRepository,
+            ILocationInventoryDataRepository locationInventoryDataRepository,
             AutoMapper.IMapper mapper)
         {
             _vanInventoryRepository = vanInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
             _followupRequestRepository = followupRequestRepository;
             _transferInventoryRepository = transferInventoryRepository;
+            _locationInventoryDataRepository = locationInventoryDataRepository;
             _mapper = mapper;
         }
 
@@ -336,11 +339,11 @@ namespace NYR.API.Services
                     LocationAddress = fr.Location.AddressLine1 + ", " + fr.Location.AddressLine2 + ", " + fr.Location.City + ", " + fr.Location.State + ", " + fr.Location.ZipCode
                 }));
                 
-                // Load shipping inventory for RestockRequest types
+                // Load shipping inventory and location inventory for RestockRequest types
                 foreach (var transfer in transfers.Where(x => x.Type == "RestockRequest"))
                 {
                     await LoadShippingInventoryForTransfer(transfer);
-                    
+                    await LoadLocationInventoryForTransfer(transfer);
                 }
             }
 
@@ -377,6 +380,28 @@ namespace NYR.API.Services
                     // If there's an error loading shipping inventory, just skip it
                     transfer.ShippingInventory = new List<TransferInventoryItemDto>();
                 }
+            }
+        }
+
+        private async Task LoadLocationInventoryForTransfer(TransferDto transfer)
+        {
+            try
+            {
+                // Load LocationInventoryData by location ID
+                var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync((int)(transfer?.LocationId));
+                if (locationInventoryData != null && locationInventoryData.Any())
+                {
+                    transfer.LocationInventory = _mapper.Map<List<LocationInventoryDataDto>>(locationInventoryData);
+                }
+                else
+                {
+                    transfer.LocationInventory = new List<LocationInventoryDataDto>();
+                }
+            }
+            catch (Exception)
+            {
+                // If there's an error loading location inventory, just skip it
+                transfer.LocationInventory = new List<LocationInventoryDataDto>();
             }
         }
 

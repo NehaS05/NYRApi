@@ -73,7 +73,7 @@ namespace NYR.API.Services
             var existing = await _inventoryRepository.GetByLocationAndProductVariationNameAsync(
                 createDto.LocationId, 
                 createDto.ProductId, 
-                createDto.VariationName);
+                createDto.VariantName);
 
             if (existing != null)
                 throw new ArgumentException("Inventory already exists for this location, product, and variation combination");

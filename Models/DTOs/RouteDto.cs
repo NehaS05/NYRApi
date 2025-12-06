@@ -35,6 +35,7 @@ namespace NYR.API.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public List<TransferInventoryItemDto> ShippingInventory { get; set; } = new List<TransferInventoryItemDto>();
+        public List<LocationInventoryDataDto> LocationInventory { get; set; } = new List<LocationInventoryDataDto>();
     }
 
     public class CreateRouteDto
