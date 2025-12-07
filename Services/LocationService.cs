@@ -14,14 +14,16 @@ namespace NYR.API.Services
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
+        private readonly IRestockRequestRepository _restockRequestRepository;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, IMapper mapper, ITransferInventoryRepository transferInventoryRepository)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
             _userRepository = userRepository;
             _mapper = mapper;
             _transferInventoryRepository = transferInventoryRepository;
+            _restockRequestRepository = restockRequestRepository;
         }
 
         public async Task<IEnumerable<LocationDto>> GetAllLocationsAsync()
@@ -38,13 +40,24 @@ namespace NYR.API.Services
             {
                 try
                 {
-                    var transfers = await _transferInventoryRepository.GetByLocationIdAsync(locationDto.Id);
-                    if (transfers != null && transfers.Any())
+                    // Get restock requests for this location
+                    var restockRequests = await _restockRequestRepository.GetByLocationIdAsync(locationDto.Id);
+                    if (restockRequests != null && restockRequests.Any())
                     {
-                        var allItems = transfers.SelectMany(t => t.Items).ToList();
+                        // Flatten all items from all restock requests for this location
+                        var allItems = restockRequests.SelectMany(rr => rr.Items).ToList();
                         if (allItems.Any())
                         {
-                            locationDto.TransferItems = _mapper.Map<List<TransferInventoryItemDto>>(allItems);
+                            // Map RestockRequestItems to TransferInventoryItemDto
+                            locationDto.TransferItems = allItems.Select(item => new TransferInventoryItemDto
+                            {
+                                ProductId = item.ProductId,
+                                ProductName = item.Product?.Name ?? string.Empty,
+                                SkuCode = item.Product?.BarcodeSKU,
+                                ProductVariantId = item.ProductVariantId,
+                                VariantName = item.ProductVariant?.VariantName,
+                                Quantity = item.Quantity
+                            }).ToList();
                         }
                     }
                 }
