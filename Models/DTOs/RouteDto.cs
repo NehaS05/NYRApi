@@ -31,6 +31,7 @@ namespace NYR.API.Models.DTOs
         public string? ContactPhone { get; set; }
         public string? Notes { get; set; }
         public string Status { get; set; } = "Draft";
+        public string? DeliveryOTP { get; set; }
         public DateTime? CompletedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
@@ -129,6 +130,9 @@ namespace NYR.API.Models.DTOs
 
         [MaxLength(50)]
         public string Status { get; set; } = "Draft";
+
+        [MaxLength(10)]
+        public string? DeliveryOTP { get; set; }
 
         public DateTime? CompletedAt { get; set; }
 

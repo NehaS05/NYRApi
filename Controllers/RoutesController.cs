@@ -23,6 +23,14 @@ namespace NYR.API.Controllers
             if (driverId.HasValue)
             {
                 var routes = await _routeService.GetRoutesByUserIdAsync(driverId.Value);
+                // When there is a driverId, set DeliveryOTP to null for all route stops
+                foreach (var route in routes)
+                {
+                    foreach (var stop in route.RouteStops)
+                    {
+                        stop.DeliveryOTP = null;
+                    }
+                }
                 return Ok(routes);
             }
             

@@ -55,6 +55,9 @@ namespace NYR.API.Models.Entities
         [MaxLength(50)]
         public string Status { get; set; } = "Pending"; // Pending, Completed, Skipped
 
+        [MaxLength(10)]
+        public string? DeliveryOTP { get; set; }
+
         public DateTime? CompletedAt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -137,6 +137,7 @@ namespace NYR.API.Services
             {
                 var stop = _mapper.Map<RouteStop>(stopDto);
                 stop.RouteId = createdRoute.Id;
+                stop.DeliveryOTP = GenerateOTP();
                 await _routeStopRepository.AddAsync(stop);
 
                 // Update RestockRequest status to "Draft" if associated
@@ -238,10 +239,26 @@ namespace NYR.API.Services
             foreach (var stopDto in updateRouteDto.RouteStops)
             {
                 if (stopDto.Id.HasValue)
-                {
+                {                    
                     var existingStop = existingStops.FirstOrDefault(es => es.Id == stopDto.Id.Value);
                     if (existingStop != null)
                     {
+                        // If status is being changed to "Delivered" or "Completed", validate OTP
+                        if ((stopDto.Status == "Delivered" || stopDto.Status == "Completed") && 
+                            !string.IsNullOrEmpty(existingStop.DeliveryOTP))
+                        {
+                            // OTP validation required
+                            if (string.IsNullOrEmpty(stopDto.DeliveryOTP))
+                            {
+                                throw new ArgumentException("DeliveryOTP is required to complete this delivery");
+                            }
+                            
+                            if (stopDto.DeliveryOTP != existingStop.DeliveryOTP)
+                            {
+                                throw new ArgumentException("Invalid DeliveryOTP");
+                            }
+                        }                        
+                        // Map and update the stop
                         _mapper.Map(stopDto, existingStop);
                         await _routeStopRepository.UpdateAsync(existingStop);
                     }
@@ -250,6 +267,7 @@ namespace NYR.API.Services
                 {
                     var newStop = _mapper.Map<RouteStop>(stopDto);
                     newStop.RouteId = id;
+                    newStop.DeliveryOTP = GenerateOTP();
                     await _routeStopRepository.AddAsync(newStop);
                 }
 
@@ -375,6 +393,15 @@ namespace NYR.API.Services
                 "Not Delivered" => requestType == "RestockRequest" ? "Restock Request" : "Followup Requested",
                 _ => routeStatus
             };
+        }
+
+        /// <summary>
+        /// Generates a random 6-digit OTP
+        /// </summary>
+        private string GenerateOTP()
+        {
+            var random = new Random();
+            return random.Next(100000, 999999).ToString();
         }
     }
 }
