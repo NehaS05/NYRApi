@@ -229,11 +229,11 @@ namespace NYR.API.Services
             var existingStops = await _routeStopRepository.GetByRouteIdAsync(id);
 
             // Remove stops not in the update  //No need to delete for now
-            //var stopsToRemove = existingStops.Where(es => !updateRouteDto.RouteStops.Any(s => s.Id == es.Id)).ToList();
-            //foreach (var stop in stopsToRemove)
-            //{
-            //    await _routeStopRepository.DeleteAsync(stop.Id);
-            //}
+            var stopsToRemove = existingStops.Where(es => !updateRouteDto.RouteStops.Any(s => s.Id == es.Id)).ToList();
+            foreach (var stop in stopsToRemove)
+            {
+                await _routeStopRepository.DeleteAsync(stop.Id);
+            }
 
             // Add or update stops and update associated request statuses
             foreach (var stopDto in updateRouteDto.RouteStops)
@@ -242,22 +242,7 @@ namespace NYR.API.Services
                 {                    
                     var existingStop = existingStops.FirstOrDefault(es => es.Id == stopDto.Id.Value);
                     if (existingStop != null)
-                    {
-                        // If status is being changed to "Delivered" or "Completed", validate OTP
-                        if ((stopDto.Status == "Delivered" || stopDto.Status == "Completed") && 
-                            !string.IsNullOrEmpty(existingStop.DeliveryOTP))
-                        {
-                            // OTP validation required
-                            if (string.IsNullOrEmpty(stopDto.DeliveryOTP))
-                            {
-                                throw new ArgumentException("DeliveryOTP is required to complete this delivery");
-                            }
-                            
-                            if (stopDto.DeliveryOTP != existingStop.DeliveryOTP)
-                            {
-                                throw new ArgumentException("Invalid DeliveryOTP");
-                            }
-                        }                        
+                    {                     
                         // Map and update the stop
                         _mapper.Map(stopDto, existingStop);
                         await _routeStopRepository.UpdateAsync(existingStop);
@@ -269,68 +254,7 @@ namespace NYR.API.Services
                     newStop.RouteId = id;
                     newStop.DeliveryOTP = GenerateOTP();
                     await _routeStopRepository.AddAsync(newStop);
-                }
-
-                // Update RestockRequest status if associated
-                if (stopDto.RestockRequestId.HasValue && stopDto.RestockRequestId.Value > 0)
-                {
-                    var restockRequest = await _restockRequestRepository.GetByIdWithDetailsAsync(stopDto.RestockRequestId.Value);
-                    if (restockRequest != null)
-                    {
-                        var status = stopDto.Status;
-                        restockRequest.Status = MapRouteStatusToRequestStatus(status, "RestockRequest");
-                        await _restockRequestRepository.UpdateAsync(restockRequest);
-
-                        if (status == "Completed")
-                        {
-                            // Add restock items to LocationInventoryData Table
-                            foreach (var item in restockRequest.Items)
-                            {
-                                // Check if inventory already exists for this location/product/variant
-                                var existingInventory = await _locationInventoryDataRepository.GetByLocationAndProductAsync(
-                                    stopDto.LocationId, 
-                                    item.ProductId, 
-                                    item.ProductVariantId);
-
-                                if (existingInventory != null)
-                                {
-                                    // Update existing inventory quantity
-                                    existingInventory.Quantity += item.Quantity;
-                                    existingInventory.UpdatedBy = route.UserId;
-                                    existingInventory.UpdatedDate = DateTime.UtcNow;
-                                    await _locationInventoryDataRepository.UpdateAsync(existingInventory);
-                                }
-                                else
-                                {
-                                    // Create new inventory record
-                                    var locationInventory = new LocationInventoryData
-                                    {
-                                        LocationId = stopDto.LocationId,
-                                        ProductId = item.ProductId,
-                                        Quantity = item.Quantity,
-                                        ProductVariantId = item.ProductVariantId,
-                                        VariationName = item.ProductVariant?.VariantName,
-                                        CreatedBy = route.UserId,
-                                        CreatedAt = DateTime.UtcNow
-                                    };
-                                    await _locationInventoryDataRepository.AddAsync(locationInventory);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Update FollowupRequest status if associated
-                if (stopDto.FollowupRequestId.HasValue && stopDto.FollowupRequestId.Value > 0)
-                {
-                    var followupRequest = await _followupRequestRepository.GetByIdAsync(stopDto.FollowupRequestId.Value);
-                    if (followupRequest != null)
-                    {
-                        var status = stopDto.Status;
-                        followupRequest.Status = MapRouteStatusToRequestStatus(status, "FollowupRequest");
-                        await _followupRequestRepository.UpdateAsync(followupRequest);
-                    }
-                }
+                }                
             }
 
             return await GetRouteByIdAsync(id);
