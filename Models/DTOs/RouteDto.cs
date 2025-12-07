@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace NYR.API.Models.DTOs
 {
@@ -7,7 +8,10 @@ namespace NYR.API.Models.DTOs
         public int Id { get; set; }
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
+        
+        [JsonConverter(typeof(NYR.API.Helpers.DateOnlyJsonConverter))]
         public DateTime DeliveryDate { get; set; }
+        
         public string Status { get; set; } = "Draft";
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
