@@ -17,6 +17,7 @@ namespace NYR.API.Repositories
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
                 .Include(u => u.Location)
+                .Include(u => u.Warehouse)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
@@ -36,6 +37,7 @@ namespace NYR.API.Repositories
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
                 .Include(u => u.Location)
+                .Include(u => u.Warehouse)
                 .Where(u => u.RoleId == roleId)
                 .ToListAsync();
         }
@@ -46,6 +48,7 @@ namespace NYR.API.Repositories
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
                 .Include(u => u.Location)
+                .Include(u => u.Warehouse)
                 .Where(u => u.CustomerId == customerId)
                 .ToListAsync();
         }
@@ -56,6 +59,7 @@ namespace NYR.API.Repositories
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
                 .Include(u => u.Location)
+                .Include(u => u.Warehouse)
                 .Where(u => u.LocationId == locationId)
                 .ToListAsync();
         }
@@ -66,6 +70,7 @@ namespace NYR.API.Repositories
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
                 .Include(u => u.Location)
+                .Include(u => u.Warehouse)
                 .ToListAsync();
         }
 
@@ -75,6 +80,7 @@ namespace NYR.API.Repositories
                 .Include(u => u.Role)
                 .Include(u => u.Customer)
                 .Include(u => u.Location)
+                .Include(u => u.Warehouse)
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
     }
