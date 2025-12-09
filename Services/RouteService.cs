@@ -237,12 +237,14 @@ namespace NYR.API.Services
 
             // Add or update stops and update associated request statuses
             foreach (var stopDto in updateRouteDto.RouteStops)
-            {
-                if (stopDto.Id.HasValue)
-                {                    
+            {                
+                if (stopDto.Id.HasValue && stopDto.Id.Value > 0)
+                {
+                    stopDto.Status = "Pending";
                     var existingStop = existingStops.FirstOrDefault(es => es.Id == stopDto.Id.Value);
                     if (existingStop != null)
-                    {                     
+                    {
+                        stopDto.DeliveryOTP = existingStop.DeliveryOTP;
                         // Map and update the stop
                         _mapper.Map(stopDto, existingStop);
                         await _routeStopRepository.UpdateAsync(existingStop);
@@ -250,6 +252,7 @@ namespace NYR.API.Services
                 }
                 else
                 {
+                    stopDto.Status = "Pending";
                     var newStop = _mapper.Map<RouteStop>(stopDto);
                     newStop.RouteId = id;
                     newStop.DeliveryOTP = GenerateOTP();

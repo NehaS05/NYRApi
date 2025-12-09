@@ -28,6 +28,7 @@ namespace NYR.API.Models.DTOs
         public string? VariationType { get; set; }
         public string? VariationValue { get; set; }
         public int Quantity { get; set; }
+        public int? RestockRequestId { get; set; }
     }
 
     public class CreateTransferInventoryDto

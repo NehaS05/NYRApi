@@ -56,7 +56,8 @@ namespace NYR.API.Services
                                 SkuCode = item.Product?.BarcodeSKU,
                                 ProductVariantId = item.ProductVariantId,
                                 VariantName = item.ProductVariant?.VariantName,
-                                Quantity = item.Quantity
+                                Quantity = item.Quantity,
+                                RestockRequestId = item.RestockRequestId
                             }).ToList();
                         }
                     }
