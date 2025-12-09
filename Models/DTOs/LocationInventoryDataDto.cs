@@ -9,6 +9,7 @@ namespace NYR.API.Models.DTOs
         public string LocationName { get; set; } = string.Empty;
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
+        public int? ProductVariantId { get; set; }
         public int Quantity { get; set; }
         public string? VariantName { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -26,6 +27,8 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public int ProductId { get; set; }
+
+        public int? ProductVariantId { get; set; }
 
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "Quantity must be non-negative")]
@@ -45,6 +48,8 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public int ProductId { get; set; }
+
+        public int? ProductVariantId { get; set; }
 
         [Required]
         [Range(0, int.MaxValue, ErrorMessage = "Quantity must be non-negative")]

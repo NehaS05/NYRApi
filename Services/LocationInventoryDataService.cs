@@ -1,6 +1,8 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Routing;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
+using NYR.API.Repositories;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
 
@@ -69,19 +71,37 @@ namespace NYR.API.Services
             if (user == null)
                 throw new ArgumentException("Invalid user ID");
 
-            // Check if inventory already exists for this combination
-            var existing = await _inventoryRepository.GetByLocationAndProductVariationNameAsync(
+            // Check if inventory already exists for this location/product/variant
+            var existingInventory = await _inventoryRepository.GetByLocationAndProductAsync(
                 createDto.LocationId, 
                 createDto.ProductId, 
-                createDto.VariantName);
+                createDto.ProductVariantId);
 
-            if (existing != null)
-                throw new ArgumentException("Inventory already exists for this location, product, and variation combination");
-
-            var inventory = _mapper.Map<LocationInventoryData>(createDto);
-            var createdInventory = await _inventoryRepository.AddAsync(inventory);
-
-            return await GetInventoryByIdAsync(createdInventory.Id) ?? throw new Exception("Failed to retrieve created inventory");
+            if (existingInventory != null)
+            {
+                // Update existing inventory quantity
+                existingInventory.Quantity += createDto.Quantity;
+                existingInventory.UpdatedBy = createDto.CreatedBy;
+                existingInventory.UpdatedDate = DateTime.UtcNow;
+                await _inventoryRepository.UpdateAsync(existingInventory);
+                return await GetInventoryByIdAsync(existingInventory.Id) ?? throw new Exception("Failed to retrieve created inventory");
+            }
+            else
+            {
+                // Create new inventory record
+                var locationInventory = new NYR.API.Models.Entities.LocationInventoryData
+                {
+                    LocationId = createDto.LocationId,
+                    ProductId = createDto.ProductId,
+                    Quantity = createDto.Quantity,
+                    ProductVariantId = createDto.ProductVariantId,
+                    VariationName = createDto.VariantName,
+                    CreatedBy = createDto.CreatedBy,
+                    CreatedAt = DateTime.UtcNow
+                };
+                var createdInventory = await _inventoryRepository.AddAsync(locationInventory);
+                return await GetInventoryByIdAsync(createdInventory.Id) ?? throw new Exception("Failed to retrieve created inventory");
+            }            
         }
 
         public async Task<LocationInventoryDataDto?> UpdateInventoryAsync(int id, UpdateLocationInventoryDataDto updateDto)
