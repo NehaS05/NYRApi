@@ -221,7 +221,8 @@ namespace NYR.API.Mappings
             // Routes mappings
             CreateMap<Routes, RouteDto>()
                 .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.Name))
-                .ForMember(dest => dest.RouteStops, opt => opt.MapFrom(src => src.RouteStops));
+                .ForMember(dest => dest.RouteStops, opt => opt.MapFrom(src => src.RouteStops))
+                .ForMember(dest => dest.WarehouseName, opt => opt.MapFrom(src => src.User.Warehouse != null  ? src.User.Warehouse.Name : ""));
             CreateMap<CreateRouteDto, Routes>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())

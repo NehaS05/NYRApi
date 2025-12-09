@@ -8,7 +8,8 @@ namespace NYR.API.Models.DTOs
         public int Id { get; set; }
         public int UserId { get; set; }
         public string UserName { get; set; } = string.Empty;
-        
+        public string WarehouseName { get; set; } = string.Empty;           //It's fro Starting Point
+
         [JsonConverter(typeof(NYR.API.Helpers.DateOnlyJsonConverter))]
         public DateTime DeliveryDate { get; set; }
         

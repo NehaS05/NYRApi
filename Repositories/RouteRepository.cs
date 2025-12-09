@@ -15,6 +15,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(r => r.User)
+                    .ThenInclude(rs => rs.Warehouse)
                 .Include(r => r.RouteStops)
                     .ThenInclude(rs => rs.Location)
                 .Include(r => r.RouteStops)
