@@ -107,30 +107,79 @@ namespace NYR.API.Services
                 }
             }
 
-            // Create RestockRequest entity
-            var restockRequest = new RestockRequest
-            {
-                CustomerId = createDto.CustomerId,
-                LocationId = createDto.LocationId,
-                Status = "Restock Request",
-                RequestDate = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow,
-                IsActive = true
-            };
+            // Check if there's an existing RestockRequest for the same customer, location, and date (today)
+            var existingRequests = await _restockRequestRepository.GetByLocationIdAsync(createDto.LocationId);
+            var today = DateTime.UtcNow.Date;
+            var existingRequest = existingRequests.FirstOrDefault(r => 
+                r.CustomerId == createDto.CustomerId && 
+                r.LocationId == createDto.LocationId && 
+                r.RequestDate.Date == today &&
+                r.IsActive);
 
-            // Add items
-            restockRequest.Items = createDto.Items.Select(itemDto => new RestockRequestItem
+            RestockRequest restockRequest;
+            
+            if (existingRequest != null)
             {
-                ProductId = itemDto.ProductId,
-                ProductVariantId = itemDto.ProductVariantId,
-                Quantity = itemDto.Quantity,
-                CreatedAt = DateTime.UtcNow
-            }).ToList();
+                // Use existing request and add new items to it
+                restockRequest = existingRequest;
+                
+                // Add new items to the existing request
+                foreach (var itemDto in createDto.Items)
+                {
+                    // Check if the same product/variant already exists in the request
+                    var existingItem = restockRequest.Items.FirstOrDefault(i => 
+                        i.ProductId == itemDto.ProductId && 
+                        i.ProductVariantId == itemDto.ProductVariantId);
+                    
+                    if (existingItem != null)
+                    {
+                        // Update quantity if item already exists
+                        existingItem.Quantity += itemDto.Quantity;
+                    }
+                    else
+                    {
+                        // Add new item
+                        restockRequest.Items.Add(new RestockRequestItem
+                        {
+                            RestockRequestId = restockRequest.Id,
+                            ProductId = itemDto.ProductId,
+                            ProductVariantId = itemDto.ProductVariantId,
+                            Quantity = itemDto.Quantity,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+                
+                restockRequest.UpdatedAt = DateTime.UtcNow;
+                await _restockRequestRepository.UpdateAsync(restockRequest);
+            }
+            else
+            {
+                // Create new RestockRequest entity
+                restockRequest = new RestockRequest
+                {
+                    CustomerId = createDto.CustomerId,
+                    LocationId = createDto.LocationId,
+                    Status = "Restock Request",
+                    RequestDate = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
 
-            var created = await _restockRequestRepository.AddAsync(restockRequest);
+                // Add items
+                restockRequest.Items = createDto.Items.Select(itemDto => new RestockRequestItem
+                {
+                    ProductId = itemDto.ProductId,
+                    ProductVariantId = itemDto.ProductVariantId,
+                    Quantity = itemDto.Quantity,
+                    CreatedAt = DateTime.UtcNow
+                }).ToList();
+
+                restockRequest = await _restockRequestRepository.AddAsync(restockRequest);
+            }
             
             // Fetch with details for proper mapping
-            var result = await _restockRequestRepository.GetByIdWithDetailsAsync(created.Id);
+            var result = await _restockRequestRepository.GetByIdWithDetailsAsync(restockRequest.Id);
             return _mapper.Map<RestockRequestDto>(result);
         }
 
