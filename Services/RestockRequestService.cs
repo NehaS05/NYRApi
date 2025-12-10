@@ -1,4 +1,6 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -13,6 +15,7 @@ namespace NYR.API.Services
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
         private readonly IGenericRepository<ProductVariant> _productVariantRepository;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
         public RestockRequestService(
@@ -21,6 +24,7 @@ namespace NYR.API.Services
             ILocationRepository locationRepository,
             IProductRepository productRepository,
             IGenericRepository<ProductVariant> productVariantRepository,
+            ApplicationDbContext context,
             IMapper mapper)
         {
             _restockRequestRepository = restockRequestRepository;
@@ -28,6 +32,7 @@ namespace NYR.API.Services
             _locationRepository = locationRepository;
             _productRepository = productRepository;
             _productVariantRepository = productVariantRepository;
+            _context = context;
             _mapper = mapper;
         }
 
@@ -46,7 +51,20 @@ namespace NYR.API.Services
         public async Task<IEnumerable<RestockRequestDto>> GetRequestsByLocationIdAsync(int locationId)
         {
             var requests = await _restockRequestRepository.GetByLocationIdAsync(locationId);
-            return _mapper.Map<IEnumerable<RestockRequestDto>>(requests);
+            var requestDtos = _mapper.Map<IEnumerable<RestockRequestDto>>(requests).ToList();
+            
+            // Get DeliveryDate from Route information for each RestockRequest
+            foreach (var dto in requestDtos)
+            {
+                var deliveryDate = await _context.RouteStops
+                    .Where(rs => rs.RestockRequestId == dto.Id && rs.IsActive)
+                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => r.DeliveryDate)
+                    .FirstOrDefaultAsync();
+                
+                dto.DeliveryDate = deliveryDate == default(DateTime) ? null : deliveryDate;
+            }
+            
+            return requestDtos;
         }
 
         public async Task<IEnumerable<RestockRequestDto>> GetRequestsByCustomerIdAsync(int customerId)

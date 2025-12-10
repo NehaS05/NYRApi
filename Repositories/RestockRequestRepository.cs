@@ -88,5 +88,25 @@ namespace NYR.API.Repositories
                 .OrderByDescending(rr => rr.RequestDate)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<RestockRequest>> GetByLocationIdWithRouteAsync(int locationId)
+        {
+            return await _dbSet
+                .Include(rr => rr.Customer)
+                .Include(rr => rr.Location)
+                .Include(rr => rr.Items)
+                    .ThenInclude(item => item.Product)
+                .Include(rr => rr.Items)
+                    .ThenInclude(item => item.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.Variation)
+                .Include(rr => rr.Items)
+                    .ThenInclude(item => item.ProductVariant)
+                        .ThenInclude(pv => pv!.Attributes)
+                            .ThenInclude(a => a.VariationOption)
+                .Where(rr => rr.LocationId == locationId && rr.IsActive)
+                .OrderByDescending(rr => rr.RequestDate)
+                .ToListAsync();
+        }
     }
 }

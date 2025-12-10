@@ -37,7 +37,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("location/{locationId}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
         public async Task<ActionResult<IEnumerable<RestockRequestDto>>> GetRequestsByLocation(int locationId)
         {
             var requests = await _restockRequestService.GetRequestsByLocationIdAsync(locationId);
