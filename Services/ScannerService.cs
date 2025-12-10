@@ -1,8 +1,12 @@
 using AutoMapper;
+using Microsoft.IdentityModel.Tokens;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace NYR.API.Services
 {
@@ -11,12 +15,14 @@ namespace NYR.API.Services
         private readonly IScannerRepository _scannerRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly IMapper _mapper;
+        private readonly IConfiguration _configuration;
 
-        public ScannerService(IScannerRepository scannerRepository, ILocationRepository locationRepository, IMapper mapper)
+        public ScannerService(IScannerRepository scannerRepository, ILocationRepository locationRepository, IMapper mapper, IConfiguration configuration)
         {
             _scannerRepository = scannerRepository;
             _locationRepository = locationRepository;
             _mapper = mapper;
+            _configuration = configuration;
         }
 
         public async Task<IEnumerable<ScannerDto>> GetAllScannersAsync()
@@ -91,6 +97,136 @@ namespace NYR.API.Services
         {
             var scanners = await _scannerRepository.SearchScannersAsync(searchTerm);
             return _mapper.Map<IEnumerable<ScannerDto>>(scanners);
+        }
+
+        public async Task<ScannerPinConfirmResponseDto> ConfirmScannerPinAsync(ScannerPinConfirmDto confirmDto)
+        {
+            // Find scanner by serial number
+            var scanner = await _scannerRepository.GetBySerialNoAsync(confirmDto.SerialNo);
+            
+            if (scanner == null)
+            {
+                return new ScannerPinConfirmResponseDto
+                {
+                    IsValid = false,
+                    Message = "Scanner not found with the provided serial number",
+                    Scanner = null
+                };
+            }
+
+            // Check if scanner is active
+            if (!scanner.IsActive)
+            {
+                return new ScannerPinConfirmResponseDto
+                {
+                    IsValid = false,
+                    Message = "Scanner is not active",
+                    Scanner = null
+                };
+            }
+
+            // Verify PIN
+            if (scanner.ScannerPIN != confirmDto.ScannerPIN)
+            {
+                return new ScannerPinConfirmResponseDto
+                {
+                    IsValid = false,
+                    Message = "Invalid PIN",
+                    Scanner = null
+                };
+            }
+
+            // PIN is valid - generate token
+            var token = GenerateScannerJwtToken(scanner);
+            var tokenExpiry = DateTime.UtcNow.AddHours(24);
+
+            return new ScannerPinConfirmResponseDto
+            {
+                IsValid = true,
+                Message = "PIN confirmed successfully",
+                Scanner = _mapper.Map<ScannerDto>(scanner),
+                Token = token,
+                TokenExpiry = tokenExpiry
+            };
+        }
+
+        public async Task<ScannerPinResetResponseDto> ResetScannerPinAsync(ScannerPinResetDto resetDto)
+        {
+            // Find scanner by serial number
+            var scanner = await _scannerRepository.GetBySerialNoAsync(resetDto.SerialNo);
+            
+            if (scanner == null)
+            {
+                return new ScannerPinResetResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Scanner not found with the provided serial number"
+                };
+            }
+
+            // Check if scanner is active
+            if (!scanner.IsActive)
+            {
+                return new ScannerPinResetResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Scanner is not active"
+                };
+            }
+
+            // Update the PIN
+            scanner.ScannerPIN = resetDto.NewPIN;
+            scanner.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await _scannerRepository.UpdateAsync(scanner);
+                
+                return new ScannerPinResetResponseDto
+                {
+                    IsSuccess = true,
+                    Message = "PIN reset successfully"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ScannerPinResetResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Failed to reset PIN. Please try again."
+                };
+            }
+        }
+
+        private string GenerateScannerJwtToken(Scanner scanner)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
+            var issuer = jwtSettings["Issuer"];
+            var audience = jwtSettings["Audience"];
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, scanner.Id.ToString()),
+                new Claim(ClaimTypes.Name, scanner.ScannerName),
+                new Claim(ClaimTypes.Role, "Scanner"), // Special role for scanners
+                new Claim("SerialNo", scanner.SerialNo),
+                new Claim("LocationId", scanner.LocationId.ToString()),
+                new Claim("ScannerType", "Device") // Identify this as a scanner token
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(24),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

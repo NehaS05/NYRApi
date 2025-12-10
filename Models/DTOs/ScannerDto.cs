@@ -58,5 +58,42 @@ namespace NYR.API.Models.DTOs
 
         public bool IsActive { get; set; } = true;
     }
+
+    public class ScannerPinConfirmDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string SerialNo { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(50)]
+        public string ScannerPIN { get; set; } = string.Empty;
+    }
+
+    public class ScannerPinConfirmResponseDto
+    {
+        public bool IsValid { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public ScannerDto? Scanner { get; set; }
+        public string? Token { get; set; }
+        public DateTime? TokenExpiry { get; set; }
+    }
+
+    public class ScannerPinResetDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string SerialNo { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(50)]
+        public string NewPIN { get; set; } = string.Empty;
+    }
+
+    public class ScannerPinResetResponseDto
+    {
+        public bool IsSuccess { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
 }
 

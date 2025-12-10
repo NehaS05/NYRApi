@@ -11,6 +11,8 @@ namespace NYR.API.Services.Interfaces
         Task<bool> DeleteScannerAsync(int id);
         Task<IEnumerable<ScannerDto>> GetScannersByLocationAsync(int locationId);
         Task<IEnumerable<ScannerDto>> SearchScannersAsync(string searchTerm);
+        Task<ScannerPinConfirmResponseDto> ConfirmScannerPinAsync(ScannerPinConfirmDto confirmDto);
+        Task<ScannerPinResetResponseDto> ResetScannerPinAsync(ScannerPinResetDto resetDto);
     }
 }
 

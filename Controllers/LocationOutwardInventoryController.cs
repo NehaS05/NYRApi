@@ -56,7 +56,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
         public async Task<ActionResult<LocationOutwardInventoryDto>> CreateOutwardInventory([FromBody] CreateLocationOutwardInventoryDto createDto)
         {
             if (!ModelState.IsValid)
@@ -74,7 +74,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
         public async Task<ActionResult<LocationOutwardInventoryDto>> UpdateOutwardInventory(int id, [FromBody] UpdateLocationOutwardInventoryDto updateDto)
         {
             if (!ModelState.IsValid)
@@ -95,7 +95,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpPatch("{id}/deactivate")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
         public async Task<ActionResult> DeactivateOutwardInventory(int id, [FromBody] DeactivateRequest request)
         {
             if (!ModelState.IsValid)
@@ -116,7 +116,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Scanner")]
         public async Task<ActionResult> DeleteOutwardInventory(int id, [FromBody] DeleteRequest request)
         {
             if (!ModelState.IsValid)
