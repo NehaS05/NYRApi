@@ -12,15 +12,17 @@ namespace NYR.API.Services
         private readonly ILocationRepository _locationRepository;
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ILocationInventoryDataRepository _locationInventoryDataRepository;
         private readonly IMapper _mapper;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
             _userRepository = userRepository;
+            _locationInventoryDataRepository = locationInventoryDataRepository;
             _mapper = mapper;
             _transferInventoryRepository = transferInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
@@ -61,11 +63,36 @@ namespace NYR.API.Services
                             }).ToList();
                         }
                     }
+
+                    // Get location inventory data for this location
+                    var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(locationDto.Id);
+                    if (locationInventoryData != null && locationInventoryData.Any())
+                    {
+                        locationDto.LocationInventoryData = locationInventoryData.Select(inventory => new LocationInventoryDataDto
+                        {
+                            Id = inventory.Id,
+                            LocationId = inventory.LocationId,
+                            LocationName = inventory.Location?.LocationName ?? string.Empty,
+                            ProductId = inventory.ProductId,
+                            ProductName = inventory.Product?.Name ?? string.Empty,
+                            ProductSKU = inventory.Product?.BarcodeSKU ?? string.Empty,
+                            ProductVariantId = inventory.ProductVariantId,
+                            Quantity = inventory.Quantity,
+                            VariantName = inventory.VariationName,
+                            CreatedAt = inventory.CreatedAt,
+                            CreatedBy = inventory.CreatedBy,
+                            CreatedByName = inventory.CreatedByUser?.Name ?? string.Empty,
+                            UpdatedBy = inventory.UpdatedBy,
+                            UpdatedByName = inventory.UpdatedByUser?.Name,
+                            UpdatedDate = inventory.UpdatedDate
+                        }).ToList();
+                    }
                 }
                 catch (Exception)
                 {
-                    // If there's an error loading transfer items for this location, just skip it
+                    // If there's an error loading inventory data for this location, just skip it
                     locationDto.TransferItems = new List<TransferInventoryItemDto>();
+                    locationDto.LocationInventoryData = new List<LocationInventoryDataDto>();
                 }
             }
             
