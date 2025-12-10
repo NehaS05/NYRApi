@@ -9,6 +9,7 @@ namespace NYR.API.Models.DTOs
         public string LocationName { get; set; } = string.Empty;
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
+        public string ProductSKU { get; set; } = string.Empty;
         public int? ProductVariantId { get; set; }
         public int Quantity { get; set; }
         public string? VariantName { get; set; }

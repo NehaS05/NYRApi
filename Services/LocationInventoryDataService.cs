@@ -45,7 +45,16 @@ namespace NYR.API.Services
         public async Task<IEnumerable<LocationInventoryDataDto>> GetInventoryByLocationIdAsync(int locationId)
         {
             var inventory = await _inventoryRepository.GetByLocationIdAsync(locationId);
-            return _mapper.Map<IEnumerable<LocationInventoryDataDto>>(inventory);
+            var inventoryDtos = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(inventory);
+
+            // Add ProductSKU to each inventory item
+            foreach (var dto in inventoryDtos)
+            {
+                var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
+                dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
+            }
+            
+            return inventoryDtos;
         }
 
         public async Task<IEnumerable<LocationInventoryDataDto>> GetInventoryByProductIdAsync(int productId)
