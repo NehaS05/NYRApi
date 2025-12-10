@@ -46,7 +46,7 @@ namespace NYR.API.Services
         {
             var inventory = await _inventoryRepository.GetByLocationIdAsync(locationId);
             var inventoryDtos = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(inventory);
-
+            
             // Add ProductSKU to each inventory item
             foreach (var dto in inventoryDtos)
             {
