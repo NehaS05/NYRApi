@@ -64,6 +64,8 @@ namespace NYR.API.Models.Entities
         [MaxLength(1000)]
         public string? Comments { get; set; }
 
+        public int? FollowUpDays { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;

@@ -22,6 +22,7 @@ namespace NYR.API.Models.DTOs
         public string? FaxNumber { get; set; }
         public string? Email { get; set; }
         public string? Comments { get; set; }
+        public int? FollowUpDays { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         // Added: flattened transfer inventory items for this location
@@ -81,6 +82,9 @@ namespace NYR.API.Models.DTOs
 
         [MaxLength(1000)]
         public string? Comments { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "FollowUpDays must be a non-negative number")]
+        public int? FollowUpDays { get; set; }
     }
 
     public class UpdateLocationDto
@@ -134,6 +138,10 @@ namespace NYR.API.Models.DTOs
 
         [MaxLength(1000)]
         public string? Comments { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "FollowUpDays must be a non-negative number")]
+        public int? FollowUpDays { get; set; }
+
         public bool IsActive { get; set; } = true;
     }
 }
