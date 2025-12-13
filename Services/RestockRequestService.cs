@@ -265,5 +265,25 @@ namespace NYR.API.Services
             await _restockRequestRepository.UpdateAsync(request);
             return true;
         }
+
+        public async Task<IEnumerable<ProductVariantInfoDto>> GetProductVariantNameBySkuAsync(string skuCode)
+        {
+            if (string.IsNullOrWhiteSpace(skuCode))
+                return Enumerable.Empty<ProductVariantInfoDto>();
+
+            var productVariants = await _context.RestockRequestItems
+                .Include(pc => pc.ProductVariant)
+                .Include(pv => pv.Product)
+                .Where(pv => (pv.Product.BarcodeSKU == skuCode || pv.Product.BarcodeSKU2 == skuCode || pv.Product.BarcodeSKU3 == skuCode || pv.Product.BarcodeSKU4 == skuCode)
+                    && pv.RestockRequest.IsActive && pv.ProductVariant.IsActive)
+                .Select(pv => new ProductVariantInfoDto
+                {
+                    Id = pv.Id,
+                    VariantName = pv.ProductVariant.VariantName
+                })
+                .ToListAsync();
+
+            return productVariants;
+        }
     }
 }

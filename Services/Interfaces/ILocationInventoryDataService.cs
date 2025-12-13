@@ -12,5 +12,6 @@ namespace NYR.API.Services.Interfaces
         Task<LocationInventoryDataDto?> UpdateInventoryAsync(int id, UpdateLocationInventoryDataDto updateDto);
         Task<bool> DeleteInventoryAsync(int id);
         Task<LocationInventoryDataDto?> AdjustQuantityAsync(int id, int quantityChange, int userId);
+        Task<IEnumerable<ProductVariantInfoDto>> GetVariantInfoBySkuAsync(string skuCode);
     }
 }

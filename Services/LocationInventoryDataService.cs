@@ -1,5 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories;
@@ -14,6 +16,7 @@ namespace NYR.API.Services
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
         private readonly IUserRepository _userRepository;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
         public LocationInventoryDataService(
@@ -21,12 +24,14 @@ namespace NYR.API.Services
             ILocationRepository locationRepository,
             IProductRepository productRepository,
             IUserRepository userRepository,
+            ApplicationDbContext context,
             IMapper mapper)
         {
             _inventoryRepository = inventoryRepository;
             _locationRepository = locationRepository;
             _productRepository = productRepository;
             _userRepository = userRepository;
+            _context = context;
             _mapper = mapper;
         }
 
@@ -173,6 +178,30 @@ namespace NYR.API.Services
 
             await _inventoryRepository.UpdateAsync(inventory);
             return await GetInventoryByIdAsync(id);
+        }
+
+        public async Task<IEnumerable<ProductVariantInfoDto>> GetVariantInfoBySkuAsync(string skuCode)
+        {
+            if (string.IsNullOrWhiteSpace(skuCode))
+                return Enumerable.Empty<ProductVariantInfoDto>();
+
+            var variantInfo = await _context.LocationInventoryData
+                .Include(lid => lid.ProductVariant)
+                .Include(lid => lid.Product)
+                .Where(lid => (lid.Product.BarcodeSKU == skuCode || 
+                              lid.Product.BarcodeSKU2 == skuCode || 
+                              lid.Product.BarcodeSKU3 == skuCode || 
+                              lid.Product.BarcodeSKU4 == skuCode) &&
+                              lid.ProductVariant != null && lid.Product.IsActive && lid.ProductVariant.IsActive)
+                .Select(lid => new ProductVariantInfoDto
+                {
+                    Id = lid.ProductVariant!.Id,
+                    VariantName = lid.ProductVariant.VariantName
+                })
+                .Distinct()
+                .ToListAsync();
+
+            return variantInfo;
         }
     }
 }

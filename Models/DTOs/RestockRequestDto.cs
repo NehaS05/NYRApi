@@ -67,4 +67,10 @@ namespace NYR.API.Models.DTOs
         public int TotalRequests { get; set; }
         public int TotalItems { get; set; }
     }
+
+    public class ProductVariantInfoDto
+    {
+        public int Id { get; set; }
+        public string VariantName { get; set; } = string.Empty;
+    }
 }

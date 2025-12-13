@@ -11,5 +11,6 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<RestockRequestSummaryDto>> GetRequestsSummaryAsync();
         Task<RestockRequestDto> CreateRequestAsync(CreateRestockRequestDto createDto);
         Task<bool> DeleteRequestAsync(int id);
+        Task<IEnumerable<ProductVariantInfoDto>> GetProductVariantNameBySkuAsync(string skuCode);
     }
 }

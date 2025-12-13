@@ -88,5 +88,19 @@ namespace NYR.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("variant-name/{skuCode}")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
+        public async Task<ActionResult<IEnumerable<ProductVariantInfoDto>>> GetProductVariantNameBySku(string skuCode)
+        {
+            if (string.IsNullOrWhiteSpace(skuCode))
+                return BadRequest("Barcode cannot be empty");
+
+            var variantInfo = await _restockRequestService.GetProductVariantNameBySkuAsync(skuCode);
+            if (!variantInfo.Any())
+                return NotFound($"No product variants found with Barcode: {skuCode}");
+
+            return Ok(variantInfo);
+        }
     }
 }
