@@ -23,6 +23,7 @@ namespace NYR.API.Controllers
         public async Task<ActionResult<IEnumerable<ProductVariantDto>>> GetProductVariants(int productId)
         {
             var variants = await _context.ProductVariants
+                .Include(p => p.Product)
                 .Include(v => v.Attributes)
                     .ThenInclude(a => a.Variation)
                 .Include(v => v.Attributes)
@@ -35,7 +36,7 @@ namespace NYR.API.Controllers
                 Id = v.Id,
                 ProductId = v.ProductId,
                 VariantName = v.VariantName,
-                SKU = v.SKU,
+                SKU = (v.SKU == ""  ? (v.Product.BarcodeSKU) : v.SKU),
                 Price = v.Price,
                 IsEnabled = v.IsEnabled,
                 Attributes = v.Attributes.Select(a => new ProductVariantAttributeDto

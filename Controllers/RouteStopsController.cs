@@ -105,42 +105,42 @@ namespace NYR.API.Controllers
                     await _restockRequestRepository.UpdateAsync(restockRequest);
 
                     //During status completed we were moving this inventory to table , but now doing on outward inventory
-                    //if (status == "Delivered")
-                    //{
-                    //    // Add restock items to LocationInventoryData Table
-                    //    foreach (var item in restockRequest.Items)
-                    //    {
-                    //        // Check if inventory already exists for this location/product/variant
-                    //        var existingInventory = await _locationInventoryDataRepository.GetByLocationAndProductAsync(
-                    //            stop.LocationId, 
-                    //            item.ProductId, 
-                    //            item.ProductVariantId);
+                    if (status.ToLower() == "completed")
+                    {
+                        // Add restock items to LocationInventoryData Table
+                        foreach (var item in restockRequest.Items)
+                        {
+                            // Check if inventory already exists for this location/product/variant
+                            var existingInventory = await _locationInventoryDataRepository.GetByLocationAndProductAsync(
+                                stop.LocationId,
+                                item.ProductId,
+                                item.ProductVariantId);
 
-                    //        if (existingInventory != null)
-                    //        {
-                    //            // Update existing inventory quantity
-                    //            existingInventory.Quantity += item.Quantity;
-                    //            existingInventory.UpdatedBy = route.UserId;
-                    //            existingInventory.UpdatedDate = DateTime.UtcNow;
-                    //            await _locationInventoryDataRepository.UpdateAsync(existingInventory);
-                    //        }
-                    //        else
-                    //        {
-                    //            // Create new inventory record
-                    //            var locationInventory = new NYR.API.Models.Entities.LocationInventoryData
-                    //            {
-                    //                LocationId = stop.LocationId,
-                    //                ProductId = item.ProductId,
-                    //                Quantity = item.Quantity,
-                    //                ProductVariantId = item.ProductVariantId,
-                    //                VariationName = item.ProductVariant?.VariantName,
-                    //                CreatedBy = route.UserId,
-                    //                CreatedAt = DateTime.UtcNow
-                    //            };
-                    //            await _locationInventoryDataRepository.AddAsync(locationInventory);
-                    //        }
-                    //    }
-                    //}
+                            if (existingInventory != null)
+                            {
+                                // Update existing inventory quantity
+                                existingInventory.Quantity += item.Quantity;
+                                existingInventory.UpdatedBy = route.UserId;
+                                existingInventory.UpdatedDate = DateTime.UtcNow;
+                                await _locationInventoryDataRepository.UpdateAsync(existingInventory);
+                            }
+                            else
+                            {
+                                // Create new inventory record
+                                var locationInventory = new NYR.API.Models.Entities.LocationInventoryData
+                                {
+                                    LocationId = stop.LocationId,
+                                    ProductId = item.ProductId,
+                                    Quantity = item.Quantity,
+                                    ProductVariantId = item.ProductVariantId,
+                                    VariationName = item.ProductVariant?.VariantName,
+                                    CreatedBy = route.UserId,
+                                    CreatedAt = DateTime.UtcNow
+                                };
+                                await _locationInventoryDataRepository.AddAsync(locationInventory);
+                            }
+                        }
+                    }
                 }
             }
 
