@@ -14,6 +14,7 @@ namespace NYR.API.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public DateTime? DeliveryDate { get; set; } // From associated Route
+        public string? DeliveryOTP { get; set; } // From associated RouteStop
         public List<RestockRequestItemDto> Items { get; set; } = new List<RestockRequestItemDto>();
     }
 

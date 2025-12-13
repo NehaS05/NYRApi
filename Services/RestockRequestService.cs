@@ -39,13 +39,46 @@ namespace NYR.API.Services
         public async Task<IEnumerable<RestockRequestDto>> GetAllRequestsAsync()
         {
             var requests = await _restockRequestRepository.GetAllWithDetailsAsync();
-            return _mapper.Map<IEnumerable<RestockRequestDto>>(requests);
+            var requestDtos = _mapper.Map<IEnumerable<RestockRequestDto>>(requests).ToList();
+            
+            // Get DeliveryDate and DeliveryOTP from Route information for each RestockRequest
+            foreach (var dto in requestDtos)
+            {
+                var routeStopInfo = await _context.RouteStops
+                    .Where(rs => rs.RestockRequestId == dto.Id && rs.IsActive)
+                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => new { r.DeliveryDate, rs.DeliveryOTP })
+                    .FirstOrDefaultAsync();
+                
+                if (routeStopInfo != null)
+                {
+                    dto.DeliveryDate = routeStopInfo.DeliveryDate == default(DateTime) ? null : routeStopInfo.DeliveryDate;
+                    dto.DeliveryOTP = routeStopInfo.DeliveryOTP;
+                }
+            }
+            
+            return requestDtos;
         }
 
         public async Task<RestockRequestDto?> GetRequestByIdAsync(int id)
         {
             var request = await _restockRequestRepository.GetByIdWithDetailsAsync(id);
-            return request != null ? _mapper.Map<RestockRequestDto>(request) : null;
+            if (request == null) return null;
+            
+            var dto = _mapper.Map<RestockRequestDto>(request);
+            
+            // Get DeliveryDate and DeliveryOTP from Route information
+            var routeStopInfo = await _context.RouteStops
+                .Where(rs => rs.RestockRequestId == dto.Id && rs.IsActive)
+                .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => new { r.DeliveryDate, rs.DeliveryOTP })
+                .FirstOrDefaultAsync();
+            
+            if (routeStopInfo != null)
+            {
+                dto.DeliveryDate = routeStopInfo.DeliveryDate == default(DateTime) ? null : routeStopInfo.DeliveryDate;
+                dto.DeliveryOTP = routeStopInfo.DeliveryOTP;
+            }
+            
+            return dto;
         }
 
         public async Task<IEnumerable<RestockRequestDto>> GetRequestsByLocationIdAsync(int locationId)
@@ -53,15 +86,19 @@ namespace NYR.API.Services
             var requests = await _restockRequestRepository.GetByLocationIdAsync(locationId);
             var requestDtos = _mapper.Map<IEnumerable<RestockRequestDto>>(requests).ToList();
             
-            // Get DeliveryDate from Route information for each RestockRequest
+            // Get DeliveryDate and DeliveryOTP from Route information for each RestockRequest
             foreach (var dto in requestDtos)
             {
-                var deliveryDate = await _context.RouteStops
+                var routeStopInfo = await _context.RouteStops
                     .Where(rs => rs.RestockRequestId == dto.Id && rs.IsActive)
-                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => r.DeliveryDate)
+                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => new { r.DeliveryDate, rs.DeliveryOTP })
                     .FirstOrDefaultAsync();
                 
-                dto.DeliveryDate = deliveryDate == default(DateTime) ? null : deliveryDate;
+                if (routeStopInfo != null)
+                {
+                    dto.DeliveryDate = routeStopInfo.DeliveryDate == default(DateTime) ? null : routeStopInfo.DeliveryDate;
+                    dto.DeliveryOTP = routeStopInfo.DeliveryOTP;
+                }
             }
             
             return requestDtos;
@@ -70,7 +107,24 @@ namespace NYR.API.Services
         public async Task<IEnumerable<RestockRequestDto>> GetRequestsByCustomerIdAsync(int customerId)
         {
             var requests = await _restockRequestRepository.GetByCustomerIdAsync(customerId);
-            return _mapper.Map<IEnumerable<RestockRequestDto>>(requests);
+            var requestDtos = _mapper.Map<IEnumerable<RestockRequestDto>>(requests).ToList();
+            
+            // Get DeliveryDate and DeliveryOTP from Route information for each RestockRequest
+            foreach (var dto in requestDtos)
+            {
+                var routeStopInfo = await _context.RouteStops
+                    .Where(rs => rs.RestockRequestId == dto.Id && rs.IsActive)
+                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => new { r.DeliveryDate, rs.DeliveryOTP })
+                    .FirstOrDefaultAsync();
+                
+                if (routeStopInfo != null)
+                {
+                    dto.DeliveryDate = routeStopInfo.DeliveryDate == default(DateTime) ? null : routeStopInfo.DeliveryDate;
+                    dto.DeliveryOTP = routeStopInfo.DeliveryOTP;
+                }
+            }
+            
+            return requestDtos;
         }
 
         public async Task<IEnumerable<RestockRequestSummaryDto>> GetRequestsSummaryAsync()
