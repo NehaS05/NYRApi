@@ -35,7 +35,7 @@ namespace NYR.API.Services
         {
             var inventory = await _outwardInventoryRepository.GetAllWithDetailsAsync();
             var inventoryDtos = _mapper.Map<IEnumerable<LocationOutwardInventoryDto>>(inventory);
-            
+            inventoryDtos = inventoryDtos.Where(x => x.IsActive == true);
             // Add ProductSKU to each inventory item
             foreach (var dto in inventoryDtos)
             {
