@@ -38,6 +38,7 @@ namespace NYR.API.Models.DTOs
         public string? Notes { get; set; }
         public string Status { get; set; } = "Draft";
         public string? DeliveryOTP { get; set; }
+        public string? Distance { get; set; }
         public DateTime? CompletedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
@@ -86,6 +87,9 @@ namespace NYR.API.Models.DTOs
 
         [MaxLength(1000)]
         public string? Notes { get; set; }
+
+        [MaxLength(50)]
+        public string? Distance { get; set; }
     }
 
     public class UpdateRouteDto
@@ -139,6 +143,9 @@ namespace NYR.API.Models.DTOs
 
         [MaxLength(10)]
         public string? DeliveryOTP { get; set; }
+
+        [MaxLength(50)]
+        public string? Distance { get; set; }
 
         public DateTime? CompletedAt { get; set; }
 

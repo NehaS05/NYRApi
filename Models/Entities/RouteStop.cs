@@ -58,6 +58,9 @@ namespace NYR.API.Models.Entities
         [MaxLength(10)]
         public string? DeliveryOTP { get; set; }
 
+        [MaxLength(50)]
+        public string? Distance { get; set; }
+
         public DateTime? CompletedAt { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
