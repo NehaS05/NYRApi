@@ -1,4 +1,6 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories;
@@ -13,16 +15,18 @@ namespace NYR.API.Services
         private readonly ICustomerRepository _customerRepository;
         private readonly IUserRepository _userRepository;
         private readonly ILocationInventoryDataRepository _locationInventoryDataRepository;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
             _userRepository = userRepository;
             _locationInventoryDataRepository = locationInventoryDataRepository;
+            _context = context;
             _mapper = mapper;
             _transferInventoryRepository = transferInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
@@ -171,6 +175,88 @@ namespace NYR.API.Services
         {
             var locations = await _locationRepository.SearchLocationsAsync(searchTerm);
             return _mapper.Map<IEnumerable<LocationDto>>(locations);
+        }
+
+        public async Task<IEnumerable<LocationDto>> GetLocationsNeedingFollowUpAsync()
+        {
+            var currentDate = DateTime.UtcNow.Date;
+            
+            // Get locations with FollowUpDays > 0 and have inventory data
+            var locationsNeedingFollowUp = await _context.Locations
+                .Include(l => l.Customer)
+                .Include(l => l.User)
+                .Where(l => l.IsActive && l.FollowUpDays.HasValue && l.FollowUpDays > 0)
+                .ToListAsync();
+
+            var result = new List<LocationDto>();
+
+            foreach (var location in locationsNeedingFollowUp)
+            {
+                // Check if location has inventory data
+                var hasInventoryData = await _context.LocationInventoryData
+                    .AnyAsync(lid => lid.LocationId == location.Id);
+
+                if (!hasInventoryData)
+                    continue;
+
+                // Get the last delivery date for this location from Routes
+                var lastDeliveryDate = await _context.RouteStops
+                    .Where(rs => rs.LocationId == location.Id && rs.IsActive)
+                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => r.DeliveryDate)
+                    .OrderByDescending(deliveryDate => deliveryDate)
+                    .FirstOrDefaultAsync();
+
+                // If no delivery found, skip this location
+                if (lastDeliveryDate == default(DateTime))
+                    continue;
+
+                // Calculate days since last delivery
+                var daysSinceLastDelivery = (currentDate - lastDeliveryDate.Date).Days;
+
+                // Check if follow-up is needed (days since last delivery > follow-up days)
+                if (daysSinceLastDelivery > location.FollowUpDays.Value)
+                {
+                    var locationDto = _mapper.Map<LocationDto>(location);
+                    
+                    // Add additional information about the follow-up
+                    locationDto.Comments = $"Last delivery: {lastDeliveryDate:yyyy-MM-dd}, Days since: {daysSinceLastDelivery}, Follow-up needed after: {location.FollowUpDays} days";
+                    
+                    // Get location inventory data for this location
+                    try
+                    {
+                        var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(location.Id);
+                        if (locationInventoryData != null && locationInventoryData.Any())
+                        {
+                            locationDto.LocationInventoryData = locationInventoryData.Select(inventory => new LocationInventoryDataDto
+                            {
+                                Id = inventory.Id,
+                                LocationId = inventory.LocationId,
+                                LocationName = inventory.Location?.LocationName ?? string.Empty,
+                                ProductId = inventory.ProductId,
+                                ProductName = inventory.Product?.Name ?? string.Empty,
+                                ProductSKU = inventory.Product?.BarcodeSKU ?? string.Empty,
+                                ProductVariantId = inventory.ProductVariantId,
+                                Quantity = inventory.Quantity,
+                                VariantName = inventory.VariationName,
+                                CreatedAt = inventory.CreatedAt,
+                                CreatedBy = inventory.CreatedBy,
+                                CreatedByName = inventory.CreatedByUser?.Name ?? string.Empty,
+                                UpdatedBy = inventory.UpdatedBy,
+                                UpdatedByName = inventory.UpdatedByUser?.Name,
+                                UpdatedDate = inventory.UpdatedDate
+                            }).ToList();
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        locationDto.LocationInventoryData = new List<LocationInventoryDataDto>();
+                    }
+
+                    result.Add(locationDto);
+                }
+            }
+
+            return result.OrderByDescending(l => l.FollowUpDays);
         }
     }
 }

@@ -12,5 +12,6 @@ namespace NYR.API.Services.Interfaces
         Task<bool> DeleteLocationAsync(int id);
         Task<IEnumerable<LocationDto>> GetLocationsByCustomerAsync(int customerId);
         Task<IEnumerable<LocationDto>> SearchLocationsAsync(string searchTerm);
+        Task<IEnumerable<LocationDto>> GetLocationsNeedingFollowUpAsync();
     }
 }

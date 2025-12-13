@@ -119,5 +119,20 @@ namespace NYR.API.Controllers
             var locations = await _locationService.SearchLocationsAsync(searchTerm);
             return Ok(locations);
         }
+
+        [HttpGet("follow-up-needed")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
+        public async Task<ActionResult<IEnumerable<LocationDto>>> GetLocationsNeedingFollowUp()
+        {
+            try
+            {
+                var locations = await _locationService.GetLocationsNeedingFollowUpAsync();
+                return Ok(locations);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
     }
 }
