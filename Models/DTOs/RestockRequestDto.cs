@@ -72,5 +72,6 @@ namespace NYR.API.Models.DTOs
     {
         public int Id { get; set; }
         public string VariantName { get; set; } = string.Empty;
+        public int ProdcutId { get; set; }
     }
 }

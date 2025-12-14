@@ -196,7 +196,8 @@ namespace NYR.API.Services
                 .Select(lid => new ProductVariantInfoDto
                 {
                     Id = lid.ProductVariant!.Id,
-                    VariantName = lid.ProductVariant.VariantName
+                    VariantName = lid.ProductVariant.VariantName,
+                    ProdcutId = lid.ProductId != null ? lid.ProductId : 0
                 })
                 .Distinct()
                 .ToListAsync();

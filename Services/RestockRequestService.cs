@@ -5,6 +5,7 @@ using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
+using System.Security.Cryptography;
 
 namespace NYR.API.Services
 {
@@ -279,7 +280,8 @@ namespace NYR.API.Services
                 .Select(pv => new ProductVariantInfoDto
                 {
                     Id = pv.Id,
-                    VariantName = pv.ProductVariant.VariantName
+                    VariantName = pv.ProductVariant.VariantName,
+                    ProdcutId = pv.ProductId != null ? pv.ProductId : 0
                 })
                 .ToListAsync();
 
