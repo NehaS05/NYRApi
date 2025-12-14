@@ -53,7 +53,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
         public async Task<ActionResult<VanInventoryDto>> CreateTransfer([FromBody] CreateVanInventoryDto createDto)
         {
             if (!ModelState.IsValid)
@@ -71,7 +71,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Driver")]
         public async Task<ActionResult> DeleteTransfer(int id)
         {
             var result = await _vanInventoryService.DeleteTransferAsync(id);
