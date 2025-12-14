@@ -164,11 +164,12 @@ namespace NYR.API.Services
         public async Task<IEnumerable<WarehouseListDto>> GetWarehouseListAsync()
         {
             var warehouses = await _warehouseRepository.GetAllAsync();
+            warehouses = warehouses.Where(x => x.IsActive == true);
             var productCounts = await _warehouseInventoryRepository.GetWarehouseProductCountsAsync();
             var quantityTotals = await _warehouseInventoryRepository.GetWarehouseQuantityTotalsAsync();
 
             var warehouseList = warehouses
-                .Where(w => productCounts.ContainsKey(w.Id) && productCounts[w.Id] > 0)
+                .Where(w => w.IsActive == true && productCounts.ContainsKey(w.Id) && productCounts[w.Id] > 0)
                 .Select(w => new WarehouseListDto
                 {
                     Id = w.Id,
