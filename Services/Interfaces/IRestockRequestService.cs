@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using NYR.API.Models.DTOs;
 
 namespace NYR.API.Services.Interfaces
@@ -11,6 +12,6 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<RestockRequestSummaryDto>> GetRequestsSummaryAsync();
         Task<RestockRequestDto> CreateRequestAsync(CreateRestockRequestDto createDto);
         Task<bool> DeleteRequestAsync(int id);
-        Task<IEnumerable<ProductVariantInfoDto>> GetProductVariantNameBySkuAsync(string skuCode);
+        Task<IEnumerable<ProductVariantInfoDto>> GetProductVariantNameBySkuAsync(string skuCode, int locationId, int? userId = null, int? productVariantId = null);
     }
 }

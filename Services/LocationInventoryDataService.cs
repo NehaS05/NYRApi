@@ -195,7 +195,7 @@ namespace NYR.API.Services
                               lid.ProductVariant != null && lid.Product.IsActive && lid.ProductVariant.IsActive)
                 .Select(lid => new ProductVariantInfoDto
                 {
-                    Id = lid.ProductVariant!.Id,
+                    ProductVariantId = lid.ProductVariant!.Id,
                     VariantName = lid.ProductVariant.VariantName,
                     ProdcutId = lid.ProductId != null ? lid.ProductId : 0
                 })

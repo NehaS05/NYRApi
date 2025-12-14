@@ -89,16 +89,18 @@ namespace NYR.API.Controllers
             return NoContent();
         }
 
-        [HttpGet("variant-name/{skuCode}")]
+        [HttpGet("scanOutwardBarcode/{skuCode}")]
         [Authorize(Roles = "Admin,Staff,Scanner")]
-        public async Task<ActionResult<IEnumerable<ProductVariantInfoDto>>> GetProductVariantNameBySku(string skuCode)
+        public async Task<ActionResult<IEnumerable<ProductVariantInfoDto>>> GetProductVariantNameBySku(string barcode, [FromQuery] int locationId, [FromQuery] int? userId = null, [FromQuery] int? productVariantId = null)
         {
-            if (string.IsNullOrWhiteSpace(skuCode))
+            if (string.IsNullOrWhiteSpace(barcode))
                 return BadRequest("Barcode cannot be empty");
 
-            var variantInfo = await _restockRequestService.GetProductVariantNameBySkuAsync(skuCode);
+            var variantInfo = await _restockRequestService.GetProductVariantNameBySkuAsync(barcode, locationId, userId, productVariantId);
             if (!variantInfo.Any())
-                return NotFound($"No product variants found with Barcode: {skuCode}");
+            {
+                return NotFound($"No product variants found with Barcode: {barcode}");
+            }
 
             return Ok(variantInfo);
         }
