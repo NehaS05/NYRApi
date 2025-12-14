@@ -1,4 +1,6 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -12,6 +14,7 @@ namespace NYR.API.Services
         private readonly ICategoryRepository _categoryRepository;
         private readonly IBrandRepository _brandRepository;
         private readonly ISupplierRepository _supplierRepository;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
         public ProductService(
@@ -19,18 +22,21 @@ namespace NYR.API.Services
             ICategoryRepository categoryRepository,
             IBrandRepository brandRepository,
             ISupplierRepository supplierRepository,
+            ApplicationDbContext context,
             IMapper mapper)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _brandRepository = brandRepository;
             _supplierRepository = supplierRepository;
+            _context = context;
             _mapper = mapper;
         }
 
         public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
             var products = await _productRepository.GetAllAsync();
+            products = products.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<ProductDto>>(products);
         }
 
@@ -133,8 +139,76 @@ namespace NYR.API.Services
             if (product == null)
                 return false;
 
-            // Note: ProductVariant deletion is handled by cascade delete in database
-            await _productRepository.DeleteAsync(product);
+            // Check if there are product variants associated with this product
+            var hasVariantsQuery = _context.ProductVariants
+                .Where(pv => pv.ProductId == id && pv.IsActive);
+            
+            var hasVariants = await hasVariantsQuery.AnyAsync();
+            
+            if (hasVariants)
+            {
+                // Check if any variants are referenced in LocationInventoryData
+                var hasInventoryReferencesQuery = _context.LocationInventoryData
+                    .Where(lid => lid.ProductId == id || 
+                                 (lid.ProductVariantId.HasValue && 
+                                  _context.ProductVariants.Any(pv => pv.Id == lid.ProductVariantId.Value && pv.ProductId == id)));
+                
+                var hasInventoryReferences = await hasInventoryReferencesQuery.AnyAsync();
+                
+                if (hasInventoryReferences)
+                {
+                    // Soft delete: deactivate product and its variants
+                    product.IsActive = false;
+                    product.UpdatedAt = DateTime.UtcNow;
+                    await _productRepository.UpdateAsync(product);
+                    
+                    // Deactivate associated product variants
+                    var variants = await hasVariantsQuery.ToListAsync();
+                    foreach (var variant in variants)
+                    {
+                        variant.IsActive = false;
+                        variant.UpdatedAt = DateTime.UtcNow;
+                    }
+                    
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // No inventory references, but has variants - soft delete product and variants
+                    product.IsActive = false;
+                    product.UpdatedAt = DateTime.UtcNow;
+                    await _productRepository.UpdateAsync(product);
+                    
+                    var variants = await hasVariantsQuery.ToListAsync();
+                    foreach (var variant in variants)
+                    {
+                        variant.IsActive = false;
+                        variant.UpdatedAt = DateTime.UtcNow;
+                    }
+                    
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                // Check if product itself is referenced in LocationInventoryData
+                var hasDirectInventoryReferences = await _context.LocationInventoryData
+                    .AnyAsync(lid => lid.ProductId == id);
+                
+                if (hasDirectInventoryReferences)
+                {
+                    // Soft delete product
+                    product.IsActive = false;
+                    product.UpdatedAt = DateTime.UtcNow;
+                    await _productRepository.UpdateAsync(product);
+                }
+                else
+                {
+                    // No references, safe to hard delete
+                    await _productRepository.DeleteAsync(product);
+                }
+            }
+            
             return true;
         }
 

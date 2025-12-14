@@ -1,4 +1,6 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -9,17 +11,20 @@ namespace NYR.API.Services
     public class CustomerService : ICustomerService
     {
         private readonly ICustomerRepository _customerRepository;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public CustomerService(ICustomerRepository customerRepository, IMapper mapper)
+        public CustomerService(ICustomerRepository customerRepository, ApplicationDbContext context, IMapper mapper)
         {
             _customerRepository = customerRepository;
+            _context = context;
             _mapper = mapper;
         }
 
         public async Task<IEnumerable<CustomerDto>> GetAllCustomersAsync()
         {
             var customers = await _customerRepository.GetAllAsync();
+            customers = customers.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<CustomerDto>>(customers);
         }
 
@@ -65,7 +70,68 @@ namespace NYR.API.Services
             if (customer == null)
                 return false;
 
-            await _customerRepository.DeleteAsync(customer);
+            // Check if there are locations associated with this customer
+            var hasLocationsQuery = _context.Locations
+                .Where(l => l.CustomerId == id && l.IsActive);
+            
+            var hasLocations = await hasLocationsQuery.AnyAsync();
+            
+            if (hasLocations)
+            {
+                // Check if any of these locations have active scanners
+                var hasActiveScannersQuery = _context.Scanners
+                    .Where(s => s.Location.CustomerId == id && s.IsActive);
+                
+                var hasActiveScanners = await hasActiveScannersQuery.AnyAsync();
+                
+                if (hasActiveScanners)
+                {
+                    // Soft delete: deactivate customer, locations, and scanners
+                    customer.IsActive = false;
+                    customer.UpdatedAt = DateTime.UtcNow;
+                    await _customerRepository.UpdateAsync(customer);
+                    
+                    // Deactivate associated locations
+                    var locations = await hasLocationsQuery.ToListAsync();
+                    foreach (var location in locations)
+                    {
+                        location.IsActive = false;
+                        location.UpdatedAt = DateTime.UtcNow;
+                    }
+                    
+                    // Deactivate associated scanners
+                    var scanners = await hasActiveScannersQuery.ToListAsync();
+                    foreach (var scanner in scanners)
+                    {
+                        scanner.IsActive = false;
+                        scanner.UpdatedAt = DateTime.UtcNow;
+                    }
+                    
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // No active scanners, but has locations - soft delete customer and locations
+                    customer.IsActive = false;
+                    customer.UpdatedAt = DateTime.UtcNow;
+                    await _customerRepository.UpdateAsync(customer);
+                    
+                    var locations = await hasLocationsQuery.ToListAsync();
+                    foreach (var location in locations)
+                    {
+                        location.IsActive = false;
+                        location.UpdatedAt = DateTime.UtcNow;
+                    }
+                    
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                // No locations, safe to hard delete
+                await _customerRepository.DeleteAsync(customer);
+            }
+            
             return true;
         }
 

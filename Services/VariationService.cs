@@ -24,6 +24,7 @@ namespace NYR.API.Services
         public async Task<IEnumerable<VariationDto>> GetAllVariationsAsync()
         {
             var variations = await _variationRepository.GetAllWithOptionsAsync();
+            variations = variations.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<VariationDto>>(variations);
         }
 
@@ -135,7 +136,72 @@ namespace NYR.API.Services
             if (variation == null)
                 return false;
 
-            await _variationRepository.DeleteAsync(variation);
+            // Check if there are variation options associated with this variation
+            var hasOptionsQuery = _context.VariationOptions
+                .Where(vo => vo.VariationId == id && vo.IsActive);
+            
+            var hasOptions = await hasOptionsQuery.AnyAsync();
+            
+            if (hasOptions)
+            {
+                // Check if any variation options are referenced in ProductVariantAttributes
+                var hasAttributeReferencesQuery = _context.ProductVariantAttributes
+                    .Where(pva => _context.VariationOptions.Any(vo => vo.Id == pva.VariationOptionId && vo.VariationId == id));
+                
+                var hasAttributeReferences = await hasAttributeReferencesQuery.AnyAsync();
+                
+                if (hasAttributeReferences)
+                {
+                    // Soft delete: deactivate variation and its options
+                    variation.IsActive = false;
+                    variation.UpdatedAt = DateTime.UtcNow;
+                    await _variationRepository.UpdateAsync(variation);
+                    
+                    // Deactivate associated variation options
+                    var options = await hasOptionsQuery.ToListAsync();
+                    foreach (var option in options)
+                    {
+                        option.IsActive = false;
+                    }
+                    
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // No attribute references, but has options - soft delete variation and options
+                    variation.IsActive = false;
+                    variation.UpdatedAt = DateTime.UtcNow;
+                    await _variationRepository.UpdateAsync(variation);
+                    
+                    var options = await hasOptionsQuery.ToListAsync();
+                    foreach (var option in options)
+                    {
+                        option.IsActive = false;
+                    }
+                    
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                // Check if variation itself is referenced in ProductVariantAttributes
+                var hasDirectAttributeReferences = await _context.ProductVariantAttributes
+                    .AnyAsync(pva => pva.VariationId == id);
+                
+                if (hasDirectAttributeReferences)
+                {
+                    // Soft delete variation
+                    variation.IsActive = false;
+                    variation.UpdatedAt = DateTime.UtcNow;
+                    await _variationRepository.UpdateAsync(variation);
+                }
+                else
+                {
+                    // No references, safe to hard delete
+                    await _variationRepository.DeleteAsync(variation);
+                }
+            }
+            
             return true;
         }
 

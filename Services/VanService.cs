@@ -1,4 +1,6 @@
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -9,17 +11,20 @@ namespace NYR.API.Services
     public class VanService : IVanService
     {
         private readonly IVanRepository _vanRepository;
+        private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public VanService(IVanRepository vanRepository, IMapper mapper)
+        public VanService(IVanRepository vanRepository, ApplicationDbContext context, IMapper mapper)
         {
             _vanRepository = vanRepository;
+            _context = context;
             _mapper = mapper;
         }
 
         public async Task<IEnumerable<VanDto>> GetAllAsync()
         {
             var vans = await _vanRepository.GetAllAsync();
+            vans = vans.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<VanDto>>(vans);
         }
 
@@ -60,7 +65,47 @@ namespace NYR.API.Services
         {
             var van = await _vanRepository.GetByIdAsync(id);
             if (van == null) return false;
-            await _vanRepository.DeleteAsync(van);
+
+            // Check if there are van inventories associated with this van
+            var hasInventoriesQuery = _context.VanInventories
+                .Where(vi => vi.VanId == id);
+            
+            var hasInventories = await hasInventoriesQuery.AnyAsync();
+            
+            if (hasInventories)
+            {
+                // Soft delete: deactivate the van instead of hard delete
+                van.IsActive = false;
+                van.UpdatedAt = DateTime.UtcNow;
+                await _vanRepository.UpdateAsync(van);
+                
+                // Optionally deactivate associated van inventories
+                var inventories = await hasInventoriesQuery.ToListAsync();
+                foreach (var inventory in inventories)
+                {
+                    // Check if VanInventory has IsActive property, if so deactivate it
+                    var inventoryType = inventory.GetType();
+                    var isActiveProperty = inventoryType.GetProperty("IsActive");
+                    if (isActiveProperty != null && isActiveProperty.PropertyType == typeof(bool))
+                    {
+                        isActiveProperty.SetValue(inventory, false);
+                    }
+                    
+                    var updatedAtProperty = inventoryType.GetProperty("UpdatedAt");
+                    if (updatedAtProperty != null && updatedAtProperty.PropertyType == typeof(DateTime?))
+                    {
+                        updatedAtProperty.SetValue(inventory, DateTime.UtcNow);
+                    }
+                }
+                
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // No inventories, safe to hard delete
+                await _vanRepository.DeleteAsync(van);
+            }
+            
             return true;
         }
 

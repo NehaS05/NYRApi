@@ -38,6 +38,7 @@ namespace NYR.API.Services
         public async Task<IEnumerable<LocationDto>> GetAllLocationsAsync()
         {
             var locations = await _locationRepository.GetAllAsync();
+            locations = locations.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<LocationDto>>(locations);
         }
         public async Task<IEnumerable<LocationDto>> GetAllLocationsWithInventoryAsync()
@@ -164,7 +165,34 @@ namespace NYR.API.Services
             if (location == null)
                 return false;
 
-            await _locationRepository.DeleteAsync(location);
+            // Check if there are active scanners associated with this location
+            var hasActiveScannersQuery = _context.Scanners
+                .Where(s => s.LocationId == id && s.IsActive);
+            
+            var hasActiveScanners = await hasActiveScannersQuery.AnyAsync();
+            
+            if (hasActiveScanners)
+            {
+                // Soft delete: deactivate the location instead of hard delete
+                location.IsActive = false;
+                location.UpdatedAt = DateTime.UtcNow;
+                await _locationRepository.UpdateAsync(location);
+                
+                // Also deactivate associated scanners
+                var scanners = await hasActiveScannersQuery.ToListAsync();
+                foreach (var scanner in scanners)
+                {
+                    scanner.IsActive = false;
+                    scanner.UpdatedAt = DateTime.UtcNow;
+                }
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                // No active scanners, safe to hard delete
+                await _locationRepository.DeleteAsync(location);
+            }
+            
             return true;
         }
 
