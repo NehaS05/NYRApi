@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
 using NYR.API.Models.DTOs;
@@ -19,8 +20,9 @@ namespace NYR.API.Services
         private readonly IMapper _mapper;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
+        private readonly IFollowupRequestRepository _followupRequestRepository;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository, IFollowupRequestRepository followupRequestRepository)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
@@ -30,6 +32,7 @@ namespace NYR.API.Services
             _mapper = mapper;
             _transferInventoryRepository = transferInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
+            _followupRequestRepository = followupRequestRepository;
         }
 
         public async Task<IEnumerable<LocationDto>> GetAllLocationsAsync()
@@ -201,8 +204,9 @@ namespace NYR.API.Services
 
                 // Get the last delivery date for this location from Routes
                 var lastDeliveryDate = await _context.RouteStops
-                    .Where(rs => rs.LocationId == location.Id && rs.IsActive)
-                    .Join(_context.Routes, rs => rs.RouteId, r => r.Id, (rs, r) => r.DeliveryDate)
+                    .Include(rs => rs.Route)
+                    .Where(rs => rs.LocationId == location.Id && rs.IsActive && rs.Route.Status.ToLower() == "completed")
+                    .Select(rs => rs.Route.DeliveryDate)
                     .OrderByDescending(deliveryDate => deliveryDate)
                     .FirstOrDefaultAsync();
 
@@ -217,6 +221,27 @@ namespace NYR.API.Services
                 if (daysSinceLastDelivery > location.FollowUpDays.Value)
                 {
                     var locationDto = _mapper.Map<LocationDto>(location);
+                    
+                    // Create followup request
+                    try
+                    {
+                        var createFollowupDto = new FollowupRequest
+                        {
+                            CustomerId = location.CustomerId,
+                            LocationId = location.Id,
+                            Status = "Followup",
+                            FollowupDate = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow,
+                            IsActive = true
+                        };
+                        
+                        await _followupRequestRepository.AddAsync(createFollowupDto);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the exception or handle as needed
+                        // Continue processing even if followup creation fails
+                    }
                     
                     // Add additional information about the follow-up
                     locationDto.Comments = $"Last delivery: {lastDeliveryDate:yyyy-MM-dd}, Days since: {daysSinceLastDelivery}, Follow-up needed after: {location.FollowUpDays} days";

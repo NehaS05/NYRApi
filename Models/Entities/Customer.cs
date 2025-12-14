@@ -14,9 +14,8 @@ namespace NYR.API.Models.Entities
         [MaxLength(200)]
         public string? DBA { get; set; }
 
-        [Required]
         [MaxLength(50)]
-        public string AccountNumber { get; set; } = string.Empty;
+        public string? AccountNumber { get; set; }
 
         [Required]
         [MaxLength(255)]
