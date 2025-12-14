@@ -7,6 +7,7 @@ using NYR.API.Models.Entities;
 using NYR.API.Repositories;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace NYR.API.Services
 {
@@ -18,6 +19,7 @@ namespace NYR.API.Services
         private readonly IUserRepository _userRepository;
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly ILocationOutwardInventoryService _locationOutwardInventoryService;
 
         public LocationInventoryDataService(
             ILocationInventoryDataRepository inventoryRepository,
@@ -25,7 +27,7 @@ namespace NYR.API.Services
             IProductRepository productRepository,
             IUserRepository userRepository,
             ApplicationDbContext context,
-            IMapper mapper)
+            IMapper mapper, ILocationOutwardInventoryService locationOutwardInventoryService)
         {
             _inventoryRepository = inventoryRepository;
             _locationRepository = locationRepository;
@@ -33,6 +35,7 @@ namespace NYR.API.Services
             _userRepository = userRepository;
             _context = context;
             _mapper = mapper;
+            _locationOutwardInventoryService = locationOutwardInventoryService;
         }
 
         public async Task<IEnumerable<LocationInventoryDataDto>> GetAllInventoryAsync()
@@ -180,20 +183,26 @@ namespace NYR.API.Services
             return await GetInventoryByIdAsync(id);
         }
 
-        public async Task<IEnumerable<ProductVariantInfoDto>> GetVariantInfoBySkuAsync(string skuCode)
+        public async Task<IEnumerable<ProductVariantInfoDto>> GetVariantInfoBySkuAsync(string skuCode, int locationId, int? userId = null, int? productVariantId = null)
         {
             if (string.IsNullOrWhiteSpace(skuCode))
                 return Enumerable.Empty<ProductVariantInfoDto>();
 
-            var variantInfo = await _context.LocationInventoryData
+            var query = _context.LocationInventoryData
                 .Include(lid => lid.ProductVariant)
                 .Include(lid => lid.Product)
-                .Where(lid => (lid.Product.BarcodeSKU == skuCode || 
-                              lid.Product.BarcodeSKU2 == skuCode || 
-                              lid.Product.BarcodeSKU3 == skuCode || 
+                .Where(lid => (lid.Product.BarcodeSKU == skuCode ||
+                              lid.Product.BarcodeSKU2 == skuCode ||
+                              lid.Product.BarcodeSKU3 == skuCode ||
                               lid.Product.BarcodeSKU4 == skuCode) &&
-                              lid.ProductVariant != null && lid.Product.IsActive && lid.ProductVariant.IsActive)
-                .Select(lid => new ProductVariantInfoDto
+                              lid.ProductVariant != null && lid.LocationId == locationId
+                              && lid.Product.IsActive && lid.ProductVariant.IsActive);
+
+            if (productVariantId.HasValue && productVariantId.Value > 0)
+            {
+                query = query.Where(pv => pv.ProductVariantId == productVariantId.Value);
+            }
+            var variantInfo = await query.Select(lid => new ProductVariantInfoDto
                 {
                     ProductVariantId = lid.ProductVariant!.Id,
                     VariantName = lid.ProductVariant.VariantName,
@@ -201,6 +210,54 @@ namespace NYR.API.Services
                 })
                 .Distinct()
                 .ToListAsync();
+
+
+            //If its only one data then do Scan complete 
+            if (variantInfo.Count() == 1)
+            {
+                // Execute CreateOutwardInventoryAsync service for each matching item
+                var locationInventoryDatas = await query.ToListAsync();
+                foreach (var item in locationInventoryDatas)
+                {
+                    try
+                    {
+                        var createOutwardDto = new CreateLocationOutwardInventoryDto
+                        {
+                            LocationId = locationId,
+                            ProductId = item.ProductId,
+                            ProductVariantId = item.ProductVariantId,
+                            Quantity = 1,  // item.Quantity,  // Quantity is doing one because driver will scan one by one and send
+                            VariationName = item.ProductVariant?.VariantName,
+                            CreatedBy = userId ?? 1 // Use provided userId or default to 1
+                        };
+
+                        await _locationOutwardInventoryService.CreateOutwardInventoryAsync(createOutwardDto);
+                        return new List<ProductVariantInfoDto>
+                        {
+                            new ProductVariantInfoDto
+                            {
+                                ProductVariantId = item.ProductVariant?.Id ?? 0,
+                                VariantName = "Data entered successfully",
+                                ProdcutId = item.ProductId
+                            }
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        return new List<ProductVariantInfoDto>
+                        {
+                            new ProductVariantInfoDto
+                            {
+                                ProductVariantId = 0,
+                                VariantName = $"Error: {ex.Message}",
+                                ProdcutId = 0
+                            }
+                        };
+                    }
+                }
+            }
+
+            //
 
             return variantInfo;
         }
