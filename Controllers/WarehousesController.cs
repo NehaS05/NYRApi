@@ -18,7 +18,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
         public async Task<ActionResult<IEnumerable<WarehouseDto>>> GetAll()
         {
             var items = await _warehouseService.GetAllAsync();
@@ -26,7 +26,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
         public async Task<ActionResult<WarehouseDto>> GetById(int id)
         {
             var item = await _warehouseService.GetByIdAsync(id);
@@ -35,7 +35,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("search")]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
         public async Task<ActionResult<IEnumerable<WarehouseDto>>> Search([FromQuery] string searchTerm)
         {
             var items = await _warehouseService.SearchAsync(searchTerm);
