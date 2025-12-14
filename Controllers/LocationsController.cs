@@ -26,7 +26,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("locationDetails")]
-        [Authorize(Roles = "Admin,Customer,Staff")]
+        [Authorize(Roles = "Admin,Customer,Staff,Driver")]
         public async Task<ActionResult<IEnumerable<LocationDto>>> GetAllLocationsWithInventory()
         {
             try
@@ -41,7 +41,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Customer,Staff")]
+        [Authorize(Roles = "Admin,Customer,Staff,Driver")]
         public async Task<ActionResult<LocationDto>> GetLocation(int id)
         {
             var location = await _locationService.GetLocationByIdAsync(id);

@@ -90,7 +90,7 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("scanOutwardBarcode/{barcode}")]
-        [Authorize(Roles = "Admin,Staff,Scanner")]
+        [Authorize(Roles = "Admin,Staff,Scanner,Driver")]
         public async Task<ActionResult<IEnumerable<ProductVariantInfoDto>>> GetProductVariantNameBySku(string barcode, [FromQuery] int locationId, [FromQuery] int? userId = null, [FromQuery] int? productVariantId = null)
         {
             if (string.IsNullOrWhiteSpace(barcode))
