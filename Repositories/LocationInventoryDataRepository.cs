@@ -15,7 +15,9 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Location)
+                    .ThenInclude(loc => loc.Customer)
                 .Include(l => l.Product)
+                .Include(l => l.ProductVariant)
                 .Include(l => l.CreatedByUser)
                 .Include(l => l.UpdatedByUser)
                 .OrderByDescending(l => l.CreatedAt)
@@ -26,7 +28,9 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Location)
+                    .ThenInclude(loc => loc.Customer)
                 .Include(l => l.Product)
+                .Include(l => l.ProductVariant)
                 .Include(l => l.CreatedByUser)
                 .Include(l => l.UpdatedByUser)
                 .FirstOrDefaultAsync(l => l.Id == id);
@@ -36,7 +40,9 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(l => l.Location)
+                    .ThenInclude(loc => loc.Customer)
                 .Include(l => l.Product)
+                .Include(l => l.ProductVariant)
                 .Include(l => l.CreatedByUser)
                 .Include(l => l.UpdatedByUser)
                 .Where(l => l.LocationId == locationId)

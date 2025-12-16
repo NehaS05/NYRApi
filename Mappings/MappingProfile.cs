@@ -266,9 +266,14 @@ namespace NYR.API.Mappings
             CreateMap<LocationInventoryData, LocationInventoryDataDto>()
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.ProductSKU, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.VariationName))
                 .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByUser.Name))
-                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedByUser != null ? src.UpdatedByUser.Name : null));
+                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedByUser != null ? src.UpdatedByUser.Name : null))
+                .ForMember(dest => dest.customerId, opt => opt.MapFrom(src => src.Location.CustomerId))
+                .ForMember(dest => dest.customerName, opt => opt.MapFrom(src => src.Location.Customer.CompanyName))
+                .ForMember(dest => dest.ContactPerson, opt => opt.MapFrom(src => src.Location.ContactPerson))
+                .ForMember(dest => dest.LocationNumber, opt => opt.MapFrom(src => src.Location.LocationPhone));
             CreateMap<CreateLocationInventoryDataDto, LocationInventoryData>()
                 .ForMember(dest => dest.VariationName, opt => opt.MapFrom(src => src.VariantName))
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));

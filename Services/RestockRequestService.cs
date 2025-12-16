@@ -190,7 +190,7 @@ namespace NYR.API.Services
             var existingRequest = existingRequests.FirstOrDefault(r => 
                 r.CustomerId == createDto.CustomerId && 
                 r.LocationId == createDto.LocationId && 
-                r.RequestDate.Date == today &&
+                // r.RequestDate.Date == today &&
                 r.IsActive);
 
             RestockRequest restockRequest;

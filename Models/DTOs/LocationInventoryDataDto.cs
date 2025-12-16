@@ -19,6 +19,10 @@ namespace NYR.API.Models.DTOs
         public int? UpdatedBy { get; set; }
         public string? UpdatedByName { get; set; }
         public DateTime? UpdatedDate { get; set; }
+        public int customerId { get; set; }
+        public string customerName { get; set; } = string.Empty;
+        public string? ContactPerson { get; set; }
+        public string? LocationNumber { get; set; }
     }
 
     public class CreateLocationInventoryDataDto
