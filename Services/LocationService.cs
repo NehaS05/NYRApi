@@ -171,7 +171,13 @@ namespace NYR.API.Services
             
             var hasActiveScanners = await hasActiveScannersQuery.AnyAsync();
             
-            if (hasActiveScanners)
+            // Check if there are route stops associated with this location
+            var hasRouteStopsQuery = _context.RouteStops
+                .Where(rs => rs.LocationId == id && rs.IsActive);
+            
+            var hasRouteStops = await hasRouteStopsQuery.AnyAsync();
+            
+            if (hasActiveScanners || hasRouteStops)
             {
                 // Soft delete: deactivate the location instead of hard delete
                 location.IsActive = false;
@@ -179,17 +185,32 @@ namespace NYR.API.Services
                 await _locationRepository.UpdateAsync(location);
                 
                 // Also deactivate associated scanners
-                var scanners = await hasActiveScannersQuery.ToListAsync();
-                foreach (var scanner in scanners)
+                if (hasActiveScanners)
                 {
-                    scanner.IsActive = false;
-                    scanner.UpdatedAt = DateTime.UtcNow;
+                    var scanners = await hasActiveScannersQuery.ToListAsync();
+                    foreach (var scanner in scanners)
+                    {
+                        scanner.IsActive = false;
+                        scanner.UpdatedAt = DateTime.UtcNow;
+                    }
                 }
+                
+                // Also deactivate associated route stops
+                if (hasRouteStops)
+                {
+                    var routeStops = await hasRouteStopsQuery.ToListAsync();
+                    foreach (var routeStop in routeStops)
+                    {
+                        routeStop.IsActive = false;
+                        //routeStop.UpdatedAt = DateTime.UtcNow;
+                    }
+                }
+                
                 await _context.SaveChangesAsync();
             }
             else
             {
-                // No active scanners, safe to hard delete
+                // No active scanners or route stops, safe to hard delete
                 await _locationRepository.DeleteAsync(location);
             }
             
