@@ -147,7 +147,7 @@ namespace NYR.API.Services
             
             if (hasVariants)
             {
-                // Check if any variants are referenced in LocationInventoryData
+                // Check if any variants are referenced in LocationInventoryData or RequestSupplies
                 var hasInventoryReferencesQuery = _context.LocationInventoryData
                     .Where(lid => lid.ProductId == id || 
                                  (lid.ProductVariantId.HasValue && 
@@ -155,7 +155,11 @@ namespace NYR.API.Services
                 
                 var hasInventoryReferences = await hasInventoryReferencesQuery.AnyAsync();
                 
-                if (hasInventoryReferences)
+                // Check if product is referenced in RequestSupplies
+                var hasRequestSuppliesReferences = await _context.RequestSupplies
+                    .AnyAsync(rs => rs.ProductId == id);
+                
+                if (hasInventoryReferences || hasRequestSuppliesReferences)
                 {
                     // Soft delete: deactivate product and its variants
                     product.IsActive = false;
@@ -174,7 +178,7 @@ namespace NYR.API.Services
                 }
                 else
                 {
-                    // No inventory references, but has variants - soft delete product and variants
+                    // No inventory or request supplies references, but has variants - soft delete product and variants
                     product.IsActive = false;
                     product.UpdatedAt = DateTime.UtcNow;
                     await _productRepository.UpdateAsync(product);
@@ -191,11 +195,14 @@ namespace NYR.API.Services
             }
             else
             {
-                // Check if product itself is referenced in LocationInventoryData
+                // Check if product itself is referenced in LocationInventoryData or RequestSupplies
                 var hasDirectInventoryReferences = await _context.LocationInventoryData
                     .AnyAsync(lid => lid.ProductId == id);
                 
-                if (hasDirectInventoryReferences)
+                var hasDirectRequestSuppliesReferences = await _context.RequestSupplies
+                    .AnyAsync(rs => rs.ProductId == id);
+                
+                if (hasDirectInventoryReferences || hasDirectRequestSuppliesReferences)
                 {
                     // Soft delete product
                     product.IsActive = false;
