@@ -32,6 +32,12 @@ namespace NYR.API.Models.Entities
         [Required]
         public int Quantity { get; set; }
 
+        /// <summary>
+        /// The quantity that was actually delivered for this item
+        /// Nullable - will be null until delivery is completed
+        /// </summary>
+        public int? DeliveredQuantity { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

@@ -339,7 +339,8 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.VariationValue, opt => opt.MapFrom(src => 
                     src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
                     ? src.ProductVariant.Attributes.First().VariationOption.Name 
-                    : null));
+                    : null))
+                .ForMember(dest => dest.DeliveredQuantity, opt => opt.MapFrom(src => src.DeliveredQuantity));
 
             CreateMap<CreateRestockRequestItemDto, RestockRequestItem>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));

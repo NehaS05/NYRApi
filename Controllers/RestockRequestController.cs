@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NYR.API.Models.DTOs;
 using NYR.API.Services.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace NYR.API.Controllers
 {
@@ -104,5 +105,30 @@ namespace NYR.API.Controllers
 
             return Ok(variantInfo);
         }
+
+        [HttpPatch("items/{itemId}/delivered-quantity")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<string>> UpdateDeliveredQuantity(int itemId, [FromBody] UpdateDeliveredQuantityDto updateDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _restockRequestService.UpdateDeliveredQuantityAsync(itemId, updateDto.DeliveredQuantity);
+                return Ok(new { message = result });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+    }
+
+    public class UpdateDeliveredQuantityDto
+    {
+        [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Delivered quantity must be at least 1")]
+        public int DeliveredQuantity { get; set; }
     }
 }

@@ -10,6 +10,12 @@ using System.Security.Cryptography;
 
 namespace NYR.API.Services
 {
+    public class DeliveryStatus
+    {
+        public bool IsFullyDelivered { get; set; }
+        public string Message { get; set; } = string.Empty;
+    }
+
     public class RestockRequestService : IRestockRequestService
     {
         private readonly IRestockRequestRepository _restockRequestRepository;
@@ -321,13 +327,35 @@ namespace NYR.API.Services
                             CreatedBy = userId ?? 1 // Use provided userId or default to 1
                         };
 
+                        // Check current delivery status before processing
+                        var currentDeliveryStatus = await CheckDeliveryStatusAsync(item.Id);
+                        
+                        // If item is already fully delivered, don't create inventory and return completion message
+                        if (currentDeliveryStatus.IsFullyDelivered)
+                        {
+                            return new List<ProductVariantInfoDto>
+                            {
+                                new ProductVariantInfoDto
+                                {
+                                    ProductVariantId = item.ProductVariant?.Id ?? 0,
+                                    VariantName = currentDeliveryStatus.Message,
+                                    ProdcutId = item.ProductId
+                                }
+                            };
+                        }
+
+                        // Only create inventory if item is not delivered or partially delivered
                         await _locationInventoryDataService.CreateInventoryAsync(createOutwardDto);
+                        
+                        // Update delivered quantity after creating inventory
+                        var deliveryStatus = await UpdateDeliveredQuantityForItemAsync(item.Id, createOutwardDto.Quantity);
+                        
                         return new List<ProductVariantInfoDto>
                         {
                             new ProductVariantInfoDto
                             {
                                 ProductVariantId = item.ProductVariant?.Id ?? 0,
-                                VariantName = "Data entered successfully",
+                                VariantName = deliveryStatus.Message,
                                 ProdcutId = item.ProductId
                             }
                         };
@@ -354,5 +382,177 @@ namespace NYR.API.Services
             // Ensure all code paths return a value
             return Enumerable.Empty<ProductVariantInfoDto>();
         }
+
+        public async Task<string> UpdateDeliveredQuantityAsync(int restockRequestItemId, int deliveredQuantity)
+        {
+            // Find the RestockRequestItem
+            var restockRequestItem = await _context.RestockRequestItems
+                .Include(rri => rri.RestockRequest)
+                    .ThenInclude(rr => rr.Items)
+                .FirstOrDefaultAsync(rri => rri.Id == restockRequestItemId);
+
+            if (restockRequestItem == null)
+            {
+                throw new ArgumentException("RestockRequestItem not found");
+            }
+
+            // Validate delivered quantity
+            if (deliveredQuantity < 0)
+            {
+                throw new ArgumentException("Delivered quantity cannot be negative");
+            }
+
+            if (deliveredQuantity > restockRequestItem.Quantity)
+            {
+                throw new ArgumentException($"Delivered quantity ({deliveredQuantity}) cannot exceed requested quantity ({restockRequestItem.Quantity})");
+            }
+
+            // Update the delivered quantity
+            restockRequestItem.DeliveredQuantity = (restockRequestItem.DeliveredQuantity ?? 0) + deliveredQuantity;
+
+            // Ensure delivered quantity doesn't exceed requested quantity
+            if (restockRequestItem.DeliveredQuantity > restockRequestItem.Quantity)
+            {
+                restockRequestItem.DeliveredQuantity = restockRequestItem.Quantity;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Check if all items in the RestockRequest are fully delivered
+            var allItems = restockRequestItem.RestockRequest.Items;
+            var allItemsDelivered = allItems.All(item => 
+                item.DeliveredQuantity.HasValue && item.DeliveredQuantity.Value >= item.Quantity);
+
+            if (allItemsDelivered)
+            {
+                // Update RestockRequest status to completed
+                // restockRequestItem.RestockRequest.Status = "Completed";
+                // restockRequestItem.RestockRequest.UpdatedAt = DateTime.UtcNow;
+                // await _context.SaveChangesAsync();
+
+                return "Requested Items delivered - All items in this RestockRequest have been fully delivered";
+            }
+            else
+            {
+                // Check if this specific item is fully delivered
+                if (restockRequestItem.DeliveredQuantity >= restockRequestItem.Quantity)
+                {
+                    return $"Item fully delivered - {restockRequestItem.DeliveredQuantity}/{restockRequestItem.Quantity} delivered";
+                }
+                else
+                {
+                    return $"Partial delivery recorded - {restockRequestItem.DeliveredQuantity}/{restockRequestItem.Quantity} delivered";
+                }
+            }
+        }
+
+        private async Task<DeliveryStatus> UpdateDeliveredQuantityForItemAsync(int restockRequestItemId, int deliveredQuantity)
+        {
+            // Find the RestockRequestItem
+            var restockRequestItem = await _context.RestockRequestItems
+                .Include(rri => rri.RestockRequest)
+                    .ThenInclude(rr => rr.Items)
+                .FirstOrDefaultAsync(rri => rri.Id == restockRequestItemId);
+
+            if (restockRequestItem == null)
+            {
+                return new DeliveryStatus
+                {
+                    IsFullyDelivered = false,
+                    Message = "RestockRequestItem not found"
+                };
+            }
+
+            // Update the delivered quantity
+            restockRequestItem.DeliveredQuantity = (restockRequestItem.DeliveredQuantity ?? 0) + deliveredQuantity;
+
+            // Ensure delivered quantity doesn't exceed requested quantity
+            if (restockRequestItem.DeliveredQuantity > restockRequestItem.Quantity)
+            {
+                restockRequestItem.DeliveredQuantity = restockRequestItem.Quantity;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Check if this specific item is fully delivered
+            bool isItemFullyDelivered = restockRequestItem.DeliveredQuantity >= restockRequestItem.Quantity;
+
+            if (isItemFullyDelivered)
+            {
+                // Check if all items in the RestockRequest are fully delivered
+                var allItems = restockRequestItem.RestockRequest.Items;
+                var allItemsDelivered = allItems.All(item => 
+                    item.DeliveredQuantity.HasValue && item.DeliveredQuantity.Value >= item.Quantity);
+
+                if (allItemsDelivered)
+                {
+                    // Update RestockRequest status to completed
+                    restockRequestItem.RestockRequest.Status = "Completed";
+                    restockRequestItem.RestockRequest.UpdatedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+
+                    return new DeliveryStatus
+                    {
+                        IsFullyDelivered = true,
+                        Message = "Requested Items delivered - All items in this RestockRequest have been fully delivered"
+                    };
+                }
+                else
+                {
+                    return new DeliveryStatus
+                    {
+                        IsFullyDelivered = true,
+                        Message = $"Item fully delivered - {restockRequestItem.DeliveredQuantity}/{restockRequestItem.Quantity} delivered"
+                    };
+                }
+            }
+            else
+            {
+                return new DeliveryStatus
+                {
+                    IsFullyDelivered = false,
+                    Message = $"Partial delivery - {restockRequestItem.DeliveredQuantity}/{restockRequestItem.Quantity} delivered"
+                };
+            }
+        }
+
+        private async Task<DeliveryStatus> CheckDeliveryStatusAsync(int restockRequestItemId)
+        {
+            // Find the RestockRequestItem
+            var restockRequestItem = await _context.RestockRequestItems
+                .FirstOrDefaultAsync(rri => rri.Id == restockRequestItemId);
+
+            if (restockRequestItem == null)
+            {
+                return new DeliveryStatus
+                {
+                    IsFullyDelivered = false,
+                    Message = "RestockRequestItem not found"
+                };
+            }
+
+            // Check if this specific item is already fully delivered
+            bool isItemFullyDelivered = restockRequestItem.DeliveredQuantity.HasValue && 
+                                       restockRequestItem.DeliveredQuantity.Value >= restockRequestItem.Quantity;
+
+            if (isItemFullyDelivered)
+            {
+                return new DeliveryStatus
+                {
+                    IsFullyDelivered = true,
+                    Message = $"Item already fully delivered - {restockRequestItem.DeliveredQuantity}/{restockRequestItem.Quantity} delivered"
+                };
+            }
+            else
+            {
+                var currentDelivered = restockRequestItem.DeliveredQuantity ?? 0;
+                return new DeliveryStatus
+                {
+                    IsFullyDelivered = false,
+                    Message = $"Item available for delivery - {currentDelivered}/{restockRequestItem.Quantity} delivered"
+                };
+            }
+        }
+       
     }
 }
