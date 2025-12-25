@@ -187,10 +187,13 @@ namespace NYR.API.Services
             // Check if there's an existing RestockRequest for the same customer, location, and date (today)
             var existingRequests = await _restockRequestRepository.GetByLocationIdAsync(createDto.LocationId);
             var today = DateTime.UtcNow.Date;
+
+            //If existingRequests status is delivered then only create new Restock Request
             var existingRequest = existingRequests.FirstOrDefault(r => 
                 r.CustomerId == createDto.CustomerId && 
                 r.LocationId == createDto.LocationId && 
                 // r.RequestDate.Date == today &&
+                r.Status.ToLower() != "delivered" &&
                 r.IsActive);
 
             RestockRequest restockRequest;
