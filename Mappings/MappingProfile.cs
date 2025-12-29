@@ -112,7 +112,8 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.VariationOptionValue, opt => opt.MapFrom(src => src.VariationOption.Value));
 
 			// Van mappings
-			CreateMap<Van, VanDto>();
+			CreateMap<Van, VanDto>()
+				.ForMember(dest => dest.DriverName, opt => opt.MapFrom(src => src.Driver != null ? src.Driver.Name : null));
 			CreateMap<CreateVanDto, Van>()
 				.ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
 				.ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())

@@ -23,14 +23,18 @@ namespace NYR.API.Services
 
         public async Task<IEnumerable<VanDto>> GetAllAsync()
         {
-            var vans = await _vanRepository.GetAllAsync();
-            vans = vans.Where(x => x.IsActive == true);
+            var vans = await _context.Vans
+                .Include(v => v.Driver)
+                .Where(v => v.IsActive)
+                .ToListAsync();
             return _mapper.Map<IEnumerable<VanDto>>(vans);
         }
 
         public async Task<VanDto?> GetByIdAsync(int id)
         {
-            var van = await _vanRepository.GetByIdAsync(id);
+            var van = await _context.Vans
+                .Include(v => v.Driver)
+                .FirstOrDefaultAsync(v => v.Id == id);
             return van != null ? _mapper.Map<VanDto>(van) : null;
         }
 
