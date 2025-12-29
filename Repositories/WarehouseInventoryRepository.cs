@@ -13,7 +13,7 @@ namespace NYR.API.Repositories
 
         public async Task<IEnumerable<WarehouseInventory>> GetByWarehouseIdAsync(int warehouseId)
         {
-            return await _dbSet
+            var data = await _dbSet
                 .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
                 .Include(wi => wi.Warehouse)
                 .Include(wi => wi.Product)
@@ -24,6 +24,7 @@ namespace NYR.API.Repositories
                     .ThenInclude(pv => pv.Attributes)
                         .ThenInclude(a => a.VariationOption)
                 .ToListAsync();
+            return data;
         }
 
         public async Task<IEnumerable<WarehouseInventory>> GetByProductIdAsync(int productId)

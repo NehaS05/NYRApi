@@ -11,5 +11,6 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<TransferDto>> GetTransfersByStatusAsync(string status);
         Task<IEnumerable<TransferDto>> GetTransfersByTypeAsync(string type);
         Task<TransferSummaryDto> GetTransfersSummaryAsync();
+        Task<InventoryCountsByDriverDto?> GetInventoryCountsByDriverIdAsync(int driverId);
     }
 }

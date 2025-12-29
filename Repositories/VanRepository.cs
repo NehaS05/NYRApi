@@ -28,6 +28,13 @@ namespace NYR.API.Repositories
                 v.DefaultDriverName.ToLower().Contains(searchTerm)
             ).ToListAsync();
         }
+
+        public async Task<IEnumerable<Van>> GetByDriverIdAsync(int driverId)
+        {
+            return await _dbSet
+                .Where(v => v.DriverId == driverId && v.IsActive)
+                .ToListAsync();
+        }
     }
 }
 

@@ -105,5 +105,19 @@ namespace NYR.API.Controllers
             var summary = await _transferService.GetTransfersSummaryAsync();
             return Ok(summary);
         }
+
+        /// <summary>
+        /// Get inventory counts by driver ID
+        /// </summary>
+        [HttpGet("inventory-counts/driver/{driverId}")]
+        [Authorize(Roles = "Admin,Staff,Driver")]
+        public async Task<ActionResult<InventoryCountsByDriverDto>> GetInventoryCountsByDriverId(int driverId)
+        {
+            var inventoryCounts = await _transferService.GetInventoryCountsByDriverIdAsync(driverId);
+            if (inventoryCounts == null)
+                return NotFound($"Driver with ID {driverId} not found");
+
+            return Ok(inventoryCounts);
+        }
     }
 }

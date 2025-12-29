@@ -6,6 +6,7 @@ namespace NYR.API.Repositories.Interfaces
     {
         Task<Van?> GetByVanNumberAsync(string vanNumber);
         Task<IEnumerable<Van>> SearchAsync(string searchTerm);
+        Task<IEnumerable<Van>> GetByDriverIdAsync(int driverId);
     }
 }
 

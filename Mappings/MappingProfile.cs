@@ -358,6 +358,20 @@ namespace NYR.API.Mappings
             CreateMap<UpdateLocationOutwardInventoryDto, LocationOutwardInventory>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedBy, opt => opt.Ignore());
+
+            // InventoryCount mappings
+            CreateMap<WarehouseInventory, WarehouseInventoryCountDto>()
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null));
+
+            CreateMap<VanInventoryItem, VanInventoryCountDto>()
+                .ForMember(dest => dest.VanId, opt => opt.MapFrom(src => src.VanInventory.VanId))
+                .ForMember(dest => dest.VanName, opt => opt.MapFrom(src => src.VanInventory.Van.VanName))
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.VanInventory.Status));
         }
     }
 }

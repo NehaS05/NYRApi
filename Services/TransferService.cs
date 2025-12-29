@@ -11,6 +11,9 @@ namespace NYR.API.Services
         private readonly IFollowupRequestRepository _followupRequestRepository;
         private readonly ITransferInventoryRepository _transferInventoryRepository;
         private readonly ILocationInventoryDataRepository _locationInventoryDataRepository;
+        private readonly IUserRepository _userRepository;
+        private readonly IWarehouseInventoryRepository _warehouseInventoryRepository;
+        private readonly IVanRepository _vanRepository;
         private readonly AutoMapper.IMapper _mapper;
 
         public TransferService(
@@ -19,6 +22,9 @@ namespace NYR.API.Services
             IFollowupRequestRepository followupRequestRepository,
             ITransferInventoryRepository transferInventoryRepository,
             ILocationInventoryDataRepository locationInventoryDataRepository,
+            IUserRepository userRepository,
+            IWarehouseInventoryRepository warehouseInventoryRepository,
+            IVanRepository vanRepository,
             AutoMapper.IMapper mapper)
         {
             _vanInventoryRepository = vanInventoryRepository;
@@ -26,6 +32,9 @@ namespace NYR.API.Services
             _followupRequestRepository = followupRequestRepository;
             _transferInventoryRepository = transferInventoryRepository;
             _locationInventoryDataRepository = locationInventoryDataRepository;
+            _userRepository = userRepository;
+            _warehouseInventoryRepository = warehouseInventoryRepository;
+            _vanRepository = vanRepository;
             _mapper = mapper;
         }
 
@@ -429,6 +438,75 @@ namespace NYR.API.Services
                 PendingTransfers = pendingTransfers,
                 CompletedTransfers = completedTransfers
             };
+        }
+
+        public async Task<InventoryCountsByDriverDto?> GetInventoryCountsByDriverIdAsync(int driverId)
+        {
+            // Get user by driverId
+            var user = await _userRepository.GetByIdAsync(driverId);
+            if (user == null)
+                return null;
+
+            var result = new InventoryCountsByDriverDto
+            {
+                DriverId = driverId,
+                DriverName = user.Name,
+                WarehouseId = user.WarehouseId,
+                WarehouseName = user.Warehouse?.Name
+            };
+
+            // Get warehouse inventories if user has a warehouse
+            if (user.WarehouseId.HasValue)
+            {
+                var warehouseInventories = await _warehouseInventoryRepository.GetByWarehouseIdAsync(user.WarehouseId.Value);
+                result.WarehouseInventories = warehouseInventories.Where(wi => wi.IsActive).Select(wi => new WarehouseInventoryCountDto
+                {
+                    Id = wi.Id,
+                    ProductId = wi.ProductId,
+                    ProductName = wi.Product?.Name ?? "Unknown",
+                    SkuCode = wi.Product?.BarcodeSKU,
+                    ProductVariantId = wi.ProductVariantId,
+                    VariantName = wi.ProductVariant?.VariantName,
+                    Quantity = wi.Quantity,
+                    Notes = wi.Notes,
+                    CreatedAt = wi.CreatedAt
+                }).ToList();
+
+                result.TotalWarehouseItems = result.WarehouseInventories.Sum(wi => wi.Quantity);
+            }
+
+            // Get van inventories for vans assigned to this driver
+            var assignedVans = await _vanRepository.GetByDriverIdAsync(driverId);
+
+            var vanInventoryItems = new List<VanInventoryCountDto>();
+            var vanInventories = await _vanInventoryRepository.GetAllWithDetailsAsync();
+            foreach (var van in assignedVans)
+            {                
+                var vanItems = vanInventories
+                    .Where(vi => vi.VanId == van.Id && vi.IsActive)
+                    .SelectMany(vi => vi.Items.Select(item => new VanInventoryCountDto
+                    {
+                        Id = item.Id,
+                        VanId = vi.VanId,
+                        VanName = van.VanName,
+                        ProductId = item.ProductId,
+                        ProductName = item.Product?.Name ?? "Unknown",
+                        SkuCode = item.Product?.BarcodeSKU,
+                        ProductVariantId = item.ProductVariantId,
+                        VariantName = item.ProductVariant?.VariantName,
+                        Quantity = item.Quantity,
+                        Status = vi.Status,
+                        CreatedAt = item.CreatedAt
+                    }));
+
+                vanInventoryItems.AddRange(vanItems);
+            }
+
+            result.VanInventories = vanInventoryItems;
+            result.TotalVanItems = result.VanInventories.Sum(vi => vi.Quantity);
+            result.TotalItems = result.TotalWarehouseItems + result.TotalVanItems;
+
+            return result;
         }
     }
 }
