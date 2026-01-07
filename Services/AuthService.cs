@@ -41,11 +41,19 @@ namespace NYR.API.Services
 
             var userDto = _mapper.Map<UserDto>(user);
             var token = await GenerateJwtTokenAsync(userDto);
+            var refreshToken = await GenerateRefreshTokenAsync();
+
+            // Store refresh token in database
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(30); // 30 days for refresh token
+            await _userRepository.UpdateAsync(user);
 
             return new AuthResponseDto
             {
                 Token = token,
+                RefreshToken = refreshToken,
                 Expiration = DateTime.UtcNow.AddHours(24),
+                RefreshTokenExpiration = user.RefreshTokenExpiry.Value,
                 User = userDto
             };
         }
@@ -101,6 +109,51 @@ namespace NYR.API.Services
             );
 
             return Task.FromResult(new JwtSecurityTokenHandler().WriteToken(token));
+        }
+
+        public Task<string> GenerateRefreshTokenAsync()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Task.FromResult(Convert.ToBase64String(randomNumber));
+        }
+
+        public async Task<AuthResponseDto?> RefreshTokenAsync(string refreshToken)
+        {
+            var user = await _userRepository.GetByRefreshTokenAsync(refreshToken);
+            if (user == null || user.RefreshTokenExpiry <= DateTime.UtcNow || !user.IsActive)
+                return null;
+
+            var userDto = _mapper.Map<UserDto>(user);
+            var newToken = await GenerateJwtTokenAsync(userDto);
+            var newRefreshToken = await GenerateRefreshTokenAsync();
+
+            // Update refresh token in database
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+            await _userRepository.UpdateAsync(user);
+
+            return new AuthResponseDto
+            {
+                Token = newToken,
+                RefreshToken = newRefreshToken,
+                Expiration = DateTime.UtcNow.AddHours(24),
+                RefreshTokenExpiration = user.RefreshTokenExpiry.Value,
+                User = userDto
+            };
+        }
+
+        public async Task<bool> RevokeRefreshTokenAsync(string refreshToken)
+        {
+            var user = await _userRepository.GetByRefreshTokenAsync(refreshToken);
+            if (user == null)
+                return false;
+
+            user.RefreshToken = null;
+            user.RefreshTokenExpiry = null;
+            await _userRepository.UpdateAsync(user);
+            return true;
         }
 
         private string HashPassword(string password)

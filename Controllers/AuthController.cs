@@ -58,5 +58,32 @@ namespace NYR.API.Controllers
             // For now, returning a placeholder
             return Ok(new { Message = "User details endpoint" });
         }
+
+        [HttpPost("refresh-token")]
+        public async Task<ActionResult<AuthResponseDto>> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.RefreshTokenAsync(refreshTokenDto.RefreshToken);
+            if (result == null)
+                return Unauthorized("Invalid or expired refresh token");
+
+            return Ok(result);
+        }
+
+        [HttpPost("revoke-token")]
+        [Authorize]
+        public async Task<ActionResult> RevokeToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.RevokeRefreshTokenAsync(refreshTokenDto.RefreshToken);
+            if (!result)
+                return BadRequest("Failed to revoke token");
+
+            return Ok(new { Message = "Token revoked successfully" });
+        }
     }
 }

@@ -60,6 +60,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // AutoMapper Configuration
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+// Add Memory Cache for PIN service
+builder.Services.AddMemoryCache();
+
 // Repository Registration
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();

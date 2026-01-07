@@ -64,6 +64,16 @@ namespace NYR.API.Repositories
                 .ToListAsync();
         }
 
+        public async Task<User?> GetByRefreshTokenAsync(string refreshToken)
+        {
+            return await _dbSet
+                .Include(u => u.Role)
+                .Include(u => u.Customer)
+                .Include(u => u.Location)
+                .Include(u => u.Warehouse)
+                .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
+        }
+
         public override async Task<IEnumerable<User>> GetAllAsync()
         {
             return await _dbSet

@@ -207,6 +207,34 @@ namespace NYR.API.Controllers
 
             return Ok(scanner);
         }
+
+        [HttpPost("refresh-token")]
+        [AllowAnonymous] // Allow anonymous access for token refresh
+        public async Task<ActionResult<ScannerPinConfirmResponseDto>> RefreshScannerToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _scannerService.RefreshScannerTokenAsync(refreshTokenDto.RefreshToken);
+            if (result == null)
+                return Unauthorized("Invalid or expired refresh token");
+
+            return Ok(result);
+        }
+
+        [HttpPost("revoke-token")]
+        [Authorize(Roles = "Scanner")] // Require scanner authentication
+        public async Task<ActionResult> RevokeScannerToken([FromBody] RefreshTokenDto refreshTokenDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _scannerService.RevokeScannerRefreshTokenAsync(refreshTokenDto.RefreshToken);
+            if (!result)
+                return BadRequest("Failed to revoke token");
+
+            return Ok(new { Message = "Scanner token revoked successfully" });
+        }
     }
 }
 

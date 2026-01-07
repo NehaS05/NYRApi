@@ -65,6 +65,11 @@ namespace NYR.API.Models.Entities
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
 
+        // Refresh Token fields
+        [MaxLength(500)]
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
+
         // Navigation properties
         public virtual ICollection<DriverAvailability> DriverAvailabilities { get; set; } = new List<DriverAvailability>();
     }

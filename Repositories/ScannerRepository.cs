@@ -44,6 +44,13 @@ namespace NYR.API.Repositories
                 .FirstOrDefaultAsync(s => s.SerialNo == serialNo);
         }
 
+        public async Task<Scanner?> GetByRefreshTokenAsync(string refreshToken)
+        {
+            return await _dbSet
+                .Include(s => s.Location)
+                .FirstOrDefaultAsync(s => s.RefreshToken == refreshToken);
+        }
+
         public override async Task<IEnumerable<Scanner>> GetAllAsync()
         {
             return await _dbSet

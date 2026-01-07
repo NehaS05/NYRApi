@@ -6,6 +6,7 @@ using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace NYR.API.Services
@@ -136,9 +137,17 @@ namespace NYR.API.Services
                 };
             }
 
-            // PIN is valid - generate token
+            // PIN is valid - generate tokens
             var token = GenerateScannerJwtToken(scanner);
+            var refreshToken = GenerateRefreshToken();
             var tokenExpiry = DateTime.UtcNow.AddHours(24);
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+            // Store refresh token in database
+            scanner.RefreshToken = refreshToken;
+            scanner.RefreshTokenExpiry = refreshTokenExpiry;
+            scanner.UpdatedAt = DateTime.UtcNow;
+            await _scannerRepository.UpdateAsync(scanner);
 
             return new ScannerPinConfirmResponseDto
             {
@@ -146,7 +155,9 @@ namespace NYR.API.Services
                 Message = "PIN confirmed successfully",
                 Scanner = _mapper.Map<ScannerDto>(scanner),
                 Token = token,
-                TokenExpiry = tokenExpiry
+                RefreshToken = refreshToken,
+                TokenExpiry = tokenExpiry,
+                RefreshTokenExpiry = refreshTokenExpiry
             };
         }
 
@@ -227,6 +238,57 @@ namespace NYR.API.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        public async Task<ScannerPinConfirmResponseDto?> RefreshScannerTokenAsync(string refreshToken)
+        {
+            var scanner = await _scannerRepository.GetByRefreshTokenAsync(refreshToken);
+            if (scanner == null || scanner.RefreshTokenExpiry <= DateTime.UtcNow || !scanner.IsActive)
+                return null;
+
+            // Generate new tokens
+            var newToken = GenerateScannerJwtToken(scanner);
+            var newRefreshToken = GenerateRefreshToken();
+            var tokenExpiry = DateTime.UtcNow.AddHours(24);
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+            // Update refresh token in database
+            scanner.RefreshToken = newRefreshToken;
+            scanner.RefreshTokenExpiry = refreshTokenExpiry;
+            scanner.UpdatedAt = DateTime.UtcNow;
+            await _scannerRepository.UpdateAsync(scanner);
+
+            return new ScannerPinConfirmResponseDto
+            {
+                IsValid = true,
+                Message = "Token refreshed successfully",
+                Scanner = _mapper.Map<ScannerDto>(scanner),
+                Token = newToken,
+                RefreshToken = newRefreshToken,
+                TokenExpiry = tokenExpiry,
+                RefreshTokenExpiry = refreshTokenExpiry
+            };
+        }
+
+        public async Task<bool> RevokeScannerRefreshTokenAsync(string refreshToken)
+        {
+            var scanner = await _scannerRepository.GetByRefreshTokenAsync(refreshToken);
+            if (scanner == null)
+                return false;
+
+            scanner.RefreshToken = null;
+            scanner.RefreshTokenExpiry = null;
+            scanner.UpdatedAt = DateTime.UtcNow;
+            await _scannerRepository.UpdateAsync(scanner);
+            return true;
         }
     }
 }

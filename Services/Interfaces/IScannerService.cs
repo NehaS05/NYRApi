@@ -13,6 +13,8 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<ScannerDto>> SearchScannersAsync(string searchTerm);
         Task<ScannerPinConfirmResponseDto> ConfirmScannerPinAsync(ScannerPinConfirmDto confirmDto);
         Task<ScannerPinResetResponseDto> ResetScannerPinAsync(ScannerPinResetDto resetDto);
+        Task<ScannerPinConfirmResponseDto?> RefreshScannerTokenAsync(string refreshToken);
+        Task<bool> RevokeScannerRefreshTokenAsync(string refreshToken);
     }
 }
 

@@ -76,7 +76,9 @@ namespace NYR.API.Models.DTOs
         public string Message { get; set; } = string.Empty;
         public ScannerDto? Scanner { get; set; }
         public string? Token { get; set; }
+        public string? RefreshToken { get; set; }
         public DateTime? TokenExpiry { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
     }
 
     public class ScannerPinResetDto
