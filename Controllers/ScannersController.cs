@@ -139,7 +139,7 @@ namespace NYR.API.Controllers
                 {
                     IsValid = false,
                     Message = "An error occurred while confirming PIN",
-                    Scanner = null
+                    AppPinReset = false
                 });
             }
         }

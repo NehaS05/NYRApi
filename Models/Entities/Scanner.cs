@@ -37,6 +37,9 @@ namespace NYR.API.Models.Entities
         [MaxLength(500)]
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiry { get; set; }
+
+        // App PIN Reset flag
+        public bool AppPinReset { get; set; } = false;
     }
 }
 

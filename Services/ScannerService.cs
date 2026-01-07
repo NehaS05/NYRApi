@@ -111,7 +111,7 @@ namespace NYR.API.Services
                 {
                     IsValid = false,
                     Message = "Scanner not found with the provided serial number",
-                    Scanner = null
+                    AppPinReset = false
                 };
             }
 
@@ -122,7 +122,7 @@ namespace NYR.API.Services
                 {
                     IsValid = false,
                     Message = "Scanner is not active",
-                    Scanner = null
+                    AppPinReset = scanner.AppPinReset
                 };
             }
 
@@ -133,19 +133,23 @@ namespace NYR.API.Services
                 {
                     IsValid = false,
                     Message = "Invalid PIN",
-                    Scanner = null
+                    AppPinReset = scanner.AppPinReset
                 };
             }
 
-            // PIN is valid - generate tokens
+            // PIN is valid - capture the current AppPinReset value before resetting it
+            var currentAppPinReset = scanner.AppPinReset;
+            
+            // Generate tokens
             var token = GenerateScannerJwtToken(scanner);
             var refreshToken = GenerateRefreshToken();
             var tokenExpiry = DateTime.UtcNow.AddHours(24);
             var refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
 
-            // Store refresh token in database
+            // Store refresh token in database and reset AppPinReset flag
             scanner.RefreshToken = refreshToken;
             scanner.RefreshTokenExpiry = refreshTokenExpiry;
+            scanner.AppPinReset = false; // Reset the flag when PIN is successfully confirmed
             scanner.UpdatedAt = DateTime.UtcNow;
             await _scannerRepository.UpdateAsync(scanner);
 
@@ -153,7 +157,7 @@ namespace NYR.API.Services
             {
                 IsValid = true,
                 Message = "PIN confirmed successfully",
-                Scanner = _mapper.Map<ScannerDto>(scanner),
+                AppPinReset = currentAppPinReset, // Send the original value before it was reset
                 Token = token,
                 RefreshToken = refreshToken,
                 TokenExpiry = tokenExpiry,
@@ -188,6 +192,7 @@ namespace NYR.API.Services
             // Update the PIN
             scanner.ScannerPIN = resetDto.NewPIN;
             scanner.UpdatedAt = DateTime.UtcNow;
+            scanner.AppPinReset = true;
 
             try
             {
@@ -270,7 +275,7 @@ namespace NYR.API.Services
             {
                 IsValid = true,
                 Message = "Token refreshed successfully",
-                Scanner = _mapper.Map<ScannerDto>(scanner),
+                AppPinReset = scanner.AppPinReset,
                 Token = newToken,
                 RefreshToken = newRefreshToken,
                 TokenExpiry = tokenExpiry,
@@ -290,6 +295,7 @@ namespace NYR.API.Services
             await _scannerRepository.UpdateAsync(scanner);
             return true;
         }
+
     }
 }
 
