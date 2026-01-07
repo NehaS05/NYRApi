@@ -234,12 +234,9 @@ namespace NYR.API.Data
 						new Product 
 						{ 
 							Name = "Pneumatic Walking Boot", 
-							Description = "Adjustable pneumatic walking boot for foot injuries", 
-							BarcodeSKU = "PWB-001", 
 							CategoryId = category.Id, 
 							BrandId = brand.Id, 
 							SupplierId = supplier.Id, 
-							Price = 89.99m, 
 							ShowInCatalogue = true, 
 							IsUniversal = false, 
 							IsActive = true 
@@ -247,12 +244,9 @@ namespace NYR.API.Data
 						new Product 
 						{ 
 							Name = "Knee Brace Support", 
-							Description = "Heavy-duty knee brace for sports and recovery", 
-							BarcodeSKU = "KBS-002", 
 							CategoryId = category.Id, 
 							BrandId = brand.Id, 
 							SupplierId = supplier.Id, 
-							Price = 45.50m, 
 							ShowInCatalogue = true, 
 							IsUniversal = false, 
 							IsActive = true 
@@ -260,12 +254,9 @@ namespace NYR.API.Data
 						new Product 
 						{ 
 							Name = "Wrist Support Band", 
-							Description = "Compression wrist support for carpal tunnel relief", 
-							BarcodeSKU = "WSB-003", 
 							CategoryId = category.Id, 
 							BrandId = brand.Id, 
 							SupplierId = supplier.Id, 
-							Price = 25.99m, 
 							ShowInCatalogue = true, 
 							IsUniversal = false, 
 							IsActive = true 
@@ -273,6 +264,44 @@ namespace NYR.API.Data
 					};
 
 					await context.Products.AddRangeAsync(products);
+					await context.SaveChangesAsync();
+
+					// Create default variants for the products with migrated data
+					var variants = new List<ProductVariant>
+					{
+						new ProductVariant
+						{
+							ProductId = products[0].Id,
+							VariantName = "Default",
+							Description = "Adjustable pneumatic walking boot for foot injuries",
+							BarcodeSKU = "PWB-001",
+							Price = 89.99m,
+							IsEnabled = true,
+							IsActive = true
+						},
+						new ProductVariant
+						{
+							ProductId = products[1].Id,
+							VariantName = "Default",
+							Description = "Heavy-duty knee brace for sports and recovery",
+							BarcodeSKU = "KBS-002",
+							Price = 45.50m,
+							IsEnabled = true,
+							IsActive = true
+						},
+						new ProductVariant
+						{
+							ProductId = products[2].Id,
+							VariantName = "Default",
+							Description = "Compression wrist support for carpal tunnel relief",
+							BarcodeSKU = "WSB-003",
+							Price = 25.99m,
+							IsEnabled = true,
+							IsActive = true
+						}
+					};
+
+					await context.ProductVariants.AddRangeAsync(variants);
 					await context.SaveChangesAsync();
 				}
 			}

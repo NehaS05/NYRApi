@@ -113,20 +113,28 @@ namespace NYR.API.Repositories
 
         public async Task<Product?> GetByBarcodeAsync(string barcode)
         {
-            return await _dbSet
-                .Include(p => p.Category)
-                .Include(p => p.Brand)
-                .Include(p => p.Supplier)
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Attributes)
-                        .ThenInclude(a => a.Variation)
-                .Include(p => p.Variants)
-                    .ThenInclude(v => v.Attributes)
-                        .ThenInclude(a => a.VariationOption)
-                .FirstOrDefaultAsync(p => p.BarcodeSKU == barcode || 
-                                        p.BarcodeSKU2 == barcode || 
-                                        p.BarcodeSKU3 == barcode || 
-                                        p.BarcodeSKU4 == barcode);
+            // Search in ProductVariant barcodes instead of Product barcodes
+            var variant = await _context.ProductVariants
+                .Include(pv => pv.Product)
+                    .ThenInclude(p => p.Category)
+                .Include(pv => pv.Product)
+                    .ThenInclude(p => p.Brand)
+                .Include(pv => pv.Product)
+                    .ThenInclude(p => p.Supplier)
+                .Include(pv => pv.Product)
+                    .ThenInclude(p => p.Variants)
+                        .ThenInclude(v => v.Attributes)
+                            .ThenInclude(a => a.Variation)
+                .Include(pv => pv.Product)
+                    .ThenInclude(p => p.Variants)
+                        .ThenInclude(v => v.Attributes)
+                            .ThenInclude(a => a.VariationOption)
+                .FirstOrDefaultAsync(pv => pv.BarcodeSKU == barcode || 
+                                          pv.BarcodeSKU2 == barcode || 
+                                          pv.BarcodeSKU3 == barcode || 
+                                          pv.BarcodeSKU4 == barcode);
+            
+            return variant?.Product;
         }
 
         public override async Task<IEnumerable<Product>> GetAllAsync()

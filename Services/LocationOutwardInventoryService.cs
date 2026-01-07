@@ -40,7 +40,7 @@ namespace NYR.API.Services
             foreach (var dto in inventoryDtos)
             {
                 var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
-                dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
+                dto.ProductSKU = inventoryItem?.ProductVariant?.BarcodeSKU ?? string.Empty;
             }
             
             return inventoryDtos;
@@ -52,7 +52,7 @@ namespace NYR.API.Services
             if (inventory == null) return null;
             
             var dto = _mapper.Map<LocationOutwardInventoryDto>(inventory);
-            dto.ProductSKU = inventory.Product?.BarcodeSKU ?? string.Empty;
+            dto.ProductSKU = inventory.ProductVariant?.BarcodeSKU ?? string.Empty;
             
             return dto;
         }
@@ -74,7 +74,7 @@ namespace NYR.API.Services
             foreach (var dto in inventoryDtos)
             {
                 var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
-                dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
+                dto.ProductSKU = inventoryItem?.ProductVariant?.BarcodeSKU ?? string.Empty;
             }
             
             return inventoryDtos;
@@ -89,7 +89,7 @@ namespace NYR.API.Services
             foreach (var dto in inventoryDtos)
             {
                 var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
-                dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
+                dto.ProductSKU = inventoryItem?.ProductVariant?.BarcodeSKU ?? string.Empty;
             }
             
             return inventoryDtos;
@@ -104,7 +104,7 @@ namespace NYR.API.Services
             foreach (var dto in inventoryDtos)
             {
                 var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
-                dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
+                dto.ProductSKU = inventoryItem?.ProductVariant?.BarcodeSKU ?? string.Empty;
             }
             
             return inventoryDtos;

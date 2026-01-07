@@ -36,7 +36,7 @@ namespace NYR.API.Controllers
                 Id = v.Id,
                 ProductId = v.ProductId,
                 VariantName = v.VariantName,
-                SKU = (v.SKU == ""  ? (v.Product.BarcodeSKU) : v.SKU),
+                SKU = (v.SKU == ""  ? (v.BarcodeSKU) : v.SKU),
                 Price = v.Price,
                 IsEnabled = v.IsEnabled,
                 Attributes = v.Attributes.Select(a => new ProductVariantAttributeDto
@@ -98,7 +98,7 @@ namespace NYR.API.Controllers
 
             variant.VariantName = dto.VariantName;
             variant.SKU = dto.SKU;
-            variant.Price = dto.Price;
+            variant.Price = dto.Price ?? variant.Price; // Keep existing price if null
             variant.IsEnabled = dto.IsEnabled;
             variant.UpdatedAt = DateTime.UtcNow;
 

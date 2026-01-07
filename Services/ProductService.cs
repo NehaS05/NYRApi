@@ -63,41 +63,52 @@ namespace NYR.API.Services
             if (supplier == null)
                 throw new ArgumentException("Invalid supplier ID");
 
+            // Validate that variants are provided and each has a price
+            if (createProductDto.Variants == null || !createProductDto.Variants.Any())
+                throw new ArgumentException("At least one variant is required");
+
             var product = _mapper.Map<Product>(createProductDto);
             var createdProduct = await _productRepository.AddAsync(product);
 
-            // Create variants if any (new system)
-            if (createProductDto.Variants != null && createProductDto.Variants.Any())
+            // Create variants with migrated fields
+            foreach (var variantDto in createProductDto.Variants)
             {
-                foreach (var variantDto in createProductDto.Variants)
+                // Validate that price is provided for each variant
+                if (variantDto.Price <= 0)
+                    throw new ArgumentException($"Price is required and must be greater than 0 for variant: {variantDto.VariantName}");
+
+                var variant = new ProductVariant
                 {
-                    var variant = new ProductVariant
-                    {
-                        ProductId = createdProduct.Id,
-                        VariantName = variantDto.VariantName,
-                        SKU = variantDto.SKU,
-                        Price = variantDto.Price,
-                        IsEnabled = variantDto.IsEnabled,
-                        CreatedAt = DateTime.UtcNow,
-                        IsActive = true
-                    };
+                    ProductId = createdProduct.Id,
+                    VariantName = variantDto.VariantName,
+                    Description = variantDto.Description,
+                    ImageUrl = variantDto.ImageUrl,
+                    Price = variantDto.Price,
+                    BarcodeSKU = variantDto.BarcodeSKU,
+                    BarcodeSKU2 = variantDto.BarcodeSKU2,
+                    BarcodeSKU3 = variantDto.BarcodeSKU3,
+                    BarcodeSKU4 = variantDto.BarcodeSKU4,
+                    SKU = variantDto.SKU,
+                    IsEnabled = variantDto.IsEnabled,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
 
-                    // Add variant attributes
-                    foreach (var attrDto in variantDto.Attributes)
+                // Add variant attributes
+                foreach (var attrDto in variantDto.Attributes)
+                {
+                    variant.Attributes.Add(new ProductVariantAttribute
                     {
-                        variant.Attributes.Add(new ProductVariantAttribute
-                        {
-                            VariationId = attrDto.VariationId,
-                            VariationOptionId = attrDto.VariationOptionId,
-                            CreatedAt = DateTime.UtcNow
-                        });
-                    }
-
-                    createdProduct.Variants.Add(variant);
+                        VariationId = attrDto.VariationId,
+                        VariationOptionId = attrDto.VariationOptionId,
+                        CreatedAt = DateTime.UtcNow
+                    });
                 }
-                await _productRepository.UpdateAsync(createdProduct);
-            }
 
+                createdProduct.Variants.Add(variant);
+            }
+            
+            await _productRepository.UpdateAsync(createdProduct);
 
             return _mapper.Map<ProductDto>(createdProduct);
         }
@@ -123,12 +134,59 @@ namespace NYR.API.Services
             if (supplier == null)
                 throw new ArgumentException("Invalid supplier ID");
 
+            // Validate that variants are provided and each has a price
+            if (updateProductDto.Variants == null || !updateProductDto.Variants.Any())
+                throw new ArgumentException("At least one variant is required");
+
             _mapper.Map(updateProductDto, product);
             product.UpdatedAt = DateTime.UtcNow;
 
+            // Update variants - remove existing and add new ones
+            var existingVariants = await _context.ProductVariants
+                .Where(pv => pv.ProductId == id)
+                .ToListAsync();
+            
+            _context.ProductVariants.RemoveRange(existingVariants);
+
+            // Add updated variants
+            foreach (var variantDto in updateProductDto.Variants)
+            {
+                // Validate that price is provided for each variant
+                if (variantDto.Price <= 0)
+                    throw new ArgumentException($"Price is required and must be greater than 0 for variant: {variantDto.VariantName}");
+
+                var variant = new ProductVariant
+                {
+                    ProductId = product.Id,
+                    VariantName = variantDto.VariantName,
+                    Description = variantDto.Description,
+                    ImageUrl = variantDto.ImageUrl,
+                    Price = variantDto.Price,
+                    BarcodeSKU = variantDto.BarcodeSKU,
+                    BarcodeSKU2 = variantDto.BarcodeSKU2,
+                    BarcodeSKU3 = variantDto.BarcodeSKU3,
+                    BarcodeSKU4 = variantDto.BarcodeSKU4,
+                    SKU = variantDto.SKU,
+                    IsEnabled = variantDto.IsEnabled,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+
+                // Add variant attributes
+                foreach (var attrDto in variantDto.Attributes)
+                {
+                    variant.Attributes.Add(new ProductVariantAttribute
+                    {
+                        VariationId = attrDto.VariationId,
+                        VariationOptionId = attrDto.VariationOptionId,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+
+                product.Variants.Add(variant);
+            }
+
             await _productRepository.UpdateAsync(product);
-
-
 
             return _mapper.Map<ProductDto>(product);
         }

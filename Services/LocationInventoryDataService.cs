@@ -59,7 +59,7 @@ namespace NYR.API.Services
             foreach (var dto in inventoryDtos)
             {
                 var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
-                dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
+                dto.ProductSKU = inventoryItem?.ProductVariant?.BarcodeSKU ?? string.Empty;
             }
             
             return inventoryDtos;
@@ -191,14 +191,15 @@ namespace NYR.API.Services
             var query = _context.LocationInventoryData
                 .Include(lid => lid.ProductVariant)
                 .Include(lid => lid.Product)
-                .Where(lid => (lid.Product.BarcodeSKU == skuCode ||
-                              lid.Product.BarcodeSKU2 == skuCode ||
-                              lid.Product.BarcodeSKU3 == skuCode ||
-                              lid.Product.BarcodeSKU4 == skuCode) &&
-                              lid.ProductVariant != null && lid.LocationId == locationId
+                .Where(lid => lid.ProductVariant != null && 
+                              (lid.ProductVariant.BarcodeSKU == skuCode ||
+                               lid.ProductVariant.BarcodeSKU2 == skuCode ||
+                               lid.ProductVariant.BarcodeSKU3 == skuCode ||
+                               lid.ProductVariant.BarcodeSKU4 == skuCode) &&
+                              lid.LocationId == locationId
                               && lid.Product.IsActive && lid.ProductVariant.IsActive);
 
-            if (productVariantId.HasValue && productVariantId.Value > 0)
+            if (productVariantId.HasValue && productVariantId > 0)
             {
                 query = query.Where(pv => pv.ProductVariantId == productVariantId.Value);
             }

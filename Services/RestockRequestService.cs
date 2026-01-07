@@ -289,7 +289,7 @@ namespace NYR.API.Services
                 .Include(pc => pc.ProductVariant)
                 .Include(pv => pv.Product)
                 .Include(pv => pv.RestockRequest)
-                .Where(pv => (pv.Product.BarcodeSKU == skuCode || pv.Product.BarcodeSKU2 == skuCode || pv.Product.BarcodeSKU3 == skuCode || pv.Product.BarcodeSKU4 == skuCode)
+                .Where(pv => (pv.ProductVariant.BarcodeSKU == skuCode || pv.ProductVariant.BarcodeSKU2 == skuCode || pv.ProductVariant.BarcodeSKU3 == skuCode || pv.ProductVariant.BarcodeSKU4 == skuCode)
                     && pv.RestockRequest.LocationId == locationId && pv.RestockRequest.IsActive && pv.ProductVariant.IsActive);
 
             if (productVariantId.HasValue && productVariantId.Value > 0)

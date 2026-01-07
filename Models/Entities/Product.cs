@@ -12,24 +12,6 @@ namespace NYR.API.Models.Entities
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(1000)]
-        public string? Description { get; set; }
-
-        [MaxLength(255)]
-        public string? ImageUrl { get; set; }
-
-        [MaxLength(100)]
-        public string? BarcodeSKU { get; set; }
-
-        [MaxLength(100)]
-        public string? BarcodeSKU2 { get; set; }
-
-        [MaxLength(100)]
-        public string? BarcodeSKU3 { get; set; }
-
-        [MaxLength(100)]
-        public string? BarcodeSKU4 { get; set; }
-
         [Required]
         public int CategoryId { get; set; }
 
@@ -47,10 +29,6 @@ namespace NYR.API.Models.Entities
 
         [ForeignKey("SupplierId")]
         public virtual Supplier Supplier { get; set; } = null!;
-
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; }
 
         public bool ShowInCatalogue { get; set; } = true;
 
