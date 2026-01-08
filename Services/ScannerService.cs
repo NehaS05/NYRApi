@@ -111,7 +111,7 @@ namespace NYR.API.Services
                 {
                     IsValid = false,
                     Message = "Scanner not found with the provided serial number",
-                    AppPinReset = false
+                    Scanner = null
                 };
             }
 
@@ -122,7 +122,7 @@ namespace NYR.API.Services
                 {
                     IsValid = false,
                     Message = "Scanner is not active",
-                    AppPinReset = scanner.AppPinReset
+                    Scanner = null
                 };
             }
 
@@ -133,7 +133,7 @@ namespace NYR.API.Services
                 {
                     IsValid = false,
                     Message = "Invalid PIN",
-                    AppPinReset = scanner.AppPinReset
+                    Scanner = null
                 };
             }
 
@@ -157,7 +157,7 @@ namespace NYR.API.Services
             {
                 IsValid = true,
                 Message = "PIN confirmed successfully",
-                AppPinReset = currentAppPinReset, // Send the original value before it was reset
+                Scanner = _mapper.Map<ScannerDto>(scanner),
                 Token = token,
                 RefreshToken = refreshToken,
                 TokenExpiry = tokenExpiry,

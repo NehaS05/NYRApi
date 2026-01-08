@@ -78,6 +78,7 @@ namespace NYR.API.Models.DTOs
     {
         public bool IsValid { get; set; }
         public string Message { get; set; } = string.Empty;
+        public ScannerDto? Scanner { get; set; }
         public bool AppPinReset { get; set; }
         public string? Token { get; set; }
         public string? RefreshToken { get; set; }
