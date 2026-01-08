@@ -72,6 +72,6 @@ namespace NYR.API.Models.DTOs
         /// <summary>
         /// Product variants to update - unique combinations of variations
         /// </summary>
-        public List<CreateProductVariantDto> Variants { get; set; } = new List<CreateProductVariantDto>();
+        public List<UpdateProductVariantDto> Variants { get; set; } = new List<UpdateProductVariantDto>();
     }
 }

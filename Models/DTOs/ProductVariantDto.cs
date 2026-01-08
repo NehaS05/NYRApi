@@ -68,4 +68,40 @@ namespace NYR.API.Models.DTOs
         public int VariationId { get; set; }
         public int VariationOptionId { get; set; }
     }
+
+    public class UpdateProductVariantDto
+    {
+        public int? Id { get; set; } // Null for new variants, set for existing variants
+        
+        [Required]
+        public string VariantName { get; set; } = string.Empty;
+        
+        [MaxLength(1000)]
+        public string? Description { get; set; }
+        
+        [MaxLength(255)]
+        public string? ImageUrl { get; set; }
+        
+        [Required]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
+        public decimal Price { get; set; }
+        
+        [MaxLength(100)]
+        public string? BarcodeSKU { get; set; }
+        
+        [MaxLength(100)]
+        public string? BarcodeSKU2 { get; set; }
+        
+        [MaxLength(100)]
+        public string? BarcodeSKU3 { get; set; }
+        
+        [MaxLength(100)]
+        public string? BarcodeSKU4 { get; set; }
+        
+        [MaxLength(100)]
+        public string? SKU { get; set; }
+        
+        public bool IsEnabled { get; set; } = true;
+        public List<CreateProductVariantAttributeDto> Attributes { get; set; } = new List<CreateProductVariantAttributeDto>();
+    }
 }

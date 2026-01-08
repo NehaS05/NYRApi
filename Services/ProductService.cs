@@ -141,36 +141,69 @@ namespace NYR.API.Services
             _mapper.Map(updateProductDto, product);
             product.UpdatedAt = DateTime.UtcNow;
 
-            // Update variants - remove existing and add new ones
+            // Update variants - preserve existing variants and update their properties
             var existingVariants = await _context.ProductVariants
+                .Include(pv => pv.Attributes)
                 .Where(pv => pv.ProductId == id)
                 .ToListAsync();
-            
-            _context.ProductVariants.RemoveRange(existingVariants);
 
-            // Add updated variants
+            // Create a dictionary of existing variants by their ID for quick lookup
+            var existingVariantsDict = existingVariants.ToDictionary(v => v.Id);
+
+            // Process incoming variants
             foreach (var variantDto in updateProductDto.Variants)
             {
                 // Validate that price is provided for each variant
                 if (variantDto.Price <= 0)
                     throw new ArgumentException($"Price is required and must be greater than 0 for variant: {variantDto.VariantName}");
 
-                var variant = new ProductVariant
+                ProductVariant variant;
+                
+                if (variantDto.Id.HasValue && existingVariantsDict.ContainsKey(variantDto.Id.Value))
                 {
-                    ProductId = product.Id,
-                    VariantName = variantDto.VariantName,
-                    Description = variantDto.Description,
-                    ImageUrl = variantDto.ImageUrl,
-                    Price = variantDto.Price,
-                    BarcodeSKU = variantDto.BarcodeSKU,
-                    BarcodeSKU2 = variantDto.BarcodeSKU2,
-                    BarcodeSKU3 = variantDto.BarcodeSKU3,
-                    BarcodeSKU4 = variantDto.BarcodeSKU4,
-                    SKU = variantDto.SKU,
-                    IsEnabled = variantDto.IsEnabled,
-                    CreatedAt = DateTime.UtcNow,
-                    IsActive = true
-                };
+                    // Update existing variant
+                    variant = existingVariantsDict[variantDto.Id.Value];
+                    variant.VariantName = variantDto.VariantName;
+                    variant.Description = variantDto.Description;
+                    variant.ImageUrl = variantDto.ImageUrl;
+                    variant.Price = variantDto.Price;
+                    variant.BarcodeSKU = variantDto.BarcodeSKU;
+                    variant.BarcodeSKU2 = variantDto.BarcodeSKU2;
+                    variant.BarcodeSKU3 = variantDto.BarcodeSKU3;
+                    variant.BarcodeSKU4 = variantDto.BarcodeSKU4;
+                    variant.SKU = variantDto.SKU;
+                    variant.IsEnabled = variantDto.IsEnabled;
+                    variant.UpdatedAt = DateTime.UtcNow;
+
+                    // Update attributes - remove existing and add new ones
+                    _context.ProductVariantAttributes.RemoveRange(variant.Attributes);
+                    variant.Attributes.Clear();
+                    
+                    // Remove from dictionary so we know it was processed
+                    existingVariantsDict.Remove(variantDto.Id.Value);
+                }
+                else
+                {
+                    // Create new variant
+                    variant = new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        VariantName = variantDto.VariantName,
+                        Description = variantDto.Description,
+                        ImageUrl = variantDto.ImageUrl,
+                        Price = variantDto.Price,
+                        BarcodeSKU = variantDto.BarcodeSKU,
+                        BarcodeSKU2 = variantDto.BarcodeSKU2,
+                        BarcodeSKU3 = variantDto.BarcodeSKU3,
+                        BarcodeSKU4 = variantDto.BarcodeSKU4,
+                        SKU = variantDto.SKU,
+                        IsEnabled = variantDto.IsEnabled,
+                        CreatedAt = DateTime.UtcNow,
+                        IsActive = true
+                    };
+                    
+                    product.Variants.Add(variant);
+                }
 
                 // Add variant attributes
                 foreach (var attrDto in variantDto.Attributes)
@@ -182,8 +215,28 @@ namespace NYR.API.Services
                         CreatedAt = DateTime.UtcNow
                     });
                 }
+            }
 
-                product.Variants.Add(variant);
+            // Handle variants that were not in the update request - soft delete them
+            foreach (var remainingVariant in existingVariantsDict.Values)
+            {
+                // Check if this variant is referenced by other entities
+                var hasReferences = await _context.RestockRequestItems.AnyAsync(rri => rri.ProductVariantId == remainingVariant.Id) ||
+                                   await _context.LocationInventoryData.AnyAsync(lid => lid.ProductVariantId == remainingVariant.Id) ||
+                                   await _context.LocationOutwardInventories.AnyAsync(loi => loi.ProductVariantId == remainingVariant.Id);
+
+                if (hasReferences)
+                {
+                    // Soft delete - mark as inactive
+                    remainingVariant.IsActive = false;
+                    remainingVariant.UpdatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Hard delete - no references found
+                    _context.ProductVariantAttributes.RemoveRange(remainingVariant.Attributes);
+                    _context.ProductVariants.Remove(remainingVariant);
+                }
             }
 
             await _productRepository.UpdateAsync(product);
