@@ -13,6 +13,7 @@ namespace NYR.API.Models.DTOs
         public string LocationName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
+        public bool AppPinReset { get; set; }
     }
 
     public class CreateScannerDto
@@ -34,6 +35,8 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public int LocationId { get; set; }
+
+        public bool AppPinReset { get; set; } = false;
     }
 
     public class UpdateScannerDto
@@ -57,6 +60,7 @@ namespace NYR.API.Models.DTOs
         public int LocationId { get; set; }
 
         public bool IsActive { get; set; } = true;
+        public bool AppPinReset { get; set; } = false;
     }
 
     public class ScannerPinConfirmDto
@@ -74,9 +78,11 @@ namespace NYR.API.Models.DTOs
     {
         public bool IsValid { get; set; }
         public string Message { get; set; } = string.Empty;
-        public ScannerDto? Scanner { get; set; }
+        public bool AppPinReset { get; set; }
         public string? Token { get; set; }
+        public string? RefreshToken { get; set; }
         public DateTime? TokenExpiry { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
     }
 
     public class ScannerPinResetDto
@@ -94,6 +100,16 @@ namespace NYR.API.Models.DTOs
     {
         public bool IsSuccess { get; set; }
         public string Message { get; set; } = string.Empty;
+    }
+
+    public class SetAppPinResetDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string SerialNo { get; set; } = string.Empty;
+
+        [Required]
+        public bool AppPinReset { get; set; }
     }
 }
 

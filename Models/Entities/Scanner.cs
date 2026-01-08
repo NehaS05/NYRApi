@@ -32,6 +32,14 @@ namespace NYR.API.Models.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
+
+        // Refresh Token fields for scanner sessions
+        [MaxLength(500)]
+        public string? RefreshToken { get; set; }
+        public DateTime? RefreshTokenExpiry { get; set; }
+
+        // App PIN Reset flag
+        public bool AppPinReset { get; set; } = false;
     }
 }
 

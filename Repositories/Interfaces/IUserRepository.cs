@@ -9,5 +9,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<User>> GetUsersByRoleAsync(int roleId);
         Task<IEnumerable<User>> GetUsersByCustomerAsync(int customerId);
         Task<IEnumerable<User>> GetUsersByLocationAsync(int locationId);
+        Task<User?> GetByRefreshTokenAsync(string refreshToken);
     }
 }
