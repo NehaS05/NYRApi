@@ -2,33 +2,29 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NYR.API.Models.DTOs
 {
-    public class LocationOutwardInventoryDto
+    public class LocationUnlistedInventoryDto
     {
         public int Id { get; set; }
+        public string BarcodeNo { get; set; } = string.Empty;
         public int LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
-        public int ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public string ProductSKU { get; set; } = string.Empty;
         public int Quantity { get; set; }
-        public DateTime CreatedAt { get; set; }
         public int CreatedBy { get; set; }
         public string CreatedByName { get; set; } = string.Empty;
+        public DateTime CreatedDate { get; set; }
         public int? UpdatedBy { get; set; }
         public string? UpdatedByName { get; set; }
         public DateTime? UpdatedDate { get; set; }
-        public int? ProductVariantId { get; set; }
-        public string? VariationName { get; set; }
-        public bool IsActive { get; set; }
     }
 
-    public class CreateLocationOutwardInventoryDto
+    public class CreateLocationUnlistedInventoryDto
     {
         [Required]
-        public int LocationId { get; set; }
+        [MaxLength(100)]
+        public string BarcodeNo { get; set; } = string.Empty;
 
         [Required]
-        public int ProductId { get; set; }
+        public int LocationId { get; set; }
 
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
@@ -36,21 +32,16 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public int CreatedBy { get; set; }
-
-        public int? ProductVariantId { get; set; }
-
-        [MaxLength(200)]
-        public string? VariationName { get; set; }
-        public string? BarcodeNo { get; set; }
     }
 
-    public class UpdateLocationOutwardInventoryDto
+    public class UpdateLocationUnlistedInventoryDto
     {
         [Required]
-        public int LocationId { get; set; }
+        [MaxLength(100)]
+        public string BarcodeNo { get; set; } = string.Empty;
 
         [Required]
-        public int ProductId { get; set; }
+        public int LocationId { get; set; }
 
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Quantity must be greater than 0")]
@@ -58,12 +49,5 @@ namespace NYR.API.Models.DTOs
 
         [Required]
         public int UpdatedBy { get; set; }
-
-        public int? ProductVariantId { get; set; }
-
-        [MaxLength(200)]
-        public string? VariationName { get; set; }
-
-        public bool IsActive { get; set; } = true;
     }
 }

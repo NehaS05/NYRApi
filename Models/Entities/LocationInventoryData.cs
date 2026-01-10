@@ -37,11 +37,10 @@ namespace NYR.API.Models.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [Required]
-        public int CreatedBy { get; set; }
+        public int? CreatedBy { get; set; }
 
         [ForeignKey("CreatedBy")]
-        public virtual User CreatedByUser { get; set; } = null!;
+        public virtual User? CreatedByUser { get; set; }
 
         public int? UpdatedBy { get; set; }
 

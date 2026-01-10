@@ -269,7 +269,7 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
                 .ForMember(dest => dest.ProductSKU, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.VariationName))
-                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByUser.Name))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.Name : null))
                 .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedByUser != null ? src.UpdatedByUser.Name : null))
                 .ForMember(dest => dest.customerId, opt => opt.MapFrom(src => src.Location.CustomerId))
                 .ForMember(dest => dest.customerName, opt => opt.MapFrom(src => src.Location.Customer.CompanyName))
@@ -357,6 +357,17 @@ namespace NYR.API.Mappings
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true));
             CreateMap<UpdateLocationOutwardInventoryDto, LocationOutwardInventory>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedBy, opt => opt.Ignore());
+
+            // LocationUnlistedInventory mappings
+            CreateMap<LocationUnlistedInventory, LocationUnlistedInventoryDto>()
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByUser.Name))
+                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedByUser != null ? src.UpdatedByUser.Name : null));
+            CreateMap<CreateLocationUnlistedInventoryDto, LocationUnlistedInventory>()
+                .ForMember(dest => dest.CreatedDate, opt => opt.MapFrom(src => DateTime.UtcNow));
+            CreateMap<UpdateLocationUnlistedInventoryDto, LocationUnlistedInventory>()
+                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedBy, opt => opt.Ignore());
 
             // InventoryCount mappings

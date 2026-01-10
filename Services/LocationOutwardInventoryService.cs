@@ -10,23 +10,29 @@ namespace NYR.API.Services
     {
         private readonly ILocationOutwardInventoryRepository _outwardInventoryRepository;
         private readonly ILocationInventoryDataRepository _locationInventoryDataRepository;
+        private readonly ILocationUnlistedInventoryRepository _locationUnlistedInventoryRepository;
         private readonly ILocationRepository _locationRepository;
         private readonly IProductRepository _productRepository;
+        private readonly IGenericRepository<ProductVariant> _productVariantRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
         public LocationOutwardInventoryService(
             ILocationOutwardInventoryRepository outwardInventoryRepository,
             ILocationInventoryDataRepository locationInventoryDataRepository,
+            ILocationUnlistedInventoryRepository locationUnlistedInventoryRepository,
             ILocationRepository locationRepository,
             IProductRepository productRepository,
+            IGenericRepository<ProductVariant> productVariantRepository,
             IUserRepository userRepository,
             IMapper mapper)
         {
             _outwardInventoryRepository = outwardInventoryRepository;
             _locationInventoryDataRepository = locationInventoryDataRepository;
+            _locationUnlistedInventoryRepository = locationUnlistedInventoryRepository;
             _locationRepository = locationRepository;
             _productRepository = productRepository;
+            _productVariantRepository = productVariantRepository;
             _userRepository = userRepository;
             _mapper = mapper;
         }
@@ -132,9 +138,64 @@ namespace NYR.API.Services
                 createDto.LocationId, 
                 createDto.ProductId, 
                 createDto.ProductVariantId);
-
+            var variationName = "";
+            //When Product is not exist then create one Table for Unlisted Product
             if (existingInventory == null)
-                throw new ArgumentException("No inventory found for this location, product, and variant combination");
+            {
+                // Additional check: Verify if ProductId and ProductVariantId combination exists in ProductVariants table
+                bool productVariantExists = true;                
+                if (createDto.ProductVariantId.HasValue)
+                {
+                    var productVariant = await _productVariantRepository.GetByIdAsync(createDto.ProductVariantId.Value);
+                    // productVariantExists = productVariant != null && productVariant.ProductId == createDto.ProductId;
+                    productVariantExists = productVariant != null;
+                    variationName = productVariant != null ? productVariant.VariantName : "";
+                }
+
+                // Only create unlisted inventory if both conditions are met:
+                // 1. No inventory exists in LocationInventoryData
+                // 2. ProductVariantId combination doesn't exist in ProductVariants table (if ProductVariantId is provided)
+                if (!productVariantExists || createDto.ProductVariantId == null)
+                {
+                    // Get the barcode from the product
+                    var barcodeNo = createDto.BarcodeNo != null ? createDto.BarcodeNo : "";
+                    
+                    // Check if this barcode already exists in unlisted inventory for this location
+                    var existingUnlistedInventory = await _locationUnlistedInventoryRepository
+                        .GetByBarcodeAndLocationAsync(barcodeNo, createDto.LocationId);
+                    
+                    if (existingUnlistedInventory != null)
+                    {
+                        // Update existing unlisted inventory quantity
+                        existingUnlistedInventory.Quantity += createDto.Quantity;
+                        existingUnlistedInventory.UpdatedBy = createDto.CreatedBy;
+                        existingUnlistedInventory.UpdatedDate = DateTime.UtcNow;
+                        await _locationUnlistedInventoryRepository.UpdateAsync(existingUnlistedInventory);
+                    }
+                    else
+                    {
+                        // Create new unlisted inventory entry
+                        var unlistedInventory = new LocationUnlistedInventory
+                        {
+                            BarcodeNo = barcodeNo,
+                            LocationId = createDto.LocationId,
+                            Quantity = createDto.Quantity,
+                            CreatedBy = createDto.CreatedBy,
+                            CreatedDate = DateTime.UtcNow
+                        };
+                        
+                        await _locationUnlistedInventoryRepository.AddAsync(unlistedInventory);
+                    }
+                    
+                    // Still throw exception to maintain existing API behavior, but unlisted inventory is now recorded
+                    throw new ArgumentException("No inventory found for this location, product, and variant combination. Item has been recorded as unlisted inventory.");
+                }
+                else
+                {
+                    // ProductVariant exists but no inventory - this is a different scenario
+                    //throw new ArgumentException("No inventory found for this location, product, and variant combination");
+                }
+            }
 
             // Check if there's sufficient quantity 
             //if (existingInventory.Quantity < createDto.Quantity)
@@ -156,11 +217,28 @@ namespace NYR.API.Services
             var createdInventory = await _outwardInventoryRepository.AddAsync(outwardInventory);
 
             // Decrease quantity in LocationInventoryData
-            existingInventory.Quantity -= createDto.Quantity;
-            existingInventory.UpdatedBy = createDto.CreatedBy;
-            existingInventory.UpdatedDate = DateTime.UtcNow;
-            await _locationInventoryDataRepository.UpdateAsync(existingInventory);
-
+            if (existingInventory != null)
+            {
+                existingInventory.Quantity -= createDto.Quantity;
+                existingInventory.UpdatedBy = createDto.CreatedBy;
+                existingInventory.UpdatedDate = DateTime.UtcNow;
+                await _locationInventoryDataRepository.UpdateAsync(existingInventory);
+            } else
+            {
+                //Or Add Quantity with Minus data in LocationInventoryData
+                // Create new inventory record
+                var locationInventory = new NYR.API.Models.Entities.LocationInventoryData
+                {
+                    LocationId = createDto.LocationId,
+                    ProductId = createDto.ProductId,
+                    Quantity = 0 - createDto.Quantity,
+                    ProductVariantId = createDto.ProductVariantId,
+                    VariationName = variationName,
+                    CreatedBy = 1,  //It's location based entry default by 1 id
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _locationInventoryDataRepository.AddAsync(locationInventory);
+            }
             return await GetOutwardInventoryByIdAsync(createdInventory.Id) ?? throw new Exception("Failed to retrieve created outward inventory");
         }
 

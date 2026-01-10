@@ -36,6 +36,7 @@ namespace NYR.API.Data
         public DbSet<RouteStop> RouteStops { get; set; }
         public DbSet<LocationInventoryData> LocationInventoryData { get; set; }
         public DbSet<LocationOutwardInventory> LocationOutwardInventories { get; set; }
+        public DbSet<LocationUnlistedInventory> LocationUnlistedInventories { get; set; }
         public DbSet<RestockRequest> RestockRequests { get; set; }
         public DbSet<RestockRequestItem> RestockRequestItems { get; set; }
         public DbSet<FollowupRequest> FollowupRequests { get; set; }
@@ -467,7 +468,7 @@ namespace NYR.API.Data
                 .HasOne(l => l.CreatedByUser)
                 .WithMany()
                 .HasForeignKey(l => l.CreatedBy)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<LocationInventoryData>()
                 .HasOne(l => l.UpdatedByUser)
@@ -570,6 +571,31 @@ namespace NYR.API.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<LocationOutwardInventory>()
+                .HasOne(l => l.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(l => l.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure LocationUnlistedInventory entity
+            modelBuilder.Entity<LocationUnlistedInventory>(entity =>
+            {
+                entity.Property(e => e.CreatedDate).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // Configure LocationUnlistedInventory relationships
+            modelBuilder.Entity<LocationUnlistedInventory>()
+                .HasOne(l => l.Location)
+                .WithMany()
+                .HasForeignKey(l => l.LocationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LocationUnlistedInventory>()
+                .HasOne(l => l.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(l => l.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LocationUnlistedInventory>()
                 .HasOne(l => l.UpdatedByUser)
                 .WithMany()
                 .HasForeignKey(l => l.UpdatedBy)

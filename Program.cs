@@ -87,6 +87,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
     builder.Services.AddScoped<IRouteStopRepository, RouteStopRepository>();
     builder.Services.AddScoped<ILocationInventoryDataRepository, LocationInventoryDataRepository>();
     builder.Services.AddScoped<ILocationOutwardInventoryRepository, LocationOutwardInventoryRepository>();
+    builder.Services.AddScoped<ILocationUnlistedInventoryRepository, LocationUnlistedInventoryRepository>();
     builder.Services.AddScoped<IVanInventoryRepository, VanInventoryRepository>();
     builder.Services.AddScoped<IRestockRequestRepository, RestockRequestRepository>();
     builder.Services.AddScoped<IFollowupRequestRepository, FollowupRequestRepository>();

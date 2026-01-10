@@ -83,10 +83,13 @@ namespace NYR.API.Services
             if (product == null)
                 throw new ArgumentException("Invalid product ID");
 
-            // Validate user exists
-            var user = await _userRepository.GetByIdAsync(createDto.CreatedBy);
-            if (user == null)
-                throw new ArgumentException("Invalid user ID");
+            // Validate user exists (if CreatedBy is provided)
+            if (createDto.CreatedBy.HasValue)
+            {
+                var user = await _userRepository.GetByIdAsync(createDto.CreatedBy.Value);
+                if (user == null)
+                    throw new ArgumentException("Invalid user ID");
+            }
 
             // Check if inventory already exists for this location/product/variant
             var existingInventory = await _inventoryRepository.GetByLocationAndProductAsync(
