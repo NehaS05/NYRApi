@@ -67,11 +67,15 @@ namespace NYR.API.Services
         {
             var inventory = await _outwardInventoryRepository.GetByLocationIdAsync(locationId);
             
+            // Get data from LocationUnlistedInventories as well by location Id
+            var unlistedInventory = await _locationUnlistedInventoryRepository.GetByLocationIdAsync(locationId);
+            
             // Filter for last 60 minutes if requested
             if (last60Minutes == true)
             {
                 var cutoffTime = DateTime.UtcNow.AddMinutes(-60);
                 inventory = inventory.Where(i => i.CreatedAt >= cutoffTime);
+                unlistedInventory = unlistedInventory.Where(i => i.CreatedDate >= cutoffTime);
             }
             
             var inventoryDtos = _mapper.Map<IEnumerable<LocationOutwardInventoryDto>>(inventory);
@@ -83,7 +87,31 @@ namespace NYR.API.Services
                 dto.ProductSKU = inventoryItem?.Product?.BarcodeSKU ?? string.Empty;
             }
             
-            return inventoryDtos;
+            // Convert unlisted inventory to LocationOutwardInventoryDto format
+            var unlistedInventoryDtos = unlistedInventory.Select(ui => new LocationOutwardInventoryDto
+            {
+                Id = ui.Id,
+                LocationId = ui.LocationId,
+                LocationName = ui.Location?.LocationName ?? string.Empty,
+                ProductId = 0, // No specific product ID for unlisted items
+                ProductName = "Unlisted Item",
+                ProductSKU = ui.BarcodeNo,
+                Quantity = ui.Quantity,
+                CreatedAt = ui.CreatedDate,
+                CreatedBy = ui.CreatedBy,
+                CreatedByName = ui.CreatedByUser?.Name ?? "System",
+                UpdatedBy = ui.UpdatedBy,
+                UpdatedByName = ui.UpdatedByUser?.Name,
+                UpdatedDate = ui.UpdatedDate,
+                ProductVariantId = null,
+                VariationName = "Unlisted",
+                IsActive = true
+            });
+            
+            // Combine both datasets
+            var combinedResult = inventoryDtos.Concat(unlistedInventoryDtos).OrderByDescending(x => x.CreatedAt);
+            
+            return combinedResult;
         }
 
         public async Task<IEnumerable<LocationOutwardInventoryDto>> GetOutwardInventoryByProductIdAsync(int productId)
