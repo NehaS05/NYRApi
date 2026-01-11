@@ -26,16 +26,53 @@ namespace NYR.API.Models.Entities
         public string VariantName { get; set; } = string.Empty;
 
         /// <summary>
+        /// Description for this variant (migrated from Product)
+        /// </summary>
+        [MaxLength(1000)]
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Image URL for this variant (migrated from Product)
+        /// </summary>
+        [MaxLength(255)]
+        public string? ImageUrl { get; set; }
+
+        /// <summary>
+        /// Price for this variant (migrated from Product, now mandatory)
+        /// </summary>
+        [Required]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
+
+        /// <summary>
+        /// Primary barcode for this variant (migrated from Product)
+        /// </summary>
+        [MaxLength(100)]
+        public string? BarcodeSKU { get; set; }
+
+        /// <summary>
+        /// Secondary barcode for this variant (migrated from Product)
+        /// </summary>
+        [MaxLength(100)]
+        public string? BarcodeSKU2 { get; set; }
+
+        /// <summary>
+        /// Third barcode for this variant (migrated from Product)
+        /// </summary>
+        [MaxLength(100)]
+        public string? BarcodeSKU3 { get; set; }
+
+        /// <summary>
+        /// Fourth barcode for this variant (migrated from Product)
+        /// </summary>
+        [MaxLength(100)]
+        public string? BarcodeSKU4 { get; set; }
+
+        /// <summary>
         /// Optional SKU specific to this variant
         /// </summary>
         [MaxLength(100)]
         public string? SKU { get; set; }
-
-        /// <summary>
-        /// Optional price override for this variant (if null, uses product base price)
-        /// </summary>
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? Price { get; set; }
 
         /// <summary>
         /// Whether this variant is available for sale

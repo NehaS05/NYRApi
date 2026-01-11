@@ -63,41 +63,52 @@ namespace NYR.API.Services
             if (supplier == null)
                 throw new ArgumentException("Invalid supplier ID");
 
+            // Validate that variants are provided and each has a price
+            if (createProductDto.Variants == null || !createProductDto.Variants.Any())
+                throw new ArgumentException("At least one variant is required");
+
             var product = _mapper.Map<Product>(createProductDto);
             var createdProduct = await _productRepository.AddAsync(product);
 
-            // Create variants if any (new system)
-            if (createProductDto.Variants != null && createProductDto.Variants.Any())
+            // Create variants with migrated fields
+            foreach (var variantDto in createProductDto.Variants)
             {
-                foreach (var variantDto in createProductDto.Variants)
+                // Validate that price is provided for each variant
+                if (variantDto.Price <= 0)
+                    throw new ArgumentException($"Price is required and must be greater than 0 for variant: {variantDto.VariantName}");
+
+                var variant = new ProductVariant
                 {
-                    var variant = new ProductVariant
-                    {
-                        ProductId = createdProduct.Id,
-                        VariantName = variantDto.VariantName,
-                        SKU = variantDto.SKU,
-                        Price = variantDto.Price,
-                        IsEnabled = variantDto.IsEnabled,
-                        CreatedAt = DateTime.UtcNow,
-                        IsActive = true
-                    };
+                    ProductId = createdProduct.Id,
+                    VariantName = variantDto.VariantName,
+                    Description = variantDto.Description,
+                    ImageUrl = variantDto.ImageUrl,
+                    Price = variantDto.Price,
+                    BarcodeSKU = variantDto.BarcodeSKU,
+                    BarcodeSKU2 = variantDto.BarcodeSKU2,
+                    BarcodeSKU3 = variantDto.BarcodeSKU3,
+                    BarcodeSKU4 = variantDto.BarcodeSKU4,
+                    SKU = variantDto.SKU,
+                    IsEnabled = variantDto.IsEnabled,
+                    CreatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
 
-                    // Add variant attributes
-                    foreach (var attrDto in variantDto.Attributes)
+                // Add variant attributes
+                foreach (var attrDto in variantDto.Attributes)
+                {
+                    variant.Attributes.Add(new ProductVariantAttribute
                     {
-                        variant.Attributes.Add(new ProductVariantAttribute
-                        {
-                            VariationId = attrDto.VariationId,
-                            VariationOptionId = attrDto.VariationOptionId,
-                            CreatedAt = DateTime.UtcNow
-                        });
-                    }
-
-                    createdProduct.Variants.Add(variant);
+                        VariationId = attrDto.VariationId,
+                        VariationOptionId = attrDto.VariationOptionId,
+                        CreatedAt = DateTime.UtcNow
+                    });
                 }
-                await _productRepository.UpdateAsync(createdProduct);
-            }
 
+                createdProduct.Variants.Add(variant);
+            }
+            
+            await _productRepository.UpdateAsync(createdProduct);
 
             return _mapper.Map<ProductDto>(createdProduct);
         }
@@ -123,12 +134,112 @@ namespace NYR.API.Services
             if (supplier == null)
                 throw new ArgumentException("Invalid supplier ID");
 
+            // Validate that variants are provided and each has a price
+            if (updateProductDto.Variants == null || !updateProductDto.Variants.Any())
+                throw new ArgumentException("At least one variant is required");
+
             _mapper.Map(updateProductDto, product);
             product.UpdatedAt = DateTime.UtcNow;
 
+            // Update variants - preserve existing variants and update their properties
+            var existingVariants = await _context.ProductVariants
+                .Include(pv => pv.Attributes)
+                .Where(pv => pv.ProductId == id)
+                .ToListAsync();
+
+            // Create a dictionary of existing variants by their ID for quick lookup
+            var existingVariantsDict = existingVariants.ToDictionary(v => v.Id);
+
+            // Process incoming variants
+            foreach (var variantDto in updateProductDto.Variants)
+            {
+                // Validate that price is provided for each variant
+                if (variantDto.Price <= 0)
+                    throw new ArgumentException($"Price is required and must be greater than 0 for variant: {variantDto.VariantName}");
+
+                ProductVariant variant;
+                
+                if (variantDto.Id.HasValue && existingVariantsDict.ContainsKey(variantDto.Id.Value))
+                {
+                    // Update existing variant
+                    variant = existingVariantsDict[variantDto.Id.Value];
+                    variant.VariantName = variantDto.VariantName;
+                    variant.Description = variantDto.Description;
+                    variant.ImageUrl = variantDto.ImageUrl;
+                    variant.Price = variantDto.Price;
+                    variant.BarcodeSKU = variantDto.BarcodeSKU;
+                    variant.BarcodeSKU2 = variantDto.BarcodeSKU2;
+                    variant.BarcodeSKU3 = variantDto.BarcodeSKU3;
+                    variant.BarcodeSKU4 = variantDto.BarcodeSKU4;
+                    variant.SKU = variantDto.SKU;
+                    variant.IsEnabled = variantDto.IsEnabled;
+                    variant.UpdatedAt = DateTime.UtcNow;
+
+                    // Update attributes - remove existing and add new ones
+                    _context.ProductVariantAttributes.RemoveRange(variant.Attributes);
+                    variant.Attributes.Clear();
+                    
+                    // Remove from dictionary so we know it was processed
+                    existingVariantsDict.Remove(variantDto.Id.Value);
+                }
+                else
+                {
+                    // Create new variant
+                    variant = new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        VariantName = variantDto.VariantName,
+                        Description = variantDto.Description,
+                        ImageUrl = variantDto.ImageUrl,
+                        Price = variantDto.Price,
+                        BarcodeSKU = variantDto.BarcodeSKU,
+                        BarcodeSKU2 = variantDto.BarcodeSKU2,
+                        BarcodeSKU3 = variantDto.BarcodeSKU3,
+                        BarcodeSKU4 = variantDto.BarcodeSKU4,
+                        SKU = variantDto.SKU,
+                        IsEnabled = variantDto.IsEnabled,
+                        CreatedAt = DateTime.UtcNow,
+                        IsActive = true
+                    };
+                    
+                    product.Variants.Add(variant);
+                }
+
+                // Add variant attributes
+                foreach (var attrDto in variantDto.Attributes)
+                {
+                    variant.Attributes.Add(new ProductVariantAttribute
+                    {
+                        VariationId = attrDto.VariationId,
+                        VariationOptionId = attrDto.VariationOptionId,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            // Handle variants that were not in the update request - soft delete them
+            foreach (var remainingVariant in existingVariantsDict.Values)
+            {
+                // Check if this variant is referenced by other entities
+                var hasReferences = await _context.RestockRequestItems.AnyAsync(rri => rri.ProductVariantId == remainingVariant.Id) ||
+                                   await _context.LocationInventoryData.AnyAsync(lid => lid.ProductVariantId == remainingVariant.Id) ||
+                                   await _context.LocationOutwardInventories.AnyAsync(loi => loi.ProductVariantId == remainingVariant.Id);
+
+                if (hasReferences)
+                {
+                    // Soft delete - mark as inactive
+                    remainingVariant.IsActive = false;
+                    remainingVariant.UpdatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    // Hard delete - no references found
+                    _context.ProductVariantAttributes.RemoveRange(remainingVariant.Attributes);
+                    _context.ProductVariants.Remove(remainingVariant);
+                }
+            }
+
             await _productRepository.UpdateAsync(product);
-
-
 
             return _mapper.Map<ProductDto>(product);
         }

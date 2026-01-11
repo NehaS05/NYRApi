@@ -43,6 +43,9 @@ namespace NYR.API.Models.Entities
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; } = null!;
 
+        [ForeignKey("ProductVariantId")]
+        public virtual ProductVariant? ProductVariant { get; set; }
+
         [ForeignKey("CreatedBy")]
         public virtual User CreatedByUser { get; set; } = null!;
 

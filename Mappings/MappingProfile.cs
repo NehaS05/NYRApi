@@ -183,7 +183,7 @@ namespace NYR.API.Mappings
             // TransferInventoryItem mappings
             CreateMap<TransferInventoryItem, TransferInventoryItemDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.BarcodeSKU : null))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
                 .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => 
                     src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
@@ -246,7 +246,7 @@ namespace NYR.API.Mappings
                             Id = item.Id,
                             ProductId = item.ProductId,
                             ProductName = item.Product != null ? item.Product.Name : "Unknown",
-                            SkuCode = item.Product != null ? item.Product.BarcodeSKU : null,
+                            SkuCode = item.ProductVariant != null ? item.ProductVariant.BarcodeSKU : null,
                             ProductVariantId = item.ProductVariantId,
                             VariantName = item.ProductVariant != null ? item.ProductVariant.VariantName : null,
                             VariationType = item.ProductVariant != null && item.ProductVariant.Attributes.Any() 
@@ -267,7 +267,7 @@ namespace NYR.API.Mappings
             CreateMap<LocationInventoryData, LocationInventoryDataDto>()
                 .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName))
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.ProductSKU, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.ProductSKU, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.BarcodeSKU : null))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.VariationName))
                 .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedByUser != null ? src.CreatedByUser.Name : null))
                 .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedByUser != null ? src.UpdatedByUser.Name : null))
@@ -302,7 +302,7 @@ namespace NYR.API.Mappings
             // VanInventoryItem mappings
             CreateMap<VanInventoryItem, VanInventoryItemDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.BarcodeSKU : null))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
                 .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => 
                     src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
@@ -331,7 +331,7 @@ namespace NYR.API.Mappings
             // RestockRequestItem mappings
             CreateMap<RestockRequestItem, RestockRequestItemDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.BarcodeSKU : null))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
                 .ForMember(dest => dest.VariationType, opt => opt.MapFrom(src => 
                     src.ProductVariant != null && src.ProductVariant.Attributes.Any() 
@@ -373,14 +373,14 @@ namespace NYR.API.Mappings
             // InventoryCount mappings
             CreateMap<WarehouseInventory, WarehouseInventoryCountDto>()
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.BarcodeSKU : null))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null));
 
             CreateMap<VanInventoryItem, VanInventoryCountDto>()
                 .ForMember(dest => dest.VanId, opt => opt.MapFrom(src => src.VanInventory.VanId))
                 .ForMember(dest => dest.VanName, opt => opt.MapFrom(src => src.VanInventory.Van.VanName))
                 .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product.Name))
-                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.Product.BarcodeSKU))
+                .ForMember(dest => dest.SkuCode, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.BarcodeSKU : null))
                 .ForMember(dest => dest.VariantName, opt => opt.MapFrom(src => src.ProductVariant != null ? src.ProductVariant.VariantName : null))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.VanInventory.Status));
         }

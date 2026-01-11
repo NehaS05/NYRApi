@@ -36,7 +36,7 @@ namespace NYR.API.Controllers
                 Id = v.Id,
                 ProductId = v.ProductId,
                 VariantName = v.VariantName,
-                SKU = (v.SKU == ""  ? (v.Product.BarcodeSKU) : v.SKU),
+                SKU = (v.SKU == ""  ? (v.BarcodeSKU) : v.SKU),
                 Price = v.Price,
                 IsEnabled = v.IsEnabled,
                 Attributes = v.Attributes.Select(a => new ProductVariantAttributeDto
@@ -97,8 +97,14 @@ namespace NYR.API.Controllers
                 return NotFound();
 
             variant.VariantName = dto.VariantName;
-            variant.SKU = dto.SKU;
+            variant.Description = dto.Description;
+            variant.ImageUrl = dto.ImageUrl;
             variant.Price = dto.Price;
+            variant.BarcodeSKU = dto.BarcodeSKU;
+            variant.BarcodeSKU2 = dto.BarcodeSKU2;
+            variant.BarcodeSKU3 = dto.BarcodeSKU3;
+            variant.BarcodeSKU4 = dto.BarcodeSKU4;
+            variant.SKU = dto.SKU;
             variant.IsEnabled = dto.IsEnabled;
             variant.UpdatedAt = DateTime.UtcNow;
 
@@ -118,13 +124,5 @@ namespace NYR.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-    }
-
-    public class UpdateProductVariantDto
-    {
-        public string VariantName { get; set; } = string.Empty;
-        public string? SKU { get; set; }
-        public decimal? Price { get; set; }
-        public bool IsEnabled { get; set; }
     }
 }

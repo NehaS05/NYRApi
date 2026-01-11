@@ -171,6 +171,9 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+// Enable static file serving
+app.UseStaticFiles();
+
 app.UseCors("AllowAll");
 
 app.UseAuthentication();

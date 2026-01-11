@@ -88,7 +88,7 @@ namespace NYR.API.Controllers
             {
                 ProductId = g.Key,
                 ProductName = g.First().Product.Name,
-                ProductSKU = g.First().Product.BarcodeSKU,
+                ProductSKU = g.FirstOrDefault(wi => wi.ProductVariant != null)?.ProductVariant?.BarcodeSKU ?? string.Empty,
                 Variants = g.Select(wi => new
                 {
                     InventoryId = wi.Id,
