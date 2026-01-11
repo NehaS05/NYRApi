@@ -10,6 +10,7 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<LocationOutwardInventoryDto>> GetOutwardInventoryByProductIdAsync(int productId);
         Task<IEnumerable<LocationOutwardInventoryDto>> GetActiveOutwardInventoryByLocationIdAsync(int locationId);
         Task<LocationOutwardInventoryDto> CreateOutwardInventoryAsync(CreateLocationOutwardInventoryDto createDto);
+        Task<LocationOutwardInventoryDto> BarcodeOutwardInventoryAsync(CreateLocationOutwardInventoryDto createDto);
         Task<LocationOutwardInventoryDto?> UpdateOutwardInventoryAsync(int id, UpdateLocationOutwardInventoryDto updateDto);
         Task<bool> DeleteOutwardInventoryAsync(int id, int userId);
         Task<bool> DeactivateOutwardInventoryAsync(int id, int userId);

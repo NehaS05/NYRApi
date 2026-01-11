@@ -259,8 +259,36 @@ namespace NYR.API.Services
                         };
                     }
                 }
+            } 
+            else if (variantInfo.Count() == 0)
+            {
+                //When Product is not exist then create one Table for Unlisted Product
+                int productIdFromVariant = 0;
+                
+                // Get Product details from productVariantId if provided
+                if (productVariantId.HasValue && productVariantId.Value > 0)
+                {
+                    var productVariant = await _context.ProductVariants
+                        .Include(pv => pv.Product)
+                        .FirstOrDefaultAsync(pv => pv.Id == productVariantId.Value);
+                    
+                    if (productVariant != null && productVariant.Product != null)
+                    {
+                        productIdFromVariant = productVariant.ProductId;
+                    }
+                }
+                
+                var createOutwardDto = new CreateLocationOutwardInventoryDto
+                {
+                    LocationId = locationId,
+                    ProductId = productIdFromVariant, // Use product ID from variant if available, otherwise 0
+                    ProductVariantId = productVariantId,
+                    Quantity = 1,  // item.Quantity,  // Quantity is doing one because driver will scan one by one and send
+                    VariationName = skuCode,        //Barcode
+                    CreatedBy = userId ?? 1 // Use provided userId or default to 1
+                };
+                await _locationOutwardInventoryService.BarcodeOutwardInventoryAsync(createOutwardDto);
             }
-
             //
 
             return variantInfo;
