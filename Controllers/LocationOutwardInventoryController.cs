@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NYR.API.Models.DTOs;
+using NYR.API.Models.Entities;
 using NYR.API.Services.Interfaces;
 
 namespace NYR.API.Controllers
@@ -11,10 +13,14 @@ namespace NYR.API.Controllers
     public class LocationOutwardInventoryController : ControllerBase
     {
         private readonly ILocationOutwardInventoryService _outwardInventoryService;
+        private readonly ILocationUnlistedInventoryService _unlistedInventoryService;
 
-        public LocationOutwardInventoryController(ILocationOutwardInventoryService outwardInventoryService)
+        public LocationOutwardInventoryController(
+            ILocationOutwardInventoryService outwardInventoryService,
+            ILocationUnlistedInventoryService unlistedInventoryService)
         {
             _outwardInventoryService = outwardInventoryService;
+            _unlistedInventoryService = unlistedInventoryService;
         }
 
         [HttpGet]
@@ -115,6 +121,12 @@ namespace NYR.API.Controllers
             }
         }
 
+        /// <summary>
+        /// Delete outward inventory item (regular or unlisted)
+        /// </summary>
+        /// <param name="id">The ID of the inventory item to delete</param>
+        /// <param name="request">Delete request containing UserId and ProductId</param>
+        /// <returns>NoContent if successful, NotFound if item doesn't exist</returns>
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin,Scanner")]
         public async Task<ActionResult> DeleteOutwardInventory(int id, [FromBody] DeleteRequest request)
@@ -124,15 +136,28 @@ namespace NYR.API.Controllers
 
             try
             {
-                var result = await _outwardInventoryService.DeleteOutwardInventoryAsync(id, request.UserId);
-                if (!result)
-                    return NotFound();
-
+                if (request.ProductId > 0)
+                {
+                    var result = await _outwardInventoryService.DeleteOutwardInventoryAsync(id, request.UserId);
+                    if (!result)
+                        return NotFound();
+                }
+                else if (request.ProductId == 0)
+                {
+                    // Delete unlisted inventory
+                    var result = await _unlistedInventoryService.DeleteAsync(id, request.UserId);
+                    if (!result)
+                        return NotFound();
+                }
                 return NoContent();
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
     }
@@ -145,5 +170,6 @@ namespace NYR.API.Controllers
     public class DeleteRequest
     {
         public int UserId { get; set; }
+        public int ProductId { get; set; }
     }
 }

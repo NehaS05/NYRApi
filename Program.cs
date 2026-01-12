@@ -114,6 +114,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddScoped<IRouteService, RouteService>();
     builder.Services.AddScoped<ILocationInventoryDataService, LocationInventoryDataService>();
     builder.Services.AddScoped<ILocationOutwardInventoryService, LocationOutwardInventoryService>();
+    builder.Services.AddScoped<ILocationUnlistedInventoryService, LocationUnlistedInventoryService>();
     builder.Services.AddScoped<IRestockRequestService, RestockRequestService>();
     builder.Services.AddScoped<IFollowupRequestService, FollowupRequestService>();
     builder.Services.AddScoped<ITransferService, TransferService>();
