@@ -171,8 +171,8 @@ namespace NYR.API.Services
                 throw new ArgumentException("No inventory found for this location, product, and variant combination");
 
             // Check if there's sufficient quantity
-            if (existingInventory.Quantity < createDto.Quantity)
-                throw new ArgumentException($"Insufficient inventory. Available quantity: {existingInventory.Quantity}, Requested: {createDto.Quantity}");
+            //if (existingInventory.Quantity < createDto.Quantity)
+            //    throw new ArgumentException($"Insufficient inventory. Available quantity: {existingInventory.Quantity}, Requested: {createDto.Quantity}");
 
             // Create outward inventory entry
             var outwardInventory = new LocationOutwardInventory
