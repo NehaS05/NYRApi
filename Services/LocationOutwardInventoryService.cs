@@ -258,16 +258,16 @@ namespace NYR.API.Services
                         var existingUnlistedInventory = await _locationUnlistedInventoryRepository
                             .GetByBarcodeAndLocationAsync(barcodeNo, createDto.LocationId);
 
-                        if (existingUnlistedInventory != null)
-                        {
-                            // Update existing unlisted inventory quantity
-                            existingUnlistedInventory.Quantity += createDto.Quantity;
-                            existingUnlistedInventory.UpdatedBy = createDto.CreatedBy;
-                            existingUnlistedInventory.UpdatedDate = DateTime.UtcNow;
-                            await _locationUnlistedInventoryRepository.UpdateAsync(existingUnlistedInventory);
-                        }
-                        else
-                        {
+                        //if (existingUnlistedInventory != null)
+                        //{
+                        //    // Update existing unlisted inventory quantity
+                        //    existingUnlistedInventory.Quantity += createDto.Quantity;
+                        //    existingUnlistedInventory.UpdatedBy = createDto.CreatedBy;
+                        //    existingUnlistedInventory.UpdatedDate = DateTime.UtcNow;
+                        //    await _locationUnlistedInventoryRepository.UpdateAsync(existingUnlistedInventory);
+                        //}
+                        //else
+                        //{
                             // Create new unlisted inventory entry
                             var unlistedInventory = new LocationUnlistedInventory
                             {
@@ -279,7 +279,7 @@ namespace NYR.API.Services
                             };
 
                             await _locationUnlistedInventoryRepository.AddAsync(unlistedInventory);
-                        }
+                        //}
 
                         // Still throw exception to maintain existing API behavior, but unlisted inventory is now recorded
                         throw new ArgumentException("No inventory found for this location, product, and variant combination. Item has been recorded as unlisted inventory.");
@@ -299,16 +299,16 @@ namespace NYR.API.Services
                     var existingUnlistedInventory = await _locationUnlistedInventoryRepository
                         .GetByBarcodeAndLocationAsync(barcodeNo, createDto.LocationId);
 
-                    if (existingUnlistedInventory != null)
-                    {
-                        // Update existing unlisted inventory quantity
-                        existingUnlistedInventory.Quantity += createDto.Quantity;
-                        existingUnlistedInventory.UpdatedBy = createDto.CreatedBy;
-                        existingUnlistedInventory.UpdatedDate = DateTime.UtcNow;
-                        await _locationUnlistedInventoryRepository.UpdateAsync(existingUnlistedInventory);
-                    }
-                    else
-                    {
+                    //if (existingUnlistedInventory != null)
+                    //{
+                    //    // Update existing unlisted inventory quantity
+                    //    existingUnlistedInventory.Quantity += createDto.Quantity;
+                    //    existingUnlistedInventory.UpdatedBy = createDto.CreatedBy;
+                    //    existingUnlistedInventory.UpdatedDate = DateTime.UtcNow;
+                    //    await _locationUnlistedInventoryRepository.UpdateAsync(existingUnlistedInventory);
+                    //}
+                    //else
+                    //{
                         // Create new unlisted inventory entry
                         var unlistedInventory = new LocationUnlistedInventory
                         {
@@ -320,7 +320,7 @@ namespace NYR.API.Services
                         };
 
                         await _locationUnlistedInventoryRepository.AddAsync(unlistedInventory);
-                    }
+                    //}
                 }
 
                 // Check if there's sufficient quantity 

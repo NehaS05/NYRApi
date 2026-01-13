@@ -128,7 +128,7 @@ namespace NYR.API.Controllers
 
             var variantInfo = await _inventoryService.GetVariantInfoBySkuAsync(barcode, locationId, userId, productVariantId);
             if (!variantInfo.Any())
-                return NotFound($"No product variants found in inventory with Barcode: {barcode}");
+                return Ok($"No product variants found in inventory with Barcode: {barcode}");
 
             return Ok(variantInfo);
         }
