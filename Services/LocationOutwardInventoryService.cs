@@ -75,7 +75,7 @@ namespace NYR.API.Services
             if (last60Minutes == true)
             {
                 var cutoffTime = DateTime.UtcNow.AddMinutes(-60);
-                inventory = inventory.Where(i => i.CreatedAt >= cutoffTime);
+                inventory = inventory.Where(i => i.CreatedAt >= cutoffTime && i.IsActive == true);
                 unlistedInventory = unlistedInventory.Where(i => i.CreatedDate >= cutoffTime);
             }
             
