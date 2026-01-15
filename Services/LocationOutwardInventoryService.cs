@@ -70,7 +70,8 @@ namespace NYR.API.Services
             
             // Get data from LocationUnlistedInventories as well by location Id
             var unlistedInventory = await _locationUnlistedInventoryRepository.GetByLocationIdAsync(locationId);
-            
+            inventory = inventory.Where(i => i.IsActive == true);
+
             // Filter for last 60 minutes if requested
             if (last60Minutes == true)
             {
