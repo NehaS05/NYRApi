@@ -198,8 +198,8 @@ namespace NYR.API.Services
                               (lid.ProductVariant.BarcodeSKU == skuCode ||
                                lid.ProductVariant.BarcodeSKU2 == skuCode ||
                                lid.ProductVariant.BarcodeSKU3 == skuCode ||
-                               lid.ProductVariant.BarcodeSKU4 == skuCode) &&
-                              lid.LocationId == locationId
+                               lid.ProductVariant.BarcodeSKU4 == skuCode) 
+                               //&& lid.LocationId == locationId
                               && lid.Product.IsActive && lid.ProductVariant.IsActive);
 
             if (productVariantId.HasValue && productVariantId > 0)
@@ -275,6 +275,7 @@ namespace NYR.API.Services
                     if (productVariant != null && productVariant.Product != null)
                     {
                         productIdFromVariant = productVariant.ProductId;
+                        skuCode = productVariant.VariantName;
                     }
                 }
                 
