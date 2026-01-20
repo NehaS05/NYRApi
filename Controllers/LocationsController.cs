@@ -138,7 +138,7 @@ namespace NYR.API.Controllers
         /// <summary>
         /// Get locations that don't have any scanners assigned
         /// </summary>
-        [HttpGet("without-scanners")]
+        [HttpGet("Location-without-scanners")]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult<IEnumerable<LocationDto>>> GetLocationsWithoutScanners()
         {
