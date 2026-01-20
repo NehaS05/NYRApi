@@ -332,5 +332,11 @@ namespace NYR.API.Services
 
             return result.OrderByDescending(l => l.FollowUpDays);
         }
+
+        public async Task<IEnumerable<LocationDto>> GetLocationsWithoutScannersAsync()
+        {
+            var locations = await _locationRepository.GetLocationsWithoutScannersAsync();
+            return _mapper.Map<IEnumerable<LocationDto>>(locations);
+        }
     }
 }

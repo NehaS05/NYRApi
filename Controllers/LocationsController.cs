@@ -134,5 +134,23 @@ namespace NYR.API.Controllers
                 return BadRequest(new { error = ex.Message, stackTrace = ex.StackTrace });
             }
         }
+
+        /// <summary>
+        /// Get locations that don't have any scanners assigned
+        /// </summary>
+        [HttpGet("without-scanners")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<ActionResult<IEnumerable<LocationDto>>> GetLocationsWithoutScanners()
+        {
+            try
+            {
+                var locations = await _locationService.GetLocationsWithoutScannersAsync();
+                return Ok(locations);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

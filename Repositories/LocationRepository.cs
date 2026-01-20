@@ -40,6 +40,17 @@ namespace NYR.API.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Location>> GetLocationsWithoutScannersAsync()
+        {
+            return await _dbSet
+                .Include(l => l.Customer)
+                .Include(l => l.User)
+                .Where(l => !_context.Scanners.Any(s => s.LocationId == l.Id))
+                .AsNoTracking()
+                .OrderBy(l => l.LocationName)
+                .ToListAsync();
+        }
+
         public override async Task<IEnumerable<Location>> GetAllAsync()
         {
             return await _dbSet
