@@ -24,6 +24,20 @@ namespace NYR.API.Controllers
             return Ok(inventory);
         }
 
+        [HttpGet("grouped-by-location")]
+        public async Task<ActionResult<IEnumerable<LocationInventoryGroupDto>>> GetAllInventoryGroupedByLocation()
+        {
+            try
+            {
+                var groupedInventory = await _inventoryService.GetAllInventoryGroupedByLocationAsync();
+                return Ok(groupedInventory);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<LocationInventoryDataDto>> GetInventory(int id)
         {

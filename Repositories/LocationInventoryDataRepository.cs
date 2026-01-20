@@ -20,8 +20,25 @@ namespace NYR.API.Repositories
                 .Include(l => l.ProductVariant)
                 .Include(l => l.CreatedByUser)
                 .Include(l => l.UpdatedByUser)
-                .OrderByDescending(l => l.CreatedAt)
+                .OrderBy(l => l.Location.LocationName)
+                .ThenByDescending(l => l.CreatedAt)
                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<IGrouping<int, LocationInventoryData>>> GetAllGroupedByLocationAsync()
+        {
+            var data = await _dbSet
+                .Include(l => l.Location)
+                    .ThenInclude(loc => loc.Customer)
+                .Include(l => l.Product)
+                //.Include(l => l.ProductVariant)
+                .Include(l => l.CreatedByUser)
+                .Include(l => l.UpdatedByUser)
+                .OrderBy(l => l.Location.LocationName)
+                .ThenByDescending(l => l.CreatedAt)
+                .ToListAsync();
+
+            return data.GroupBy(l => l.LocationId);
         }
 
         public async Task<LocationInventoryData?> GetByIdWithDetailsAsync(int id)
