@@ -144,7 +144,8 @@ namespace NYR.API.Mappings
 
             // Scanner mappings
             CreateMap<Scanner, ScannerDto>()
-                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location.LocationName));
+                .ForMember(dest => dest.LocationId, opt => opt.MapFrom(src => src.LocationId ?? 0)) // Map null to 0 for DTO
+                .ForMember(dest => dest.LocationName, opt => opt.MapFrom(src => src.Location != null ? src.Location.LocationName : "-"));
             CreateMap<CreateScannerDto, Scanner>()
                 .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())

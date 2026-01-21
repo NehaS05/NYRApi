@@ -79,7 +79,14 @@ namespace NYR.API.Controllers
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { Message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { 
+                    Message = "An error occurred while creating the scanner", 
+                    Error = ex.Message 
+                });
             }
         }
 

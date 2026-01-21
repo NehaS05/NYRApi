@@ -40,10 +40,13 @@ namespace NYR.API.Services
 
         public async Task<ScannerDto> CreateScannerAsync(CreateScannerDto createScannerDto)
         {
-            // Validate location exists
-            var location = await _locationRepository.GetByIdAsync(createScannerDto.LocationId);
-            if (location == null)
-                throw new ArgumentException("Invalid location ID");
+            // Validate location exists if LocationId is provided
+            if (createScannerDto.LocationId.HasValue)
+            {
+                var location = await _locationRepository.GetByIdAsync(createScannerDto.LocationId.Value);
+                if (location == null)
+                    throw new ArgumentException("Invalid location ID");
+            }
 
             // Check if SerialNo already exists
             var existingScanner = await _scannerRepository.GetBySerialNoAsync(createScannerDto.SerialNo);
@@ -52,7 +55,18 @@ namespace NYR.API.Services
 
             var scanner = _mapper.Map<Scanner>(createScannerDto);
             var createdScanner = await _scannerRepository.AddAsync(scanner);
-            return _mapper.Map<ScannerDto>(createdScanner);
+            
+            // If scanner was created without location, return DTO with proper mapping
+            if (!createdScanner.LocationId.HasValue)
+            {
+                var scannerDto = _mapper.Map<ScannerDto>(createdScanner);
+                scannerDto.LocationName = "Unassigned";
+                return scannerDto;
+            }
+            
+            // Get scanner with location for proper mapping
+            var scannerWithLocation = await _scannerRepository.GetScannerWithLocationAsync(createdScanner.Id);
+            return _mapper.Map<ScannerDto>(scannerWithLocation);
         }
 
         public async Task<ScannerDto?> UpdateScannerAsync(int id, UpdateScannerDto updateScannerDto)
@@ -61,10 +75,13 @@ namespace NYR.API.Services
             if (scanner == null)
                 return null;
 
-            // Validate location exists
-            var location = await _locationRepository.GetByIdAsync(updateScannerDto.LocationId);
-            if (location == null)
-                throw new ArgumentException("Invalid location ID");
+            // Validate location exists if LocationId is provided
+            if (updateScannerDto.LocationId.HasValue)
+            {
+                var location = await _locationRepository.GetByIdAsync(updateScannerDto.LocationId.Value);
+                if (location == null)
+                    throw new ArgumentException("Invalid location ID");
+            }
 
             // Check if SerialNo already exists for another scanner
             var existingScanner = await _scannerRepository.GetBySerialNoAsync(updateScannerDto.SerialNo);
@@ -75,7 +92,10 @@ namespace NYR.API.Services
             scanner.UpdatedAt = DateTime.UtcNow;
 
             await _scannerRepository.UpdateAsync(scanner);
-            return _mapper.Map<ScannerDto>(scanner);
+            
+            // Get updated scanner with location for proper mapping
+            var updatedScanner = await _scannerRepository.GetScannerWithLocationAsync(id);
+            return _mapper.Map<ScannerDto>(updatedScanner);
         }
 
         public async Task<bool> DeleteScannerAsync(int id)
@@ -224,15 +244,20 @@ namespace NYR.API.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, scanner.Id.ToString()),
                 new Claim(ClaimTypes.Name, scanner.ScannerName),
                 new Claim(ClaimTypes.Role, "Scanner"), // Special role for scanners
                 new Claim("SerialNo", scanner.SerialNo),
-                new Claim("LocationId", scanner.LocationId.ToString()),
                 new Claim("ScannerType", "Device") // Identify this as a scanner token
             };
+
+            // Only add LocationId claim if scanner has a location assigned
+            if (scanner.LocationId.HasValue)
+            {
+                claims.Add(new Claim("LocationId", scanner.LocationId.Value.ToString()));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: issuer,

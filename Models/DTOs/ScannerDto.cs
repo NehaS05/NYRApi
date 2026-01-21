@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using NYR.API.Helpers;
 
 namespace NYR.API.Models.DTOs
 {
@@ -9,7 +11,7 @@ namespace NYR.API.Models.DTOs
         public string ScannerName { get; set; } = string.Empty;
         public string ScannerPIN { get; set; } = string.Empty;
         public string? ScannerUrl { get; set; }
-        public int LocationId { get; set; }
+        public int LocationId { get; set; } // Keep as int for backward compatibility, 0 means unassigned
         public string LocationName { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
@@ -33,8 +35,8 @@ namespace NYR.API.Models.DTOs
         [MaxLength(500)]
         public string? ScannerUrl { get; set; }
 
-        [Required]
-        public int LocationId { get; set; }
+        [JsonConverter(typeof(NullableIntJsonConverter))]
+        public int? LocationId { get; set; } // Nullable to allow unassigned scanners
 
         public bool AppPinReset { get; set; } = false;
     }
@@ -56,8 +58,8 @@ namespace NYR.API.Models.DTOs
         [MaxLength(500)]
         public string? ScannerUrl { get; set; }
 
-        [Required]
-        public int LocationId { get; set; }
+        [JsonConverter(typeof(NullableIntJsonConverter))]
+        public int? LocationId { get; set; } // Nullable to allow unassigned scanners
 
         public bool IsActive { get; set; } = true;
         public bool AppPinReset { get; set; } = false;

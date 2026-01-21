@@ -23,11 +23,10 @@ namespace NYR.API.Models.Entities
         [MaxLength(500)]
         public string? ScannerUrl { get; set; }
 
-        [Required]
-        public int LocationId { get; set; }
+        public int? LocationId { get; set; } // Made nullable to allow unassigned scanners
 
         [ForeignKey("LocationId")]
-        public virtual Location Location { get; set; } = null!;
+        public virtual Location? Location { get; set; } // Made nullable since LocationId is nullable
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
