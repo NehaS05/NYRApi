@@ -1,12 +1,17 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NYR.API.Data;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace NYR.API.Services
 {
@@ -21,8 +26,10 @@ namespace NYR.API.Services
         private readonly ITransferInventoryRepository _transferInventoryRepository;
         private readonly IRestockRequestRepository _restockRequestRepository;
         private readonly IFollowupRequestRepository _followupRequestRepository;
+        private readonly IScannerRepository _scannerRepository;
+        private readonly IConfiguration _configuration;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository, IFollowupRequestRepository followupRequestRepository)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository, IFollowupRequestRepository followupRequestRepository, IScannerRepository scannerRepository, IConfiguration configuration)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
@@ -33,6 +40,8 @@ namespace NYR.API.Services
             _transferInventoryRepository = transferInventoryRepository;
             _restockRequestRepository = restockRequestRepository;
             _followupRequestRepository = followupRequestRepository;
+            _scannerRepository = scannerRepository;
+            _configuration = configuration;
         }
 
         public async Task<IEnumerable<LocationDto>> GetAllLocationsAsync()
@@ -337,6 +346,244 @@ namespace NYR.API.Services
         {
             var locations = await _locationRepository.GetLocationsWithoutScannersAsync();
             return _mapper.Map<IEnumerable<LocationDto>>(locations);
+        }
+
+        public async Task<ScannerLocationCheckDto> CheckScannerLocationAssignmentAsync(string serialNo)
+        {
+            if (string.IsNullOrWhiteSpace(serialNo))
+            {
+                return new ScannerLocationCheckDto
+                {
+                    IsLocation = false,
+                    SerialNo = serialNo,
+                    Message = "Serial number is required",
+                    AvailableLocations = new List<SimpleLocationDto>()
+                };
+            }
+
+            // First, check if scanner exists and is active
+            var scanner = await _scannerRepository.GetBySerialNoAsync(serialNo);
+            
+            if (scanner == null)
+            {
+                return new ScannerLocationCheckDto
+                {
+                    IsLocation = false,
+                    SerialNo = serialNo,
+                    Message = $"Scanner {serialNo} not found",
+                    AvailableLocations = new List<SimpleLocationDto>()
+                };
+            }
+
+            if (!scanner.IsActive)
+            {
+                return new ScannerLocationCheckDto
+                {
+                    IsLocation = false,
+                    SerialNo = serialNo,
+                    Message = $"Scanner {serialNo} is not active",
+                    AvailableLocations = new List<SimpleLocationDto>()
+                };
+            }
+
+            // Generate tokens for valid scanner
+            var token = GenerateScannerJwtToken(scanner);
+            var refreshToken = GenerateRefreshToken();
+            var tokenExpiry = DateTime.UtcNow.AddHours(24);
+            var refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+            // Update scanner with new refresh token
+            scanner.RefreshToken = refreshToken;
+            scanner.RefreshTokenExpiry = refreshTokenExpiry;
+            scanner.UpdatedAt = DateTime.UtcNow;
+            await _scannerRepository.UpdateAsync(scanner);
+
+            // Check if scanner is assigned to a location
+            var assignedLocation = await _locationRepository.GetLocationByScannerSerialNoAsync(serialNo);
+
+            if (assignedLocation != null)
+            {
+                // Scanner is assigned to a location
+                return new ScannerLocationCheckDto
+                {
+                    IsLocation = true,
+                    SerialNo = serialNo,
+                    AssignedLocation = _mapper.Map<SimpleLocationDto>(assignedLocation),
+                    Message = $"Scanner {serialNo} is assigned to location: {assignedLocation.LocationName}",
+                    AvailableLocations = new List<SimpleLocationDto>(),
+                    Token = token,
+                    RefreshToken = refreshToken,
+                    TokenExpiry = tokenExpiry,
+                    RefreshTokenExpiry = refreshTokenExpiry
+                };
+            }
+            else
+            {
+                // Scanner is not assigned, get available locations
+                var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
+                
+                return new ScannerLocationCheckDto
+                {
+                    IsLocation = false,
+                    SerialNo = serialNo,
+                    Message = $"Scanner {serialNo} is not assigned to any location",
+                    AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
+                    Token = token,
+                    RefreshToken = refreshToken,
+                    TokenExpiry = tokenExpiry,
+                    RefreshTokenExpiry = refreshTokenExpiry
+                };
+            }
+        }
+
+        private string GenerateScannerJwtToken(Scanner scanner)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
+            var issuer = jwtSettings["Issuer"];
+            var audience = jwtSettings["Audience"];
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, scanner.Id.ToString()),
+                new Claim(ClaimTypes.Name, scanner.ScannerName),
+                new Claim(ClaimTypes.Role, "Scanner"), // Special role for scanners
+                new Claim("SerialNo", scanner.SerialNo),
+                new Claim("ScannerType", "Device") // Identify this as a scanner token
+            };
+
+            // Only add LocationId claim if scanner has a location assigned
+            if (scanner.LocationId.HasValue)
+            {
+                claims.Add(new Claim("LocationId", scanner.LocationId.Value.ToString()));
+            }
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(24),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        public async Task<AssignScannerToLocationResponseDto> AssignScannerToLocationAsync(AssignScannerToLocationDto assignDto)
+        {
+            try
+            {
+                // Verify admin PIN first
+                if (assignDto.AdminPIN != "0000")
+                {
+                    return new AssignScannerToLocationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = "Invalid admin PIN. Access denied.",
+                        SerialNo = assignDto.SerialNo,
+                        LocationId = assignDto.LocationId
+                    };
+                }
+
+                // Validate scanner exists and is active
+                var scanner = await _scannerRepository.GetBySerialNoAsync(assignDto.SerialNo);
+                if (scanner == null)
+                {
+                    return new AssignScannerToLocationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = $"Scanner with serial number {assignDto.SerialNo} not found",
+                        SerialNo = assignDto.SerialNo,
+                        LocationId = assignDto.LocationId
+                    };
+                }
+
+                if (!scanner.IsActive)
+                {
+                    return new AssignScannerToLocationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = $"Scanner {assignDto.SerialNo} is not active",
+                        SerialNo = assignDto.SerialNo,
+                        LocationId = assignDto.LocationId
+                    };
+                }
+
+                // Validate location exists and is active
+                var location = await _locationRepository.GetByIdAsync(assignDto.LocationId);
+                if (location == null)
+                {
+                    return new AssignScannerToLocationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = $"Location with ID {assignDto.LocationId} not found",
+                        SerialNo = assignDto.SerialNo,
+                        LocationId = assignDto.LocationId
+                    };
+                }
+
+                if (!location.IsActive)
+                {
+                    return new AssignScannerToLocationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = $"Location {location.LocationName} is not active",
+                        SerialNo = assignDto.SerialNo,
+                        LocationId = assignDto.LocationId,
+                        LocationName = location.LocationName
+                    };
+                }
+
+                // Check if another scanner is already assigned to this location
+                var existingScanner = await _scannerRepository.GetScannersByLocationAsync(assignDto.LocationId);
+                var otherScanner = existingScanner.FirstOrDefault(s => s.SerialNo != assignDto.SerialNo);
+                if (otherScanner != null)
+                {
+                    return new AssignScannerToLocationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = $"Location {location.LocationName} already has scanner {otherScanner.SerialNo} assigned",
+                        SerialNo = assignDto.SerialNo,
+                        LocationId = assignDto.LocationId,
+                        LocationName = location.LocationName
+                    };
+                }
+
+                // Update scanner with new location
+                scanner.LocationId = assignDto.LocationId;
+                scanner.UpdatedAt = DateTime.UtcNow;
+                await _scannerRepository.UpdateAsync(scanner);
+
+                return new AssignScannerToLocationResponseDto
+                {
+                    IsSuccess = true,
+                    Message = $"Scanner {assignDto.SerialNo} successfully assigned to location {location.LocationName}",
+                    SerialNo = assignDto.SerialNo,
+                    LocationId = assignDto.LocationId,
+                    LocationName = location.LocationName
+                };
+            }
+            catch (Exception ex)
+            {
+                return new AssignScannerToLocationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = $"An error occurred while assigning scanner: {ex.Message}",
+                    SerialNo = assignDto.SerialNo,
+                    LocationId = assignDto.LocationId
+                };
+            }
         }
     }
 }

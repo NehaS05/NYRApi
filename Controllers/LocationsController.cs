@@ -138,10 +138,10 @@ namespace NYR.API.Controllers
         /// <summary>
         /// Get locations that don't have any scanners assigned
         /// </summary>
-        [HttpGet("Location-without-scanners")]
-        [Authorize(Roles = "Admin,Staff")]
+        [HttpGet("without-scanners")]
+        // [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult<IEnumerable<LocationDto>>> GetLocationsWithoutScanners()
-        {
+    {
             try
             {
                 var locations = await _locationService.GetLocationsWithoutScannersAsync();
@@ -150,6 +150,66 @@ namespace NYR.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check if scanner is assigned to a location and return available locations if not
+        /// </summary>
+        [HttpGet("check-scanner-assignment/{serialNo}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ScannerLocationCheckDto>> CheckScannerLocationAssignment(string serialNo)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(serialNo))
+                {
+                    return BadRequest("Scanner serial number is required");
+                }
+
+                var result = await _locationService.CheckScannerLocationAssignmentAsync(serialNo);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Assign a scanner to a location by updating the scanner's LocationId
+        /// </summary>
+        [HttpPost("assign-scanner")]
+        [Authorize(Roles = "Admin,Staff,Scanner")]
+        public async Task<ActionResult<AssignScannerToLocationResponseDto>> AssignScannerToLocation([FromBody] AssignScannerToLocationDto assignDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _locationService.AssignScannerToLocationAsync(assignDto);
+                
+                if (result.IsSuccess)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new AssignScannerToLocationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = $"Internal server error: {ex.Message}",
+                    SerialNo = assignDto.SerialNo,
+                    LocationId = assignDto.LocationId
+                });
             }
         }
     }

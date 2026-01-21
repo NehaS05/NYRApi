@@ -14,5 +14,7 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<LocationDto>> SearchLocationsAsync(string searchTerm);
         Task<IEnumerable<LocationDto>> GetLocationsNeedingFollowUpAsync();
         Task<IEnumerable<LocationDto>> GetLocationsWithoutScannersAsync();
+        Task<ScannerLocationCheckDto> CheckScannerLocationAssignmentAsync(string serialNo);
+        Task<AssignScannerToLocationResponseDto> AssignScannerToLocationAsync(AssignScannerToLocationDto assignDto);
     }
 }

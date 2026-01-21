@@ -66,5 +66,18 @@ namespace NYR.API.Repositories
                 .Include(l => l.User)
                 .FirstOrDefaultAsync(l => l.Id == id);
         }
+
+        public async Task<Location?> GetLocationByScannerSerialNoAsync(string serialNo)
+        {
+            return await _context.Scanners
+                .Include(s => s.Location)
+                    //.ThenInclude(l => l.Customer)
+                //.Include(s => s.Location)
+                //    .ThenInclude(l => l.User)
+                .Where(s => s.SerialNo == serialNo && s.Location.IsActive)
+                .Select(s => s.Location)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+        }
     }
 }
