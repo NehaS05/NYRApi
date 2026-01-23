@@ -5,6 +5,7 @@ namespace NYR.API.Services.Interfaces
     public interface IProductService
     {
         Task<IEnumerable<ProductDto>> GetAllProductsAsync();
+        Task<PagedResultDto<ProductDto>> GetProductsPagedAsync(PaginationParamsDto paginationParams);
         Task<ProductDto?> GetProductByIdAsync(int id);
         Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto);
         Task<ProductDto?> UpdateProductAsync(int id, UpdateProductDto updateProductDto);

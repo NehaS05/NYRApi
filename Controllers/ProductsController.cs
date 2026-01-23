@@ -18,8 +18,18 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts()
+        public async Task<ActionResult> GetAllProducts([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            // Use pagination if any query parameters are provided, otherwise return all (backward compatibility)
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _productService.GetProductsPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var products = await _productService.GetAllProductsAsync();
             return Ok(products);
         }

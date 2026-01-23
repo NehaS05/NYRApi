@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace NYR.API.Repositories
 {
@@ -166,6 +169,61 @@ namespace NYR.API.Repositories
                     .ThenInclude(v => v.Attributes)
                         .ThenInclude(a => a.VariationOption)
                 .FirstOrDefaultAsync(p => p.Id == id);
+        }
+
+        public async Task<(IEnumerable<Product> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto paginationParams)
+        {
+            var query = BuildBaseQuery();
+            query = ApplySearchFilter(query, paginationParams.Search);
+            
+            var totalCount = await query.CountAsync();
+
+            var sortFields = GetSortFields();
+            query = query.ApplySorting(paginationParams.SortBy, paginationParams.SortOrder, sortFields, p => p.Name);
+            query = query.ApplyPagination(paginationParams.PageNumber, paginationParams.PageSize);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        private IQueryable<Product> BuildBaseQuery()
+        {
+            return _dbSet
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Supplier)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(p => p.Variants)
+                    .ThenInclude(v => v.Attributes)
+                        .ThenInclude(a => a.VariationOption)
+                .Where(p => p.IsActive);
+        }
+
+        private IQueryable<Product> ApplySearchFilter(IQueryable<Product> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var search = searchTerm.Trim();
+            return query.Where(p =>
+                EF.Functions.Like(p.Name, $"%{search}%") ||
+                EF.Functions.Like(p.Category.Name, $"%{search}%") ||
+                EF.Functions.Like(p.Brand.Name, $"%{search}%") ||
+                EF.Functions.Like(p.Supplier.Name, $"%{search}%"));
+        }
+
+        private Dictionary<string, Expression<Func<Product, object>>> GetSortFields()
+        {
+            return new Dictionary<string, Expression<Func<Product, object>>>
+            {
+                { "name", p => p.Name },
+                { "categoryname", p => p.Category.Name },
+                { "brandname", p => p.Brand.Name },
+                { "suppliername", p => p.Supplier.Name },
+                { "createdat", p => p.CreatedAt }
+            };
         }
     }
 }

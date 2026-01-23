@@ -1,3 +1,4 @@
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 
 namespace NYR.API.Repositories.Interfaces
@@ -11,5 +12,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<Product>> GetCatalogueProductsAsync();
         Task<IEnumerable<Product>> GetUniversalProductsAsync();
         Task<Product?> GetByBarcodeAsync(string barcode);
+        Task<(IEnumerable<Product> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto paginationParams);
     }
 }
