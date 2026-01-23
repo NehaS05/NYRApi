@@ -370,13 +370,15 @@ namespace NYR.API.Services
             DateTime tokenExpiry;
             DateTime refreshTokenExpiry;
 
+            // Initialize token values for cases where scanner doesn't exist yet
+            refreshToken = GenerateRefreshToken();
+            tokenExpiry = DateTime.UtcNow.AddHours(24);
+            refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
             if (scanner != null && scanner.IsActive)
             {
                 // Generate tokens for valid scanner
                 token = GenerateScannerJwtToken(scanner);
-                refreshToken = GenerateRefreshToken();
-                tokenExpiry = DateTime.UtcNow.AddHours(24);
-                refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
 
                 // Update scanner with new refresh token
                 scanner.RefreshToken = refreshToken;
@@ -384,31 +386,80 @@ namespace NYR.API.Services
                 scanner.UpdatedAt = DateTime.UtcNow;
                 await _scannerRepository.UpdateAsync(scanner);
             }
+            else if (scanner != null && !scanner.IsActive)
+            {
+                // Generate generic tokens for inactive scanners
+                token = GenerateGenericJwtToken(serialNo);
+            }
             else
             {
-                // Generate generic tokens for invalid/inactive scanners
+                // Scanner is null - will be handled in the scanner creation logic below
                 token = GenerateGenericJwtToken(serialNo);
-                refreshToken = GenerateRefreshToken();
-                tokenExpiry = DateTime.UtcNow.AddHours(24);
-                refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
             }
 
             if (scanner == null)
             {
-                // Get available locations even if scanner doesn't exist
-                var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
-                
-                return new ScannerLocationCheckDto
+                // Create a new scanner if it doesn't exist
+                try
                 {
-                    IsLocation = false,
-                    SerialNo = serialNo,
-                    Message = $"Scanner {serialNo} not found",
-                    AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
-                    Token = token,
-                    RefreshToken = refreshToken,
-                    TokenExpiry = tokenExpiry,
-                    RefreshTokenExpiry = refreshTokenExpiry
-                };
+                    var newScanner = new Scanner
+                    {
+                        SerialNo = serialNo,
+                        ScannerName = $"Auto-Created Scanner {serialNo}",
+                        ScannerPIN = "1234", // Default PIN
+                        ScannerUrl = null,
+                        LocationId = null, // Not assigned to any location initially
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        AppPinReset = false
+                    };
+
+                    scanner = await _scannerRepository.AddAsync(newScanner);
+
+                    // Generate tokens for the newly created scanner
+                    token = GenerateScannerJwtToken(scanner);
+                    refreshToken = GenerateRefreshToken();
+                    tokenExpiry = DateTime.UtcNow.AddHours(24);
+                    refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+                    // Update scanner with refresh token
+                    scanner.RefreshToken = refreshToken;
+                    scanner.RefreshTokenExpiry = refreshTokenExpiry;
+                    scanner.UpdatedAt = DateTime.UtcNow;
+                    await _scannerRepository.UpdateAsync(scanner);
+
+                    // Get available locations for the newly created scanner
+                    var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
+                    
+                    return new ScannerLocationCheckDto
+                    {
+                        IsLocation = false,
+                        SerialNo = serialNo,
+                        Message = $"Scanner {serialNo} created successfully and is not assigned to any location",
+                        AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
+                        Token = token,
+                        RefreshToken = refreshToken,
+                        TokenExpiry = tokenExpiry,
+                        RefreshTokenExpiry = refreshTokenExpiry
+                    };
+                }
+                catch (Exception ex)
+                {
+                    // If scanner creation fails, return error with generic token
+                    var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
+                    
+                    return new ScannerLocationCheckDto
+                    {
+                        IsLocation = false,
+                        SerialNo = serialNo,
+                        Message = $"Scanner {serialNo} not found and failed to create: {ex.Message}",
+                        AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
+                        Token = token,
+                        RefreshToken = refreshToken,
+                        TokenExpiry = tokenExpiry,
+                        RefreshTokenExpiry = refreshTokenExpiry
+                    };
+                }
             }
 
             if (!scanner.IsActive)
