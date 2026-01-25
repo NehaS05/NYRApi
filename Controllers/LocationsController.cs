@@ -21,7 +21,7 @@ namespace NYR.API.Controllers
         [Authorize(Roles = "Admin,Customer,Staff,Driver")]
         public async Task<ActionResult> GetAllLocations([FromQuery] PaginationParamsDto? paginationParams = null)
         {
-            if (paginationParams != null)
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);

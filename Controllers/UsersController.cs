@@ -23,7 +23,7 @@ namespace NYR.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> GetAllUsers([FromQuery] PaginationParamsDto? paginationParams = null)
         {
-            if (paginationParams != null)
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);

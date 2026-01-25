@@ -20,7 +20,7 @@ namespace NYR.API.Controllers
         [HttpGet]
         public async Task<ActionResult> GetAllVariations([FromQuery] PaginationParamsDto? paginationParams = null)
         {
-            if (paginationParams != null)
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);

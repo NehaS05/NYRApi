@@ -21,7 +21,7 @@ namespace NYR.API.Controllers
         public async Task<ActionResult> GetAllProducts([FromQuery] PaginationParamsDto? paginationParams = null)
         {
             // Use pagination if any query parameters are provided, otherwise return all (backward compatibility)
-            if (paginationParams != null)
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
             {
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
