@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -28,6 +29,16 @@ namespace NYR.API.Services
                 .Where(v => v.IsActive)
                 .ToListAsync();
             return _mapper.Map<IEnumerable<VanDto>>(vans);
+        }
+
+        public async Task<PagedResultDto<VanDto>> GetVansPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _vanRepository.GetPagedAsync(paginationParams);
+            var vanDtos = _mapper.Map<IEnumerable<VanDto>>(items);
+
+            return PaginationServiceHelper.CreatePagedResult(vanDtos, totalCount, paginationParams);
         }
 
         public async Task<VanDto?> GetByIdAsync(int id)

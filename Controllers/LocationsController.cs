@@ -19,8 +19,17 @@ namespace NYR.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Customer,Staff,Driver")]
-        public async Task<ActionResult<IEnumerable<LocationDto>>> GetAllLocations()
+        public async Task<ActionResult> GetAllLocations([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _locationService.GetLocationsPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var locations = await _locationService.GetAllLocationsAsync();
             return Ok(locations);
         }

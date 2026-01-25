@@ -19,8 +19,17 @@ namespace NYR.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Staff,Driver")]
-        public async Task<ActionResult<IEnumerable<VanDto>>> GetAll()
+        public async Task<ActionResult> GetAll([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _vanService.GetVansPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var vans = await _vanService.GetAllAsync();
             return Ok(vans);
         }

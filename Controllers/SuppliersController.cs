@@ -18,8 +18,17 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<SupplierDto>>> GetAllSuppliers()
+        public async Task<ActionResult> GetAllSuppliers([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _supplierService.GetSuppliersPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var suppliers = await _supplierService.GetAllSuppliersAsync();
             return Ok(suppliers);
         }

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -26,6 +27,16 @@ namespace NYR.API.Services
             var variations = await _variationRepository.GetAllWithOptionsAsync();
             variations = variations.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<VariationDto>>(variations);
+        }
+
+        public async Task<PagedResultDto<VariationDto>> GetVariationsPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _variationRepository.GetPagedAsync(paginationParams);
+            var variationDtos = _mapper.Map<IEnumerable<VariationDto>>(items);
+
+            return PaginationServiceHelper.CreatePagedResult(variationDtos, totalCount, paginationParams);
         }
 
         public async Task<VariationDto?> GetVariationByIdAsync(int id)

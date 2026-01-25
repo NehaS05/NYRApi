@@ -1,3 +1,4 @@
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 
 namespace NYR.API.Repositories.Interfaces
@@ -10,5 +11,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<User>> GetUsersByCustomerAsync(int customerId);
         Task<IEnumerable<User>> GetUsersByLocationAsync(int locationId);
         Task<User?> GetByRefreshTokenAsync(string refreshToken);
+        Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto paginationParams);
     }
 }

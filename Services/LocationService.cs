@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NYR.API.Data;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories;
@@ -49,6 +50,16 @@ namespace NYR.API.Services
             var locations = await _locationRepository.GetAllAsync();
             locations = locations.Where(x => x.IsActive == true);
             return _mapper.Map<IEnumerable<LocationDto>>(locations);
+        }
+
+        public async Task<PagedResultDto<LocationDto>> GetLocationsPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _locationRepository.GetPagedAsync(paginationParams);
+            var locationDtos = _mapper.Map<IEnumerable<LocationDto>>(items);
+
+            return PaginationServiceHelper.CreatePagedResult(locationDtos, totalCount, paginationParams);
         }
         public async Task<IEnumerable<LocationDto>> GetAllLocationsWithInventoryAsync()
         {

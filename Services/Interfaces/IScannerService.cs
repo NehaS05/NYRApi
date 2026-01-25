@@ -5,6 +5,7 @@ namespace NYR.API.Services.Interfaces
     public interface IScannerService
     {
         Task<IEnumerable<ScannerDto>> GetAllScannersAsync();
+        Task<PagedResultDto<ScannerDto>> GetScannersPagedAsync(PaginationParamsDto paginationParams);
         Task<ScannerDto?> GetScannerByIdAsync(int id);
         Task<ScannerDto> CreateScannerAsync(CreateScannerDto createScannerDto);
         Task<ScannerDto?> UpdateScannerAsync(int id, UpdateScannerDto updateScannerDto);

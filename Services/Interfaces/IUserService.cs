@@ -5,6 +5,7 @@ namespace NYR.API.Services.Interfaces
     public interface IUserService
     {
         Task<IEnumerable<UserDto>> GetAllUsersAsync();
+        Task<PagedResultDto<UserDto>> GetUsersPagedAsync(PaginationParamsDto paginationParams);
         Task<UserDto?> GetUserByIdAsync(int id);
         Task<UserDto> CreateUserAsync(CreateUserDto createUserDto);
         Task<UserDto?> UpdateUserAsync(int id, UpdateUserDto updateUserDto);

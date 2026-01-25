@@ -1,3 +1,4 @@
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 
 namespace NYR.API.Repositories.Interfaces
@@ -9,5 +10,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<Location>> SearchLocationsAsync(string searchTerm);
         Task<IEnumerable<Location>> GetLocationsWithoutScannersAsync();
         Task<Location?> GetLocationByScannerSerialNoAsync(string serialNo);
+        Task<(IEnumerable<Location> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto paginationParams);
     }
 }

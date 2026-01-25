@@ -5,6 +5,7 @@ namespace NYR.API.Services.Interfaces
     public interface IWarehouseService
     {
         Task<IEnumerable<WarehouseDto>> GetAllAsync();
+        Task<PagedResultDto<WarehouseDto>> GetWarehousesPagedAsync(PaginationParamsDto paginationParams);
         Task<WarehouseDto?> GetByIdAsync(int id);
         Task<WarehouseDto> CreateAsync(CreateWarehouseDto dto);
         Task<WarehouseDto?> UpdateAsync(int id, UpdateWarehouseDto dto);

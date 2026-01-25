@@ -1,4 +1,5 @@
 using AutoMapper;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -21,6 +22,16 @@ namespace NYR.API.Services
         {
             var suppliers = await _supplierRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<SupplierDto>>(suppliers);
+        }
+
+        public async Task<PagedResultDto<SupplierDto>> GetSuppliersPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _supplierRepository.GetPagedAsync(paginationParams);
+            var supplierDtos = _mapper.Map<IEnumerable<SupplierDto>>(items);
+
+            return PaginationServiceHelper.CreatePagedResult(supplierDtos, totalCount, paginationParams);
         }
 
         public async Task<SupplierDto?> GetSupplierByIdAsync(int id)

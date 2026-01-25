@@ -5,6 +5,7 @@ namespace NYR.API.Services.Interfaces
     public interface ILocationService
     {
         Task<IEnumerable<LocationDto>> GetAllLocationsAsync();
+        Task<PagedResultDto<LocationDto>> GetLocationsPagedAsync(PaginationParamsDto paginationParams);
         Task<IEnumerable<LocationDto>> GetAllLocationsWithInventoryAsync();
         Task<LocationDto?> GetLocationByIdAsync(int id);
         Task<LocationDto> CreateLocationAsync(CreateLocationDto createLocationDto);

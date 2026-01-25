@@ -18,8 +18,17 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<VariationDto>>> GetAllVariations()
+        public async Task<ActionResult> GetAllVariations([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _variationService.GetVariationsPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var variations = await _variationService.GetAllVariationsAsync();
             return Ok(variations);
         }

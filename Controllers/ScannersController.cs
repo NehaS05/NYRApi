@@ -19,8 +19,17 @@ namespace NYR.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Staff")]
-        public async Task<ActionResult<IEnumerable<ScannerDto>>> GetAllScanners()
+        public async Task<ActionResult> GetAllScanners([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _scannerService.GetScannersPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var scanners = await _scannerService.GetAllScannersAsync();
             return Ok(scanners);
         }

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -26,6 +27,16 @@ namespace NYR.API.Services
             var warehouses = await _warehouseRepository.GetAllAsync();
             warehouses = warehouses.Where(x => x.IsActive);
             return _mapper.Map<IEnumerable<WarehouseDto>>(warehouses);
+        }
+
+        public async Task<PagedResultDto<WarehouseDto>> GetWarehousesPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _warehouseRepository.GetPagedAsync(paginationParams);
+            var warehouseDtos = _mapper.Map<IEnumerable<WarehouseDto>>(items);
+
+            return PaginationServiceHelper.CreatePagedResult(warehouseDtos, totalCount, paginationParams);
         }
 
         public async Task<WarehouseDto?> GetByIdAsync(int id)

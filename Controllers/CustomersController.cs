@@ -19,8 +19,17 @@ namespace NYR.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Customer")]
-        public async Task<ActionResult<IEnumerable<CustomerDto>>> GetAllCustomers()
+        public async Task<ActionResult> GetAllCustomers([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _customerService.GetCustomersPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var customers = await _customerService.GetAllCustomersAsync();
             return Ok(customers);
         }

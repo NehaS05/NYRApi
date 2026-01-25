@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.IdentityModel.Tokens;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -30,6 +31,16 @@ namespace NYR.API.Services
         {
             var scanners = await _scannerRepository.GetAllAsync();
             return _mapper.Map<IEnumerable<ScannerDto>>(scanners);
+        }
+
+        public async Task<PagedResultDto<ScannerDto>> GetScannersPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _scannerRepository.GetPagedAsync(paginationParams);
+            var scannerDtos = _mapper.Map<IEnumerable<ScannerDto>>(items);
+
+            return PaginationServiceHelper.CreatePagedResult(scannerDtos, totalCount, paginationParams);
         }
 
         public async Task<ScannerDto?> GetScannerByIdAsync(int id)

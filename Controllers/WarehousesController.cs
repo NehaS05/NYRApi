@@ -19,8 +19,17 @@ namespace NYR.API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Staff,Driver")]
-        public async Task<ActionResult<IEnumerable<WarehouseDto>>> GetAll()
+        public async Task<ActionResult> GetAll([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null)
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _warehouseService.GetWarehousesPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var items = await _warehouseService.GetAllAsync();
             return Ok(items);
         }

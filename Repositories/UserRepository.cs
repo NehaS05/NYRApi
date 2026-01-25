@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace NYR.API.Repositories
 {
@@ -92,6 +95,55 @@ namespace NYR.API.Repositories
                 .Include(u => u.Location)
                 .Include(u => u.Warehouse)
                 .FirstOrDefaultAsync(u => u.Id == id);
+        }
+
+        public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto paginationParams)
+        {
+            var query = BuildBaseQuery();
+            query = ApplySearchFilter(query, paginationParams.Search);
+            
+            var totalCount = await query.CountAsync();
+
+            var sortFields = GetSortFields();
+            query = query.ApplySorting(paginationParams.SortBy, paginationParams.SortOrder, sortFields, u => u.Name);
+            query = query.ApplyPagination(paginationParams.PageNumber, paginationParams.PageSize);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        private IQueryable<User> BuildBaseQuery()
+        {
+            return _dbSet
+                .Include(u => u.Role)
+                .Include(u => u.Customer)
+                .Include(u => u.Location)
+                .Include(u => u.Warehouse)
+                .Where(u => u.IsActive);
+        }
+
+        private IQueryable<User> ApplySearchFilter(IQueryable<User> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var search = searchTerm.Trim();
+            return query.Where(u =>
+                EF.Functions.Like(u.Name, $"%{search}%") ||
+                EF.Functions.Like(u.Email, $"%{search}%") ||
+                (u.PhoneNumber != null && EF.Functions.Like(u.PhoneNumber, $"%{search}%")));
+        }
+
+        private Dictionary<string, Expression<Func<User, object>>> GetSortFields()
+        {
+            return new Dictionary<string, Expression<Func<User, object>>>
+            {
+                { "name", u => u.Name },
+                { "email", u => u.Email },
+                { "phonenumber", u => u.PhoneNumber ?? "" },
+                { "role", u => u.Role.Name },
+                { "createdat", u => u.CreatedAt }
+            };
         }
     }
 }
