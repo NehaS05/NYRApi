@@ -375,39 +375,121 @@ namespace NYR.API.Services
             // First, check if scanner exists and is active
             var scanner = await _scannerRepository.GetBySerialNoAsync(serialNo);
             
+            // Generate tokens regardless of scanner validity
+            string token;
+            string refreshToken;
+            DateTime tokenExpiry;
+            DateTime refreshTokenExpiry;
+
+            // Initialize token values for cases where scanner doesn't exist yet
+            refreshToken = GenerateRefreshToken();
+            tokenExpiry = DateTime.UtcNow.AddHours(24);
+            refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+            if (scanner != null && scanner.IsActive)
+            {
+                // Generate tokens for valid scanner
+                token = GenerateScannerJwtToken(scanner);
+
+                // Update scanner with new refresh token
+                scanner.RefreshToken = refreshToken;
+                scanner.RefreshTokenExpiry = refreshTokenExpiry;
+                scanner.UpdatedAt = DateTime.UtcNow;
+                await _scannerRepository.UpdateAsync(scanner);
+            }
+            else if (scanner != null && !scanner.IsActive)
+            {
+                // Generate generic tokens for inactive scanners
+                token = GenerateGenericJwtToken(serialNo);
+            }
+            else
+            {
+                // Scanner is null - will be handled in the scanner creation logic below
+                token = GenerateGenericJwtToken(serialNo);
+            }
+
             if (scanner == null)
             {
-                return new ScannerLocationCheckDto
+                // Create a new scanner if it doesn't exist
+                try
                 {
-                    IsLocation = false,
-                    SerialNo = serialNo,
-                    Message = $"Scanner {serialNo} not found",
-                    AvailableLocations = new List<SimpleLocationDto>()
-                };
+                    var newScanner = new Scanner
+                    {
+                        SerialNo = serialNo,
+                        ScannerName = $"Auto-Created Scanner {serialNo}",
+                        ScannerPIN = "1234", // Default PIN
+                        ScannerUrl = null,
+                        LocationId = null, // Not assigned to any location initially
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow,
+                        AppPinReset = false
+                    };
+
+                    scanner = await _scannerRepository.AddAsync(newScanner);
+
+                    // Generate tokens for the newly created scanner
+                    token = GenerateScannerJwtToken(scanner);
+                    refreshToken = GenerateRefreshToken();
+                    tokenExpiry = DateTime.UtcNow.AddHours(24);
+                    refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
+
+                    // Update scanner with refresh token
+                    scanner.RefreshToken = refreshToken;
+                    scanner.RefreshTokenExpiry = refreshTokenExpiry;
+                    scanner.UpdatedAt = DateTime.UtcNow;
+                    await _scannerRepository.UpdateAsync(scanner);
+
+                    // Get available locations for the newly created scanner
+                    var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
+                    
+                    return new ScannerLocationCheckDto
+                    {
+                        IsLocation = false,
+                        SerialNo = serialNo,
+                        Message = $"Scanner {serialNo} created successfully and is not assigned to any location",
+                        AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
+                        Token = token,
+                        RefreshToken = refreshToken,
+                        TokenExpiry = tokenExpiry,
+                        RefreshTokenExpiry = refreshTokenExpiry
+                    };
+                }
+                catch (Exception ex)
+                {
+                    // If scanner creation fails, return error with generic token
+                    var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
+                    
+                    return new ScannerLocationCheckDto
+                    {
+                        IsLocation = false,
+                        SerialNo = serialNo,
+                        Message = $"Scanner {serialNo} not found and failed to create: {ex.Message}",
+                        AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
+                        Token = token,
+                        RefreshToken = refreshToken,
+                        TokenExpiry = tokenExpiry,
+                        RefreshTokenExpiry = refreshTokenExpiry
+                    };
+                }
             }
 
             if (!scanner.IsActive)
             {
+                // Get available locations even if scanner is inactive
+                var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
+                
                 return new ScannerLocationCheckDto
                 {
                     IsLocation = false,
                     SerialNo = serialNo,
                     Message = $"Scanner {serialNo} is not active",
-                    AvailableLocations = new List<SimpleLocationDto>()
+                    AvailableLocations = _mapper.Map<IEnumerable<SimpleLocationDto>>(availableLocations),
+                    Token = token,
+                    RefreshToken = refreshToken,
+                    TokenExpiry = tokenExpiry,
+                    RefreshTokenExpiry = refreshTokenExpiry
                 };
             }
-
-            // Generate tokens for valid scanner
-            var token = GenerateScannerJwtToken(scanner);
-            var refreshToken = GenerateRefreshToken();
-            var tokenExpiry = DateTime.UtcNow.AddHours(24);
-            var refreshTokenExpiry = DateTime.UtcNow.AddDays(30);
-
-            // Update scanner with new refresh token
-            scanner.RefreshToken = refreshToken;
-            scanner.RefreshTokenExpiry = refreshTokenExpiry;
-            scanner.UpdatedAt = DateTime.UtcNow;
-            await _scannerRepository.UpdateAsync(scanner);
 
             // Check if scanner is assigned to a location
             var assignedLocation = await _locationRepository.GetLocationByScannerSerialNoAsync(serialNo);
@@ -430,7 +512,7 @@ namespace NYR.API.Services
             }
             else
             {
-                // Scanner is not assigned, get available locations
+                // Scanner is not assigned, get available locations AND provide tokens
                 var availableLocations = await _locationRepository.GetLocationsWithoutScannersAsync();
                 
                 return new ScannerLocationCheckDto
@@ -489,6 +571,37 @@ namespace NYR.API.Services
             using var rng = RandomNumberGenerator.Create();
             rng.GetBytes(randomNumber);
             return Convert.ToBase64String(randomNumber);
+        }
+
+        private string GenerateGenericJwtToken(string serialNo)
+        {
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
+            var issuer = jwtSettings["Issuer"];
+            var audience = jwtSettings["Audience"];
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, "0"), // Generic ID for invalid scanners
+                new Claim(ClaimTypes.Name, $"Unknown Scanner {serialNo}"),
+                new Claim(ClaimTypes.Role, "Scanner"), // Keep Scanner role
+                new Claim("SerialNo", serialNo),
+                new Claim("ScannerType", "Generic"), // Mark as generic token
+                new Claim("IsValid", "false") // Mark as invalid scanner
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(24),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         public async Task<AssignScannerToLocationResponseDto> AssignScannerToLocationAsync(AssignScannerToLocationDto assignDto)
