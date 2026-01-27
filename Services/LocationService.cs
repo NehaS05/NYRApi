@@ -29,8 +29,10 @@ namespace NYR.API.Services
         private readonly IFollowupRequestRepository _followupRequestRepository;
         private readonly IScannerRepository _scannerRepository;
         private readonly IConfiguration _configuration;
+        private readonly ILocationOutwardInventoryService _outwardInventoryService;
+        private readonly ILocationInventoryDataService _locationInventoryDataService;
 
-        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository, IFollowupRequestRepository followupRequestRepository, IScannerRepository scannerRepository, IConfiguration configuration)
+        public LocationService(ILocationRepository locationRepository, ICustomerRepository customerRepository, IUserRepository userRepository, ILocationInventoryDataRepository locationInventoryDataRepository, ApplicationDbContext context, IMapper mapper, ITransferInventoryRepository transferInventoryRepository, IRestockRequestRepository restockRequestRepository, IFollowupRequestRepository followupRequestRepository, IScannerRepository scannerRepository, IConfiguration configuration, ILocationOutwardInventoryService outwardInventoryService, ILocationInventoryDataService locationInventoryDataService)
         {
             _locationRepository = locationRepository;
             _customerRepository = customerRepository;
@@ -43,6 +45,8 @@ namespace NYR.API.Services
             _followupRequestRepository = followupRequestRepository;
             _scannerRepository = scannerRepository;
             _configuration = configuration;
+            _outwardInventoryService = outwardInventoryService;
+            _locationInventoryDataService = locationInventoryDataService;
         }
 
         public async Task<IEnumerable<LocationDto>> GetAllLocationsAsync()
@@ -368,7 +372,9 @@ namespace NYR.API.Services
                     IsLocation = false,
                     SerialNo = serialNo,
                     Message = "Serial number is required",
-                    AvailableLocations = new List<SimpleLocationDto>()
+                    AvailableLocations = new List<SimpleLocationDto>(),
+                    OutwardInventoryData = new List<LocationOutwardInventoryDto>(),
+                    LocationInventoryData = new List<LocationInventoryDataDto>()
                 };
             }
 
@@ -451,7 +457,9 @@ namespace NYR.API.Services
                         Token = token,
                         RefreshToken = refreshToken,
                         TokenExpiry = tokenExpiry,
-                        RefreshTokenExpiry = refreshTokenExpiry
+                        RefreshTokenExpiry = refreshTokenExpiry,
+                        OutwardInventoryData = new List<LocationOutwardInventoryDto>(),
+                        LocationInventoryData = new List<LocationInventoryDataDto>()
                     };
                 }
                 catch (Exception ex)
@@ -468,7 +476,9 @@ namespace NYR.API.Services
                         Token = token,
                         RefreshToken = refreshToken,
                         TokenExpiry = tokenExpiry,
-                        RefreshTokenExpiry = refreshTokenExpiry
+                        RefreshTokenExpiry = refreshTokenExpiry,
+                        OutwardInventoryData = new List<LocationOutwardInventoryDto>(),
+                        LocationInventoryData = new List<LocationInventoryDataDto>()
                     };
                 }
             }
@@ -487,7 +497,9 @@ namespace NYR.API.Services
                     Token = token,
                     RefreshToken = refreshToken,
                     TokenExpiry = tokenExpiry,
-                    RefreshTokenExpiry = refreshTokenExpiry
+                    RefreshTokenExpiry = refreshTokenExpiry,
+                    OutwardInventoryData = new List<LocationOutwardInventoryDto>(),
+                    LocationInventoryData = new List<LocationInventoryDataDto>()
                 };
             }
 
@@ -496,6 +508,12 @@ namespace NYR.API.Services
 
             if (assignedLocation != null)
             {
+                // Get outward inventory data for the last 60 minutes
+                var outwardInventoryData = await _outwardInventoryService.GetOutwardInventoryByLocationIdAsync(assignedLocation.Id, true);
+                
+                // Get location inventory data
+                var locationInventoryData = await _locationInventoryDataService.GetInventoryByLocationIdAsync(assignedLocation.Id);
+                
                 // Scanner is assigned to a location
                 return new ScannerLocationCheckDto
                 {
@@ -507,7 +525,9 @@ namespace NYR.API.Services
                     Token = token,
                     RefreshToken = refreshToken,
                     TokenExpiry = tokenExpiry,
-                    RefreshTokenExpiry = refreshTokenExpiry
+                    RefreshTokenExpiry = refreshTokenExpiry,
+                    OutwardInventoryData = outwardInventoryData,
+                    LocationInventoryData = locationInventoryData
                 };
             }
             else
@@ -524,7 +544,9 @@ namespace NYR.API.Services
                     Token = token,
                     RefreshToken = refreshToken,
                     TokenExpiry = tokenExpiry,
-                    RefreshTokenExpiry = refreshTokenExpiry
+                    RefreshTokenExpiry = refreshTokenExpiry,
+                    OutwardInventoryData = new List<LocationOutwardInventoryDto>(),
+                    LocationInventoryData = new List<LocationInventoryDataDto>()
                 };
             }
         }

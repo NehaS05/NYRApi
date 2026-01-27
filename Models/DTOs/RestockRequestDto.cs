@@ -74,5 +74,8 @@ namespace NYR.API.Models.DTOs
         public int ProductVariantId { get; set; }
         public string VariantName { get; set; } = string.Empty;
         public int ProdcutId { get; set; }
+        
+        // Outward inventory data for the location (last 60 minutes)
+        public IEnumerable<LocationOutwardInventoryDto> OutwardInventoryData { get; set; } = new List<LocationOutwardInventoryDto>();
     }
 }

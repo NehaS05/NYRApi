@@ -208,6 +208,9 @@ namespace NYR.API.Services
             if (string.IsNullOrWhiteSpace(skuCode))
                 return Enumerable.Empty<ProductVariantInfoDto>();
 
+            // Get outward inventory data for the location (last 60 minutes)
+            var outwardInventoryData = await _locationOutwardInventoryService.GetOutwardInventoryByLocationIdAsync(locationId, true);
+
             var query = _context.LocationInventoryData
                 .Include(lid => lid.ProductVariant)
                 .Include(lid => lid.Product)
@@ -227,7 +230,8 @@ namespace NYR.API.Services
                 {
                     ProductVariantId = lid.ProductVariant!.Id,
                     VariantName = lid.ProductVariant.VariantName,
-                    ProdcutId = lid.ProductId != null ? lid.ProductId : 0
+                    ProdcutId = lid.ProductId != null ? lid.ProductId : 0,
+                    OutwardInventoryData = outwardInventoryData
                 })
                 .Distinct()
                 .ToListAsync();
@@ -253,13 +257,18 @@ namespace NYR.API.Services
                         };
 
                         await _locationOutwardInventoryService.CreateOutwardInventoryAsync(createOutwardDto);
+                        
+                        // Get updated outward inventory data after creating new entry
+                        var updatedOutwardInventoryData = await _locationOutwardInventoryService.GetOutwardInventoryByLocationIdAsync(locationId, true);
+                        
                         return new List<ProductVariantInfoDto>
                         {
                             new ProductVariantInfoDto
                             {
                                 ProductVariantId = item.ProductVariant?.Id ?? 0,
                                 VariantName = "Data entered successfully",
-                                ProdcutId = item.ProductId
+                                ProdcutId = item.ProductId,
+                                OutwardInventoryData = updatedOutwardInventoryData
                             }
                         };
                     }
@@ -271,7 +280,8 @@ namespace NYR.API.Services
                             {
                                 ProductVariantId = 0,
                                 VariantName = $"Error: {ex.Message}",
-                                ProdcutId = 0
+                                ProdcutId = 0,
+                                OutwardInventoryData = outwardInventoryData
                             }
                         };
                     }
@@ -306,8 +316,51 @@ namespace NYR.API.Services
                     CreatedBy = userId ?? 1 // Use provided userId or default to 1
                 };
                 await _locationOutwardInventoryService.BarcodeOutwardInventoryAsync(createOutwardDto);
+                
+                // Get updated outward inventory data after creating new entry
+                var updatedOutwardInventoryData = await _locationOutwardInventoryService.GetOutwardInventoryByLocationIdAsync(locationId, true);
+                
+                // Update variantInfo to include the outward inventory data
+                foreach (var variant in variantInfo)
+                {
+                    variant.OutwardInventoryData = updatedOutwardInventoryData;
+                }
+
+                if (variantInfo.Count == 0)
+                {
+                    return new List<ProductVariantInfoDto>
+                    {
+                        new ProductVariantInfoDto
+                        {
+                            ProductVariantId = 0,
+                            VariantName = $"No product variants found in inventory with Barcode: {skuCode}",
+                            ProdcutId = 0,
+                            OutwardInventoryData = updatedOutwardInventoryData
+                        }
+                    };
+                }
             }
-            //
+            else
+            {
+                // Multiple variants found - update each with outward inventory data
+                foreach (var variant in variantInfo)
+                {
+                    variant.OutwardInventoryData = outwardInventoryData;
+                }
+                if (variantInfo.Count == 0)
+                {
+                    return new List<ProductVariantInfoDto>
+                    {
+                        new ProductVariantInfoDto
+                        {
+                            ProductVariantId = 0,
+                            VariantName = $"No product variants found in inventory with Barcode: {skuCode}",
+                            ProdcutId = 0,
+                            OutwardInventoryData = outwardInventoryData
+                        }
+                    };
+                }
+            }
 
             return variantInfo;
         }
