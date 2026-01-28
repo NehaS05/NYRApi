@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories;
@@ -47,18 +48,34 @@ namespace NYR.API.Services
         public async Task<IEnumerable<LocationInventoryGroupDto>> GetAllInventoryGroupedByLocationAsync()
         {
             var groupedInventory = await _inventoryRepository.GetAllGroupedByLocationAsync();
-            
-            var result = groupedInventory.Select(group => new LocationInventoryGroupDto
+
+            var result = groupedInventory.Select(group =>
             {
-                LocationId = group.Key,
-                LocationName = group.First().Location?.LocationName ?? "Unknown Location",
-                CustomerName = group.First().Location?.Customer?.CompanyName ?? "Unknown Customer",
-                //InventoryItems = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(group),
-                TotalItems = group.Count(),
-                TotalQuantity = group.Sum(item => item.Quantity)
+                var first = group.First();
+                return new LocationInventoryGroupDto
+                {
+                    LocationId = group.Key,
+                    LocationName = first.Location?.LocationName ?? "Unknown Location",
+                    CustomerName = first.Location?.Customer?.CompanyName ?? "Unknown Customer",
+                    ContactPerson = first.Location?.ContactPerson,
+                    // Location entity does not currently expose a location number; leave null.
+                    LocationNumber = null,
+                    TotalItems = group.Count(),
+                    TotalQuantity = group.Sum(item => item.Quantity),
+                    CreatedAt = first.Location?.CreatedAt ?? DateTime.UtcNow
+                };
             });
 
             return result;
+        }
+
+        public async Task<PagedResultDto<LocationInventoryGroupDto>> GetAllInventoryGroupedByLocationPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _inventoryRepository.GetAllGroupedByLocationPagedAsync(paginationParams);
+
+            return PaginationServiceHelper.CreatePagedResult(items, totalCount, paginationParams);
         }
 
         public async Task<LocationInventoryDataDto?> GetInventoryByIdAsync(int id)

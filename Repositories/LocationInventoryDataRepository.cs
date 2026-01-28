@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Helpers;
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
+using System.Linq.Expressions;
 
 namespace NYR.API.Repositories
 {
@@ -103,6 +106,74 @@ namespace NYR.API.Repositories
                     l.LocationId == locationId &&
                     l.ProductId == productId &&
                     l.VariationName == variationName);
+        }
+
+        public async Task<(IEnumerable<LocationInventoryGroupDto> Items, int TotalCount)> GetAllGroupedByLocationPagedAsync(PaginationParamsDto paginationParams)
+        {
+            var query = BuildGroupedByLocationBaseQuery();
+            query = ApplyGroupedByLocationSearchFilter(query, paginationParams.Search);
+
+            var totalCount = await query.CountAsync();
+
+            var sortFields = GetGroupedByLocationSortFields();
+            query = query.ApplySorting(paginationParams.SortBy, paginationParams.SortOrder, sortFields, g => g.LocationName);
+            query = query.ApplyPagination(paginationParams.PageNumber, paginationParams.PageSize);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        private IQueryable<LocationInventoryGroupDto> BuildGroupedByLocationBaseQuery()
+        {
+            return _dbSet
+                .Include(l => l.Location)
+                    .ThenInclude(loc => loc.Customer)
+                .AsNoTracking()
+                .GroupBy(l => new
+                {
+                    l.LocationId,
+                    l.Location!.LocationName,
+                    CustomerName = l.Location.Customer != null ? l.Location.Customer.CompanyName : "Unknown Customer",
+                    ContactPerson = l.Location.ContactPerson,
+                    l.Location.CreatedAt
+                })
+                .Select(g => new LocationInventoryGroupDto
+                {
+                    LocationId = g.Key.LocationId,
+                    LocationName = g.Key.LocationName ?? "Unknown Location",
+                    CustomerName = g.Key.CustomerName ?? "Unknown Customer",
+                    ContactPerson = g.Key.ContactPerson ?? string.Empty,
+                    // Location entity does not currently expose a location number; leave null.
+                    LocationNumber = null,
+                    TotalItems = g.Count(),
+                    TotalQuantity = g.Sum(item => item.Quantity),
+                    CreatedAt = g.Key.CreatedAt
+                });
+        }
+
+        private IQueryable<LocationInventoryGroupDto> ApplyGroupedByLocationSearchFilter(IQueryable<LocationInventoryGroupDto> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var search = searchTerm.Trim();
+            return query.Where(l =>
+                EF.Functions.Like(l.LocationName, $"%{search}%") ||
+                EF.Functions.Like(l.CustomerName, $"%{search}%") ||
+                EF.Functions.Like(l.ContactPerson ?? string.Empty, $"%{search}%") ||
+                EF.Functions.Like(l.LocationNumber ?? string.Empty, $"%{search}%"));
+        }
+
+        private Dictionary<string, Expression<Func<LocationInventoryGroupDto, object>>> GetGroupedByLocationSortFields()
+        {
+            return new Dictionary<string, Expression<Func<LocationInventoryGroupDto, object>>>
+            {
+                { "locationname", l => l.LocationName },
+                { "customername", l => l.CustomerName },
+                { "contactperson", l => l.ContactPerson ?? string.Empty },
+                { "locationnumber", l => l.LocationNumber ?? string.Empty },
+                { "createdat", l => l.CreatedAt }
+            };
         }
     }
 }

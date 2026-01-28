@@ -25,10 +25,20 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("grouped-by-location")]
-        public async Task<ActionResult<IEnumerable<LocationInventoryGroupDto>>> GetAllInventoryGroupedByLocation()
+        public async Task<ActionResult> GetAllInventoryGroupedByLocation([FromQuery] PaginationParamsDto? paginationParams = null)
         {
             try
             {
+                // Use pagination if any query parameters are provided, otherwise return all (backward compatibility)
+                if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+                {
+                    if (!ModelState.IsValid)
+                        return BadRequest(ModelState);
+
+                    var pagedResult = await _inventoryService.GetAllInventoryGroupedByLocationPagedAsync(paginationParams);
+                    return Ok(pagedResult);
+                }
+
                 var groupedInventory = await _inventoryService.GetAllInventoryGroupedByLocationAsync();
                 return Ok(groupedInventory);
             }
