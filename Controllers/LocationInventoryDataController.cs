@@ -151,8 +151,8 @@ namespace NYR.API.Controllers
                 return BadRequest("Barcode cannot be empty");
 
             var variantInfo = await _inventoryService.GetVariantInfoBySkuAsync(barcode, locationId, userId, productVariantId);
-            if (!variantInfo.Any())
-                return Ok($"No product variants found in inventory with Barcode: {barcode}");
+            //if (!variantInfo.Any())
+            //    return Ok($"No product variants found in inventory with Barcode: {barcode}");
 
             return Ok(variantInfo);
         }
