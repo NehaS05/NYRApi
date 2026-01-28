@@ -76,8 +76,18 @@ namespace NYR.API.Controllers
         /// </summary>
         /// <returns>List of warehouses with product counts and total quantities</returns>
         [HttpGet("warehouses")]
-        public async Task<ActionResult<IEnumerable<WarehouseListDto>>> GetWarehouseList()
+        public async Task<ActionResult> GetWarehouseList([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            // Use pagination if any query parameters are provided, otherwise return all (backward compatibility)
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _warehouseInventoryService.GetWarehouseListPagedAsync(paginationParams);
+                return Ok(result);
+            }
+
             var warehouses = await _warehouseInventoryService.GetWarehouseListAsync();
             return Ok(warehouses);
         }

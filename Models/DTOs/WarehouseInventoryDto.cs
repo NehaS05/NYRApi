@@ -80,6 +80,7 @@ namespace NYR.API.Models.DTOs
         public bool IsActive { get; set; }
         public int TotalProducts { get; set; }
         public int TotalQuantity { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
     public class WarehouseInventoryDetailDto

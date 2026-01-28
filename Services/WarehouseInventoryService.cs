@@ -1,4 +1,5 @@
 using AutoMapper;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -181,10 +182,20 @@ namespace NYR.API.Services
                     ZipCode = w.ZipCode,
                     IsActive = w.IsActive,
                     TotalProducts = productCounts.GetValueOrDefault(w.Id, 0),
-                    TotalQuantity = quantityTotals.GetValueOrDefault(w.Id, 0)
+                    TotalQuantity = quantityTotals.GetValueOrDefault(w.Id, 0),
+                    CreatedAt = w.CreatedAt
                 }).ToList();
 
             return warehouseList;
+        }
+
+        public async Task<PagedResultDto<WarehouseListDto>> GetWarehouseListPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _warehouseInventoryRepository.GetWarehouseListPagedAsync(paginationParams);
+
+            return PaginationServiceHelper.CreatePagedResult(items, totalCount, paginationParams);
         }
 
         public async Task<IEnumerable<WarehouseInventoryDetailDto>> GetWarehouseInventoryDetailsAsync(int warehouseId)

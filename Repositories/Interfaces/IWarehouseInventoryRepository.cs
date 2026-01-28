@@ -1,3 +1,4 @@
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 
 namespace NYR.API.Repositories.Interfaces
@@ -12,5 +13,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<bool> ExistsByWarehouseAndProductVariantAsync(int warehouseId, int productVariantId);
         Task<Dictionary<int, int>> GetWarehouseProductCountsAsync();
         Task<Dictionary<int, int>> GetWarehouseQuantityTotalsAsync();
+        Task<(IEnumerable<WarehouseListDto> Items, int TotalCount)> GetWarehouseListPagedAsync(PaginationParamsDto paginationParams);
     }
 }
