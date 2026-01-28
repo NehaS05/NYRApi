@@ -1,3 +1,4 @@
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 
 namespace NYR.API.Repositories.Interfaces
@@ -11,5 +12,8 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<LocationInventoryData>> GetByProductIdAsync(int productId);
         Task<LocationInventoryData?> GetByLocationAndProductAsync(int locationId, int productId, int? productVariantId);
         Task<LocationInventoryData?> GetByLocationAndProductVariationNameAsync(int locationId, int productId, string? variationName);
+        
+        // Optimized methods using raw SQL for better performance
+        Task<IEnumerable<LocationInventoryGroupDto>> GetInventoryGroupSummaryAsync();
     }
 }

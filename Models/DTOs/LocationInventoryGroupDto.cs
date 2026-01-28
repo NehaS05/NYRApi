@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace NYR.API.Models.DTOs
 {
     public class LocationInventoryGroupDto
@@ -5,6 +7,7 @@ namespace NYR.API.Models.DTOs
         public int LocationId { get; set; }
         public string LocationName { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
+        [NotMapped]
         public IEnumerable<LocationInventoryDataDto> InventoryItems { get; set; } = new List<LocationInventoryDataDto>();
         public int TotalItems { get; set; }
         public int TotalQuantity { get; set; }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
 
@@ -103,6 +104,28 @@ namespace NYR.API.Repositories
                     l.LocationId == locationId &&
                     l.ProductId == productId &&
                     l.VariationName == variationName);
+        }
+
+        // Optimized method using raw SQL for getting inventory summary
+        public async Task<IEnumerable<LocationInventoryGroupDto>> GetInventoryGroupSummaryAsync()
+        {
+            var sql = @"
+                SELECT * FROM 
+                (SELECT 
+                    l.Id as LocationId,
+                    l.LocationName,
+                    c.CompanyName as CustomerName,
+                    COUNT(lid.Id) as TotalItems,
+                    ISNULL(SUM(lid.Quantity), 0) as TotalQuantity
+                FROM Locations l
+                INNER JOIN Customers c ON l.CustomerId = c.Id
+                LEFT JOIN LocationInventoryData lid ON l.Id = lid.LocationId
+                WHERE l.IsActive = 1
+                GROUP BY l.Id, l.LocationName, c.CompanyName) AS loc
+                where loc.TotalItems > 0
+                ORDER BY loc.LocationName";
+
+            return await _context.Database.SqlQueryRaw<LocationInventoryGroupDto>(sql).ToListAsync();
         }
     }
 }
