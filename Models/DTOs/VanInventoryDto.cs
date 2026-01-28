@@ -72,6 +72,7 @@ namespace NYR.API.Models.DTOs
         public string DriverName { get; set; } = string.Empty;
         public int TotalTransfers { get; set; }
         public int TotalItems { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }
 

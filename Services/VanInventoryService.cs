@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
@@ -49,10 +50,20 @@ namespace NYR.API.Services
                     VanNumber = van.VanNumber,
                     DriverName = van.DefaultDriverName,
                     TotalTransfers = vanInventories.Count(vi => vi.VanId == van.Id),
-                    TotalItems = vanInventories.Where(vi => vi.VanId == van.Id).Sum(vi => vi.Items.Sum(i => i.Quantity))
+                    TotalItems = vanInventories.Where(vi => vi.VanId == van.Id).Sum(vi => vi.Items.Sum(i => i.Quantity)),
+                    CreatedAt = van.CreatedAt
                 }).ToList();
 
             return summary;
+        }
+
+        public async Task<PagedResultDto<VanWithInventorySummaryDto>> GetVansWithTransfersPagedAsync(PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var (items, totalCount) = await _vanInventoryRepository.GetVansWithTransfersPagedAsync(paginationParams);
+
+            return PaginationServiceHelper.CreatePagedResult(items, totalCount, paginationParams);
         }
 
         public async Task<IEnumerable<VanInventoryDto>> GetAllTransfersAsync()
