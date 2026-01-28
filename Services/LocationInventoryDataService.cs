@@ -46,17 +46,17 @@ namespace NYR.API.Services
 
         public async Task<IEnumerable<LocationInventoryGroupDto>> GetAllInventoryGroupedByLocationAsync()
         {
-            var groupedInventory = await _inventoryRepository.GetAllGroupedByLocationAsync();
+            var result = await _inventoryRepository.GetInventoryGroupSummaryAsync();
             
-            var result = groupedInventory.Select(group => new LocationInventoryGroupDto
-            {
-                LocationId = group.Key,
-                LocationName = group.First().Location?.LocationName ?? "Unknown Location",
-                CustomerName = group.First().Location?.Customer?.CompanyName ?? "Unknown Customer",
-                //InventoryItems = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(group),
-                TotalItems = group.Count(),
-                TotalQuantity = group.Sum(item => item.Quantity)
-            });
+            //var result = groupedInventory.Select(group => new LocationInventoryGroupDto
+            //{
+            //    LocationId = group.Key,
+            //    LocationName = group.First().Location?.LocationName ?? "Unknown Location",
+            //    CustomerName = group.First().Location?.Customer?.CompanyName ?? "Unknown Customer",
+            //    //InventoryItems = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(group),
+            //    TotalItems = group.Count(),
+            //    TotalQuantity = group.Sum(item => item.Quantity)
+            //});
 
             return result;
         }
