@@ -1,6 +1,8 @@
+using NYR.API.Helpers;
 using NYR.API.Models.DTOs;
 using NYR.API.Repositories.Interfaces;
 using NYR.API.Services.Interfaces;
+using System.Linq.Expressions;
 
 namespace NYR.API.Services
 {
@@ -98,6 +100,12 @@ namespace NYR.API.Services
             }));
 
             return transfers.OrderByDescending(t => t.RequestDate);
+        }
+
+        public async Task<PagedResultDto<TransferDto>> GetAllTransfersPagedAsync(PaginationParamsDto paginationParams)
+        {
+            var transfers = await GetAllTransfersAsync();
+            return CreatePagedTransfers(transfers, paginationParams);
         }
 
         public async Task<TransferDto?> GetTransferByIdAsync(int id, string type)
@@ -359,6 +367,12 @@ namespace NYR.API.Services
             return transfers.OrderByDescending(t => t.RequestDate);
         }
         
+        public async Task<PagedResultDto<TransferDto>> GetTransfersByTypePagedAsync(string type, PaginationParamsDto paginationParams)
+        {
+            var transfers = await GetTransfersByTypeAsync(type);
+            return CreatePagedTransfers(transfers, paginationParams);
+        }
+        
         private async Task LoadShippingInventoryForTransfer(TransferDto transfer)
         {
             if (transfer.Type == "RestockRequest")
@@ -507,6 +521,62 @@ namespace NYR.API.Services
             result.TotalItems = result.TotalWarehouseItems + result.TotalVanItems;
 
             return result;
+        }
+
+        private PagedResultDto<TransferDto> CreatePagedTransfers(IEnumerable<TransferDto> transfers, PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+
+            var query = transfers.AsQueryable();
+
+            // Apply search
+            if (!string.IsNullOrWhiteSpace(paginationParams.Search))
+            {
+                var search = paginationParams.Search.Trim().ToLower();
+                query = query.Where(t =>
+                    (t.LocationName ?? string.Empty).ToLower().Contains(search) ||
+                    (t.CustomerName ?? string.Empty).ToLower().Contains(search) ||
+                    (t.DriverName ?? string.Empty).ToLower().Contains(search) ||
+                    (t.Status ?? string.Empty).ToLower().Contains(search));
+            }
+
+            var totalCount = query.Count();
+
+            // Apply sorting
+            string sortBy = paginationParams.SortBy?.ToLower() ?? string.Empty;
+            string sortOrder = paginationParams.SortOrder.ToLower();
+
+            Expression<Func<TransferDto, object>> defaultSort = t => t.DeliveryDate ?? t.RequestDate;
+
+            var sortFields = new Dictionary<string, Expression<Func<TransferDto, object>>>
+            {
+                { "locationname", t => t.LocationName },
+                { "customername", t => t.CustomerName },
+                { "deliverydate", t => t.DeliveryDate ?? t.RequestDate },
+                { "drivername", t => t.DriverName ?? string.Empty },
+                { "status", t => t.Status },
+                { "createdat", t => t.CreatedAt }
+            };
+
+            if (string.IsNullOrWhiteSpace(sortBy) || !sortFields.ContainsKey(sortBy))
+            {
+                query = sortOrder == "desc"
+                    ? query.OrderByDescending(defaultSort)
+                    : query.OrderBy(defaultSort);
+            }
+            else
+            {
+                var sortField = sortFields[sortBy];
+                query = sortOrder == "desc"
+                    ? query.OrderByDescending(sortField)
+                    : query.OrderBy(sortField);
+            }
+
+            // Apply pagination
+            var skip = (paginationParams.PageNumber - 1) * paginationParams.PageSize;
+            var data = query.Skip(skip).Take(paginationParams.PageSize).ToList();
+
+            return PaginationServiceHelper.CreatePagedResult(data, totalCount, paginationParams);
         }
     }
 }

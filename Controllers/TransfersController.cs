@@ -22,8 +22,17 @@ namespace NYR.API.Controllers
         /// </summary>
         [HttpGet]
         [Authorize(Roles = "Admin,Staff,Driver")]
-        public async Task<ActionResult<IEnumerable<TransferDto>>> GetAllTransfers()
+        public async Task<ActionResult> GetAllTransfers([FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var pagedResult = await _transferService.GetAllTransfersPagedAsync(paginationParams);
+                return Ok(pagedResult);
+            }
+
             var transfers = await _transferService.GetAllTransfersAsync();
             return Ok(transfers);
         }
@@ -79,16 +88,26 @@ namespace NYR.API.Controllers
         }
 
         /// <summary>
-        /// Get transfers by type (VanTransfer or RestockRequest)
+        /// Get transfers by type (VanTransfer, RestockRequest, or FollowupRequest)
         /// </summary>
         [HttpGet("type/{type}")]
         [Authorize(Roles = "Admin,Staff,Driver")]
-        public async Task<ActionResult<IEnumerable<TransferDto>>> GetTransfersByType(string type)
+        public async Task<ActionResult> GetTransfersByType(string type, [FromQuery] PaginationParamsDto? paginationParams = null)
         {
-            if (!type.Equals("VanTransfer", StringComparison.OrdinalIgnoreCase) && 
-                !type.Equals("RestockRequest", StringComparison.OrdinalIgnoreCase))
+            if (!type.Equals("VanTransfer", StringComparison.OrdinalIgnoreCase) &&
+                !type.Equals("RestockRequest", StringComparison.OrdinalIgnoreCase) &&
+                !type.Equals("FollowupRequest", StringComparison.OrdinalIgnoreCase))
             {
-                return BadRequest("Type must be either 'VanTransfer' or 'RestockRequest'");
+                return BadRequest("Type must be either 'VanTransfer', 'RestockRequest', or 'FollowupRequest'");
+            }
+
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var pagedResult = await _transferService.GetTransfersByTypePagedAsync(type, paginationParams);
+                return Ok(pagedResult);
             }
 
             var transfers = await _transferService.GetTransfersByTypeAsync(type);
