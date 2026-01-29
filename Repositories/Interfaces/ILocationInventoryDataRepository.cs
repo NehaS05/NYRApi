@@ -9,6 +9,7 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<IGrouping<int, LocationInventoryData>>> GetAllGroupedByLocationAsync();
         Task<LocationInventoryData?> GetByIdWithDetailsAsync(int id);
         Task<IEnumerable<LocationInventoryData>> GetByLocationIdAsync(int locationId);
+        Task<(IEnumerable<LocationInventoryData> Items, int TotalCount)> GetByLocationIdPagedAsync(int locationId, PaginationParamsDto paginationParams);
         Task<IEnumerable<LocationInventoryData>> GetByProductIdAsync(int productId);
         Task<LocationInventoryData?> GetByLocationAndProductAsync(int locationId, int productId, int? productVariantId);
         Task<LocationInventoryData?> GetByLocationAndProductVariationNameAsync(int locationId, int productId, string? variationName);

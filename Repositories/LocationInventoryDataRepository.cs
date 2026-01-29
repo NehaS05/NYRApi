@@ -70,6 +70,49 @@ namespace NYR.API.Repositories
                 .ToListAsync();
         }
 
+        public async Task<(IEnumerable<LocationInventoryData> Items, int TotalCount)> GetByLocationIdPagedAsync(int locationId, PaginationParamsDto paginationParams)
+        {
+            IQueryable<LocationInventoryData> query = _dbSet
+                .Where(l => l.LocationId == locationId)
+                .Include(l => l.Product)
+                .Include(l => l.ProductVariant);
+            query = ApplyLocationInventorySearchFilter(query, paginationParams.Search);
+
+            var totalCount = await query.CountAsync();
+
+            var sortFields = GetLocationInventorySortFields();
+            query = query.ApplySorting(paginationParams.SortBy, paginationParams.SortOrder, sortFields, l => l.Product.Name);
+            query = query.ApplyPagination(paginationParams.PageNumber, paginationParams.PageSize);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        private static IQueryable<LocationInventoryData> ApplyLocationInventorySearchFilter(IQueryable<LocationInventoryData> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var search = searchTerm.Trim();
+            return query.Where(l =>
+                EF.Functions.Like(l.Product.Name, $"%{search}%") ||
+                (l.ProductVariant != null && EF.Functions.Like(l.ProductVariant.BarcodeSKU, $"%{search}%")) ||
+                (l.ProductVariant != null && l.ProductVariant.VariantName != null && EF.Functions.Like(l.ProductVariant.VariantName, $"%{search}%")) ||
+                (l.VariationName != null && EF.Functions.Like(l.VariationName, $"%{search}%")));
+        }
+
+        private static Dictionary<string, Expression<Func<LocationInventoryData, object>>> GetLocationInventorySortFields()
+        {
+            return new Dictionary<string, Expression<Func<LocationInventoryData, object>>>
+            {
+                { "productname", l => l.Product.Name },
+                { "skucode", l => l.ProductVariant != null ? (l.ProductVariant.BarcodeSKU ?? "") : "" },
+                { "variantname", l => (l.ProductVariant != null ? l.ProductVariant.VariantName : l.VariationName) ?? "" },
+                { "quantity", l => l.Quantity },
+                { "createdat", l => l.CreatedAt }
+            };
+        }
+
         public async Task<IEnumerable<LocationInventoryData>> GetByProductIdAsync(int productId)
         {
             return await _dbSet

@@ -85,6 +85,14 @@ namespace NYR.API.Services
             return _mapper.Map<IEnumerable<VanInventoryItemDto>>(allItems);
         }
 
+        public async Task<PagedResultDto<VanInventoryItemDto>> GetTransferItemsByVanIdPagedAsync(int vanId, PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+            var (items, totalCount) = await _vanInventoryRepository.GetItemsByVanIdPagedAsync(vanId, paginationParams);
+            var dtos = _mapper.Map<IEnumerable<VanInventoryItemDto>>(items).ToList();
+            return PaginationServiceHelper.CreatePagedResult(dtos, totalCount, paginationParams);
+        }
+
         public async Task<VanInventoryDto> CreateTransferAsync(CreateVanInventoryDto createDto)
         {
             // Validate Van exists

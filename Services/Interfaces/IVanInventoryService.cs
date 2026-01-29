@@ -9,6 +9,7 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<VanInventoryDto>> GetAllTransfersAsync();
         Task<VanInventoryDto?> GetTransferByIdAsync(int id);
         Task<IEnumerable<VanInventoryItemDto>> GetTransferItemsByVanIdAsync(int vanId);
+        Task<PagedResultDto<VanInventoryItemDto>> GetTransferItemsByVanIdPagedAsync(int vanId, PaginationParamsDto paginationParams);
         Task<VanInventoryDto> CreateTransferAsync(CreateVanInventoryDto createDto);
         Task<bool> DeleteTransferAsync(int id);
         Task<IEnumerable<TransferTrackingDto>> GetAllTransfersTrackingAsync();

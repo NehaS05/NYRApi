@@ -14,5 +14,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<Dictionary<int, int>> GetWarehouseProductCountsAsync();
         Task<Dictionary<int, int>> GetWarehouseQuantityTotalsAsync();
         Task<(IEnumerable<WarehouseListDto> Items, int TotalCount)> GetWarehouseListPagedAsync(PaginationParamsDto paginationParams);
+        Task<(IEnumerable<WarehouseInventory> Items, int TotalCount)> GetInventoryByWarehousePagedAsync(int warehouseId, PaginationParamsDto paginationParams);
     }
 }

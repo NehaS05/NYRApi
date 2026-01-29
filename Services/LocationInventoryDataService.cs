@@ -47,36 +47,7 @@ namespace NYR.API.Services
 
         public async Task<IEnumerable<LocationInventoryGroupDto>> GetAllInventoryGroupedByLocationAsync()
         {
-            var groupedInventory = await _inventoryRepository.GetAllGroupedByLocationAsync();
-
-            var result = groupedInventory.Select(group =>
-            {
-                var first = group.First();
-                return new LocationInventoryGroupDto
-                {
-                    LocationId = group.Key,
-                    LocationName = first.Location?.LocationName ?? "Unknown Location",
-                    CustomerName = first.Location?.Customer?.CompanyName ?? "Unknown Customer",
-                    ContactPerson = first.Location?.ContactPerson,
-                    // Location entity does not currently expose a location number; leave null.
-                    LocationNumber = null,
-                    TotalItems = group.Count(),
-                    TotalQuantity = group.Sum(item => item.Quantity),
-                    CreatedAt = first.Location?.CreatedAt ?? DateTime.UtcNow
-                };
-            });
             var result = await _inventoryRepository.GetInventoryGroupSummaryAsync();
-            
-            //var result = groupedInventory.Select(group => new LocationInventoryGroupDto
-            //{
-            //    LocationId = group.Key,
-            //    LocationName = group.First().Location?.LocationName ?? "Unknown Location",
-            //    CustomerName = group.First().Location?.Customer?.CompanyName ?? "Unknown Customer",
-            //    //InventoryItems = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(group),
-            //    TotalItems = group.Count(),
-            //    TotalQuantity = group.Sum(item => item.Quantity)
-            //});
-
             return result;
         }
 
@@ -100,7 +71,6 @@ namespace NYR.API.Services
             var inventory = await _inventoryRepository.GetByLocationIdAsync(locationId);
             var inventoryDtos = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(inventory);
             
-            // Add ProductSKU to each inventory item
             foreach (var dto in inventoryDtos)
             {
                 var inventoryItem = inventory.FirstOrDefault(wi => wi.Id == dto.Id);
@@ -108,6 +78,20 @@ namespace NYR.API.Services
             }
             
             return inventoryDtos;
+        }
+
+        public async Task<PagedResultDto<LocationInventoryDataDto>> GetInventoryByLocationIdPagedAsync(int locationId, PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+            var (items, totalCount) = await _inventoryRepository.GetByLocationIdPagedAsync(locationId, paginationParams);
+            var inventoryList = items.ToList();
+            var dtos = _mapper.Map<IEnumerable<LocationInventoryDataDto>>(inventoryList).ToList();
+            foreach (var dto in dtos)
+            {
+                var inventoryItem = inventoryList.FirstOrDefault(wi => wi.Id == dto.Id);
+                dto.ProductSKU = inventoryItem?.ProductVariant?.BarcodeSKU ?? string.Empty;
+            }
+            return PaginationServiceHelper.CreatePagedResult(dtos, totalCount, paginationParams);
         }
 
         public async Task<IEnumerable<LocationInventoryDataDto>> GetInventoryByProductIdAsync(int productId)

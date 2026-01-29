@@ -96,10 +96,20 @@ namespace NYR.API.Controllers
         /// Get detailed inventory for a specific warehouse
         /// </summary>
         /// <param name="warehouseId">Warehouse ID</param>
+        /// <param name="paginationParams">Optional pagination parameters</param>
         /// <returns>List of inventory items in the warehouse</returns>
         [HttpGet("warehouse/{warehouseId}/inventory")]
-        public async Task<ActionResult<IEnumerable<WarehouseInventoryDetailDto>>> GetWarehouseInventoryDetails(int warehouseId)
+        public async Task<ActionResult> GetWarehouseInventoryDetails(int warehouseId, [FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _warehouseInventoryService.GetWarehouseInventoryDetailsPagedAsync(warehouseId, paginationParams);
+                return Ok(result);
+            }
+
             var inventory = await _warehouseInventoryService.GetWarehouseInventoryDetailsAsync(warehouseId);
             return Ok(inventory);
         }

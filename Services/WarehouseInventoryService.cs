@@ -202,7 +202,20 @@ namespace NYR.API.Services
         {
             var inventoryItems = await _warehouseInventoryRepository.GetInventoryByWarehouseWithDetailsAsync(warehouseId);
 
-            return inventoryItems.Select(wi => new WarehouseInventoryDetailDto
+            return inventoryItems.Select(wi => MapToWarehouseInventoryDetailDto(wi)).ToList();
+        }
+
+        public async Task<PagedResultDto<WarehouseInventoryDetailDto>> GetWarehouseInventoryDetailsPagedAsync(int warehouseId, PaginationParamsDto paginationParams)
+        {
+            PaginationServiceHelper.NormalizePaginationParams(paginationParams);
+            var (items, totalCount) = await _warehouseInventoryRepository.GetInventoryByWarehousePagedAsync(warehouseId, paginationParams);
+            var dtos = items.Select(wi => MapToWarehouseInventoryDetailDto(wi)).ToList();
+            return PaginationServiceHelper.CreatePagedResult(dtos, totalCount, paginationParams);
+        }
+
+        private static WarehouseInventoryDetailDto MapToWarehouseInventoryDetailDto(WarehouseInventory wi)
+        {
+            return new WarehouseInventoryDetailDto
             {
                 Id = wi.Id,
                 ProductName = wi.Product.Name,
@@ -216,7 +229,7 @@ namespace NYR.API.Services
                 Notes = wi.Notes,
                 CreatedAt = wi.CreatedAt,
                 UpdatedAt = wi.UpdatedAt
-            }).ToList();
+            };
         }
 
         public async Task<WarehouseInventoryDto?> GetInventoryByIdAsync(int id)

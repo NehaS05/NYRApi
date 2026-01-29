@@ -9,5 +9,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<VanInventory?> GetByIdWithDetailsAsync(int id);
         Task<IEnumerable<VanInventory>> GetAllWithDetailsAsync();
         Task<(IEnumerable<VanWithInventorySummaryDto> Items, int TotalCount)> GetVansWithTransfersPagedAsync(PaginationParamsDto paginationParams);
+        Task<(IEnumerable<VanInventoryItem> Items, int TotalCount)> GetItemsByVanIdPagedAsync(int vanId, PaginationParamsDto paginationParams);
     }
 }

@@ -83,6 +83,53 @@ namespace NYR.API.Repositories
                 .ToListAsync();
         }
 
+        public async Task<(IEnumerable<WarehouseInventory> Items, int TotalCount)> GetInventoryByWarehousePagedAsync(int warehouseId, PaginationParamsDto paginationParams)
+        {
+            IQueryable<WarehouseInventory> query = _dbSet
+                .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
+                .Include(wi => wi.Product)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv!.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(wi => wi.ProductVariant)
+                    .ThenInclude(pv => pv!.Attributes)
+                        .ThenInclude(a => a.VariationOption);
+            query = ApplyWarehouseInventoryDetailSearchFilter(query, paginationParams.Search);
+
+            var totalCount = await query.CountAsync();
+
+            var sortFields = GetWarehouseInventoryDetailSortFields();
+            query = query.ApplySorting(paginationParams.SortBy, paginationParams.SortOrder, sortFields, wi => wi.Product.Name);
+            query = query.ApplyPagination(paginationParams.PageNumber, paginationParams.PageSize);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        private IQueryable<WarehouseInventory> ApplyWarehouseInventoryDetailSearchFilter(IQueryable<WarehouseInventory> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var search = searchTerm.Trim();
+            return query.Where(wi =>
+                EF.Functions.Like(wi.Product.Name, $"%{search}%") ||
+                (wi.ProductVariant != null && EF.Functions.Like(wi.ProductVariant.BarcodeSKU, $"%{search}%")) ||
+                (wi.ProductVariant != null && wi.ProductVariant.VariantName != null && EF.Functions.Like(wi.ProductVariant.VariantName, $"%{search}%")));
+        }
+
+        private Dictionary<string, Expression<Func<WarehouseInventory, object>>> GetWarehouseInventoryDetailSortFields()
+        {
+            return new Dictionary<string, Expression<Func<WarehouseInventory, object>>>
+            {
+                { "productname", wi => wi.Product.Name },
+                { "skucode", wi => wi.ProductVariant != null ? (wi.ProductVariant.BarcodeSKU ?? "") : "" },
+                { "variantname", wi => wi.ProductVariant != null ? (wi.ProductVariant.VariantName ?? "") : "" },
+                { "quantity", wi => wi.Quantity },
+                { "createdat", wi => wi.CreatedAt }
+            };
+        }
+
         public async Task<bool> ExistsByWarehouseAndProductVariantAsync(int warehouseId, int productVariantId)
         {
             return await _dbSet

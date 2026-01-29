@@ -48,7 +48,7 @@ namespace NYR.API.Controllers
             }
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<LocationInventoryDataDto>> GetInventory(int id)
         {
             var inventory = await _inventoryService.GetInventoryByIdAsync(id);
@@ -59,8 +59,17 @@ namespace NYR.API.Controllers
         }
 
         [HttpGet("by-location/{locationId}")]
-        public async Task<ActionResult<IEnumerable<LocationInventoryDataDto>>> GetInventoryByLocation(int locationId)
+        public async Task<ActionResult> GetInventoryByLocation(int locationId, [FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _inventoryService.GetInventoryByLocationIdPagedAsync(locationId, paginationParams);
+                return Ok(result);
+            }
+
             var inventory = await _inventoryService.GetInventoryByLocationIdAsync(locationId);
             return Ok(inventory);
         }

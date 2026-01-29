@@ -56,8 +56,17 @@ namespace NYR.API.Controllers
 
         [HttpGet("van/{vanId}/items")]
         [Authorize(Roles = "Admin,Staff,Driver")]
-        public async Task<ActionResult<IEnumerable<VanInventoryItemDto>>> GetTransferItemsByVan(int vanId)
+        public async Task<ActionResult> GetTransferItemsByVan(int vanId, [FromQuery] PaginationParamsDto? paginationParams = null)
         {
+            if (paginationParams != null && (Request.Query.ContainsKey("pageNumber") || Request.Query.ContainsKey("pageSize")))
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var result = await _vanInventoryService.GetTransferItemsByVanIdPagedAsync(vanId, paginationParams);
+                return Ok(result);
+            }
+
             var items = await _vanInventoryService.GetTransferItemsByVanIdAsync(vanId);
             return Ok(items);
         }

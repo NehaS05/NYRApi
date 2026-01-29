@@ -9,6 +9,7 @@ namespace NYR.API.Services.Interfaces
         Task<PagedResultDto<LocationInventoryGroupDto>> GetAllInventoryGroupedByLocationPagedAsync(PaginationParamsDto paginationParams);
         Task<LocationInventoryDataDto?> GetInventoryByIdAsync(int id);
         Task<IEnumerable<LocationInventoryDataDto>> GetInventoryByLocationIdAsync(int locationId);
+        Task<PagedResultDto<LocationInventoryDataDto>> GetInventoryByLocationIdPagedAsync(int locationId, PaginationParamsDto paginationParams);
         Task<IEnumerable<LocationInventoryDataDto>> GetInventoryByProductIdAsync(int productId);
         Task<LocationInventoryDataDto> CreateInventoryAsync(CreateLocationInventoryDataDto createDto);
         Task<LocationInventoryDataDto?> UpdateInventoryAsync(int id, UpdateLocationInventoryDataDto updateDto);

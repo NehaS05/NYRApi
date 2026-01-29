@@ -9,6 +9,7 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<WarehouseListDto>> GetWarehouseListAsync();
         Task<PagedResultDto<WarehouseListDto>> GetWarehouseListPagedAsync(PaginationParamsDto paginationParams);
         Task<IEnumerable<WarehouseInventoryDetailDto>> GetWarehouseInventoryDetailsAsync(int warehouseId);
+        Task<PagedResultDto<WarehouseInventoryDetailDto>> GetWarehouseInventoryDetailsPagedAsync(int warehouseId, PaginationParamsDto paginationParams);
         Task<WarehouseInventoryDto?> GetInventoryByIdAsync(int id);
         Task<WarehouseInventoryDto?> UpdateInventoryAsync(int id, UpdateInventoryDto updateInventoryDto);
         Task<bool> DeleteInventoryAsync(int id);

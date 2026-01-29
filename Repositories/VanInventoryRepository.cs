@@ -136,5 +136,53 @@ namespace NYR.API.Repositories
                 { "createdat", v => v.CreatedAt }
             };
         }
+
+        public async Task<(IEnumerable<VanInventoryItem> Items, int TotalCount)> GetItemsByVanIdPagedAsync(int vanId, PaginationParamsDto paginationParams)
+        {
+            var query = _context.VanInventoryItems
+                .Include(item => item.VanInventory)
+                .Include(item => item.Product)
+                .Include(item => item.ProductVariant)
+                    .ThenInclude(pv => pv!.Attributes)
+                        .ThenInclude(a => a.Variation)
+                .Include(item => item.ProductVariant)
+                    .ThenInclude(pv => pv!.Attributes)
+                        .ThenInclude(a => a.VariationOption)
+                .Where(item => item.VanInventory.VanId == vanId && item.VanInventory.IsActive);
+            query = ApplyVanItemSearchFilter(query, paginationParams.Search);
+
+            var totalCount = await query.CountAsync();
+
+            var sortFields = GetVanItemSortFields();
+            query = query.ApplySorting(paginationParams.SortBy, paginationParams.SortOrder, sortFields, item => item.Product.Name);
+            query = query.ApplyPagination(paginationParams.PageNumber, paginationParams.PageSize);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        private static IQueryable<VanInventoryItem> ApplyVanItemSearchFilter(IQueryable<VanInventoryItem> query, string? searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return query;
+
+            var search = searchTerm.Trim();
+            return query.Where(item =>
+                EF.Functions.Like(item.Product.Name, $"%{search}%") ||
+                (item.ProductVariant != null && EF.Functions.Like(item.ProductVariant.BarcodeSKU, $"%{search}%")) ||
+                (item.ProductVariant != null && item.ProductVariant.VariantName != null && EF.Functions.Like(item.ProductVariant.VariantName, $"%{search}%")));
+        }
+
+        private static Dictionary<string, Expression<Func<VanInventoryItem, object>>> GetVanItemSortFields()
+        {
+            return new Dictionary<string, Expression<Func<VanInventoryItem, object>>>
+            {
+                { "productname", item => item.Product.Name },
+                { "skucode", item => item.ProductVariant != null ? (item.ProductVariant.BarcodeSKU ?? "") : "" },
+                { "variantname", item => item.ProductVariant != null ? (item.ProductVariant.VariantName ?? "") : "" },
+                { "quantity", item => item.Quantity },
+                { "createdat", item => item.CreatedAt }
+            };
+        }
     }
 }
