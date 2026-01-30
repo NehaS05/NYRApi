@@ -234,30 +234,25 @@ namespace NYR.API.Repositories
 
         private IQueryable<LocationInventoryGroupDto> BuildGroupedByLocationBaseQuery()
         {
-            return _dbSet
-                .Include(l => l.Location)
-                    .ThenInclude(loc => loc.Customer)
+            return _context.Locations
+                .Include(l => l.Customer)
                 .AsNoTracking()
-                .GroupBy(l => new
-                {
-                    l.LocationId,
-                    l.Location!.LocationName,
-                    CustomerName = l.Location.Customer != null ? l.Location.Customer.CompanyName : "Unknown Customer",
-                    ContactPerson = l.Location.ContactPerson,
-                    l.Location.CreatedAt
-                })
-                .Select(g => new LocationInventoryGroupDto
-                {
-                    LocationId = g.Key.LocationId,
-                    LocationName = g.Key.LocationName ?? "Unknown Location",
-                    CustomerName = g.Key.CustomerName ?? "Unknown Customer",
-                    ContactPerson = g.Key.ContactPerson ?? string.Empty,
-                    // Location entity does not currently expose a location number; leave null.
-                    LocationNumber = null,
-                    TotalItems = g.Count(),
-                    TotalQuantity = g.Sum(item => item.Quantity),
-                    CreatedAt = g.Key.CreatedAt
-                });
+                .Where(l => l.IsActive) // Only show active locations
+                .GroupJoin(
+                    _dbSet,
+                    location => location.Id,
+                    inventory => inventory.LocationId,
+                    (location, inventoryItems) => new LocationInventoryGroupDto
+                    {
+                        LocationId = location.Id,
+                        LocationName = location.LocationName ?? "Unknown Location",
+                        CustomerName = location.Customer != null ? location.Customer.CompanyName : "Unknown Customer",
+                        ContactPerson = location.ContactPerson ?? string.Empty,
+                        LocationNumber = location.LocationPhone ?? string.Empty,
+                        TotalItems = inventoryItems.Count(),
+                        TotalQuantity = inventoryItems.Sum(item => item.Quantity),
+                        CreatedAt = location.CreatedAt
+                    });
         }
 
         private IQueryable<LocationInventoryGroupDto> ApplyGroupedByLocationSearchFilter(IQueryable<LocationInventoryGroupDto> query, string? searchTerm)
@@ -288,20 +283,21 @@ namespace NYR.API.Repositories
         public async Task<IEnumerable<LocationInventoryGroupDto>> GetInventoryGroupSummaryAsync()
         {
             var sql = @"
-                SELECT * FROM 
-                (SELECT 
+                SELECT 
                     l.Id as LocationId,
                     l.LocationName,
                     c.CompanyName as CustomerName,
-                    COUNT(lid.Id) as TotalItems,
-                    ISNULL(SUM(lid.Quantity), 0) as TotalQuantity
+                    l.ContactPerson,
+                    l.LocationPhone as LocationNumber,
+                    ISNULL(COUNT(lid.Id), 0) as TotalItems,
+                    ISNULL(SUM(lid.Quantity), 0) as TotalQuantity,
+                    l.CreatedAt
                 FROM Locations l
                 INNER JOIN Customers c ON l.CustomerId = c.Id
                 LEFT JOIN LocationInventoryData lid ON l.Id = lid.LocationId
                 WHERE l.IsActive = 1
-                GROUP BY l.Id, l.LocationName, c.CompanyName) AS loc
-                where loc.TotalItems > 0
-                ORDER BY loc.LocationName";
+                GROUP BY l.Id, l.LocationName, c.CompanyName, l.ContactPerson, l.LocationPhone, l.CreatedAt
+                ORDER BY l.LocationName";
 
             return await _context.Database.SqlQueryRaw<LocationInventoryGroupDto>(sql).ToListAsync();
         }
