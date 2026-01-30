@@ -12,12 +12,14 @@ namespace NYR.API.Models.Entities
         public int LocationId { get; set; }
 
         [ForeignKey("LocationId")]
+        [NotMapped]
         public virtual Location Location { get; set; } = null!;
 
         [Required]
         public int ProductId { get; set; }
 
         [ForeignKey("ProductId")]
+        [NotMapped]
         public virtual Product Product { get; set; } = null!;
 
         [Required]
@@ -30,6 +32,7 @@ namespace NYR.API.Models.Entities
         public int? ProductVariantId { get; set; }
 
         [ForeignKey("ProductVariantId")]
+        [NotMapped]
         public virtual ProductVariant? ProductVariant { get; set; }
 
         [MaxLength(200)]
@@ -38,15 +41,18 @@ namespace NYR.API.Models.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public int? CreatedBy { get; set; }
+        [NotMapped]
 
         [ForeignKey("CreatedBy")]
         public virtual User? CreatedByUser { get; set; }
 
         public int? UpdatedBy { get; set; }
+        [NotMapped]
 
         [ForeignKey("UpdatedBy")]
         public virtual User? UpdatedByUser { get; set; }
 
         public DateTime? UpdatedDate { get; set; }
+       
     }
 }

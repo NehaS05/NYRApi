@@ -69,13 +69,15 @@ namespace NYR.API.Services
         {
             var locations = await _locationRepository.GetAllAsync();
             var locationDtos = _mapper.Map<IEnumerable<LocationDto>>(locations).ToList();
-            
+
+            // Get All location inventory data
+            var all_locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(0);
             foreach (var locationDto in locationDtos)
             {
                 try
                 {
                     // Get restock requests for this location
-                    var restockRequests = await _restockRequestRepository.GetByLocationIdAsync(locationDto.Id);
+                    var restockRequests = await _restockRequestRepository.GetRequestedItemsByLocationIdAsync(locationDto.Id);
                     if (restockRequests != null && restockRequests.Any())
                     {
                         // Flatten all items from all restock requests for this location
@@ -97,7 +99,8 @@ namespace NYR.API.Services
                     }
 
                     // Get location inventory data for this location
-                    var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(locationDto.Id);
+                    //var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(locationDto.Id);
+                    var locationInventoryData = all_locationInventoryData.Where(lid => lid.LocationId == locationDto.Id).ToList();
                     if (locationInventoryData != null && locationInventoryData.Any())
                     {
                         locationDto.LocationInventoryData = locationInventoryData.Select(inventory => new LocationInventoryDataDto
@@ -113,9 +116,9 @@ namespace NYR.API.Services
                             VariantName = inventory.VariationName,
                             CreatedAt = inventory.CreatedAt,
                             CreatedBy = inventory.CreatedBy,
-                            CreatedByName = inventory.CreatedByUser?.Name ?? string.Empty,
+                            CreatedByName = string.Empty,//inventory.CreatedByUser?.Name ?? string.Empty,
                             UpdatedBy = inventory.UpdatedBy,
-                            UpdatedByName = inventory.UpdatedByUser?.Name,
+                            UpdatedByName = string.Empty,//inventory.UpdatedByUser?.Name,
                             UpdatedDate = inventory.UpdatedDate
                         }).ToList();
                     }
