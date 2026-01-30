@@ -56,9 +56,23 @@ namespace NYR.API.Repositories
 
         public async Task<IEnumerable<LocationInventoryData>> GetByLocationIdAsync(int locationId)
         {
-            return await _dbSet
+            if (locationId == 0)
+            {
+                return await _dbSet
                 .Include(l => l.Location)
-                    .ThenInclude(loc => loc.Customer)
+                //.ThenInclude(loc => loc.Customer)
+                .Include(l => l.Product)
+                .Include(l => l.ProductVariant)
+                //.Include(l => l.CreatedByUser)
+                //.Include(l => l.UpdatedByUser)
+                //.Where(l => l.LocationId == locationId)
+                .OrderBy(l => l.Product.Name)
+                .ToListAsync();
+            } else
+            {
+                return await _dbSet
+                .Include(l => l.Location)
+                .ThenInclude(loc => loc.Customer)
                 .Include(l => l.Product)
                 .Include(l => l.ProductVariant)
                 .Include(l => l.CreatedByUser)
@@ -66,6 +80,58 @@ namespace NYR.API.Repositories
                 .Where(l => l.LocationId == locationId)
                 .OrderBy(l => l.Product.Name)
                 .ToListAsync();
+            }
+            
+        }
+
+        public async Task<IEnumerable<LocationInventoryData>> GetItemsByLocationIdAsync()
+        {
+            var sql = @"
+            SELECT 
+                rr.Id,
+                rr.LocationId,
+                --la.LocationName,
+
+                rr.ProductId,
+                p.Name AS ProductName,
+
+                pv.BarcodeSKU as BarcodeSKU,
+
+                rr.ProductVariantId,
+                rr.Quantity,
+                rr.VariationName,
+
+                rr.CreatedAt,
+                rr.CreatedBy,
+                rr.UpdatedBy,
+                rr.UpdatedDate
+
+                --cu.Name AS CreatedByUser
+                --uu.Name AS UpdatedByUser
+
+            FROM LocationInventoryData rr
+            INNER JOIN Locations la 
+                ON rr.LocationId = la.Id
+            INNER JOIN Products p 
+                ON p.Id = rr.ProductId
+            LEFT JOIN ProductVariants pv 
+                ON pv.Id = rr.ProductVariantId
+            --INNER JOIN Users cu WITH (NOLOCK)
+            --    ON rr.CreatedBy = cu.Id
+            --LEFT JOIN Users uu 
+            --    ON rr.UpdatedBy = uu.Id
+";
+            return await _context.Database.SqlQueryRaw<LocationInventoryData>(sql).ToListAsync();
+            //return await _dbSet
+            //    .Include(l => l.Location)
+            //        //.ThenInclude(loc => loc.Customer)
+            //    .Include(l => l.Product)
+            //    .Include(l => l.ProductVariant)
+            //    .Include(l => l.CreatedByUser)
+            //    .Include(l => l.UpdatedByUser)
+            //    //.Where(l => l.LocationId == locationId)
+            //    .OrderBy(l => l.Product.Name)
+            //    .ToListAsync();
         }
 
         public async Task<IEnumerable<LocationInventoryData>> GetByProductIdAsync(int productId)
