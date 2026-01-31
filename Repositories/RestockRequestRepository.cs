@@ -71,18 +71,33 @@ namespace NYR.API.Repositories
 
         public async Task<IEnumerable<RestockRequest>> GetRequestedItemsByLocationIdAsync(int locationId)
         {
+            //return await _dbSet
+            //    .Include(rr => rr.Items)
+            //        .ThenInclude(item => item.Product)
+            //    .Include(rr => rr.Items)
+            //        .ThenInclude(item => item.ProductVariant)
+            //            //.ThenInclude(pv => pv!.Attributes)
+            //            //    .ThenInclude(a => a.Variation)
+            //    //.Include(rr => rr.Items)
+            //    //    .ThenInclude(item => item.ProductVariant)
+            //    //        .ThenInclude(pv => pv!.Attributes)
+            //    //            .ThenInclude(a => a.VariationOption)
+            //    .Where(rr => rr.LocationId == locationId && rr.IsActive)
+            //    .OrderByDescending(rr => rr.RequestDate)
+            //    .ToListAsync();
             return await _dbSet
-                .Include(rr => rr.Items)
+                .Include(rr => rr.Items
+                    .Where(i => i.Product.IsActive))
                     .ThenInclude(item => item.Product)
-                .Include(rr => rr.Items)
+
+                .Include(rr => rr.Items
+                    .Where(i => i.Product.IsActive))
                     .ThenInclude(item => item.ProductVariant)
-                        //.ThenInclude(pv => pv!.Attributes)
-                        //    .ThenInclude(a => a.Variation)
-                //.Include(rr => rr.Items)
-                //    .ThenInclude(item => item.ProductVariant)
-                //        .ThenInclude(pv => pv!.Attributes)
-                //            .ThenInclude(a => a.VariationOption)
-                .Where(rr => rr.LocationId == locationId && rr.IsActive)
+
+                .Where(rr =>
+                    rr.IsActive &&
+                    rr.LocationId == locationId)
+
                 .OrderByDescending(rr => rr.RequestDate)
                 .ToListAsync();
         }
