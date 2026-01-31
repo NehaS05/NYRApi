@@ -21,7 +21,7 @@ namespace NYR.API.Repositories
                 .Include(vi => vi.Location)
                     .ThenInclude(l => l!.Customer)
                 .Include(vi => vi.Items)
-                    .ThenInclude(item => item.Product)
+                    .ThenInclude(item => item.Product).Where(x => x.IsActive)
                 .Include(vi => vi.Items)
                     .ThenInclude(item => item.ProductVariant)
                         .ThenInclude(pv => pv!.Attributes)
@@ -141,7 +141,7 @@ namespace NYR.API.Repositories
         {
             var query = _context.VanInventoryItems
                 .Include(item => item.VanInventory)
-                .Include(item => item.Product)
+                .Include(item => item.Product).Where(x => x.Product.IsActive)
                 .Include(item => item.ProductVariant)
                     .ThenInclude(pv => pv!.Attributes)
                         .ThenInclude(a => a.Variation)

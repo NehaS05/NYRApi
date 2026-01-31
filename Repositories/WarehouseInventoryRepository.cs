@@ -70,10 +70,24 @@ namespace NYR.API.Repositories
 
         public async Task<IEnumerable<WarehouseInventory>> GetInventoryByWarehouseWithDetailsAsync(int warehouseId)
         {
+            //return await _dbSet
+            //    .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
+            //    .Include(wi => wi.Warehouse)
+            //    .Include(wi => wi.Product)
+            //    .Include(wi => wi.ProductVariant)
+            //        .ThenInclude(pv => pv.Attributes)
+            //            .ThenInclude(a => a.Variation)
+            //    .Include(wi => wi.ProductVariant)
+            //        .ThenInclude(pv => pv.Attributes)
+            //            .ThenInclude(a => a.VariationOption)
+            //    .ToListAsync();
             return await _dbSet
-                .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
+                .Where(wi =>
+                    wi.WarehouseId == warehouseId &&
+                    wi.IsActive == true &&
+                    wi.Product != null && wi.Product.IsActive)
                 .Include(wi => wi.Warehouse)
-                .Include(wi => wi.Product)
+                .Include(wi => wi.Product).Where(x => x.IsActive)
                 .Include(wi => wi.ProductVariant)
                     .ThenInclude(pv => pv.Attributes)
                         .ThenInclude(a => a.Variation)
@@ -86,8 +100,9 @@ namespace NYR.API.Repositories
         public async Task<(IEnumerable<WarehouseInventory> Items, int TotalCount)> GetInventoryByWarehousePagedAsync(int warehouseId, PaginationParamsDto paginationParams)
         {
             IQueryable<WarehouseInventory> query = _dbSet
-                .Where(wi => wi.WarehouseId == warehouseId && wi.IsActive)
-                .Include(wi => wi.Product)
+                .Where(wi => wi.WarehouseId == warehouseId &&
+                    wi.IsActive == true && wi.Product.IsActive)
+                .Include(wi => wi.Product).Where(x => x.IsActive)
                 .Include(wi => wi.ProductVariant)
                     .ThenInclude(pv => pv!.Attributes)
                         .ThenInclude(a => a.Variation)
