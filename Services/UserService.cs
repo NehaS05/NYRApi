@@ -261,5 +261,11 @@ namespace NYR.API.Services
             await _driverAvailabilityRepository.DeleteAsync(availability);
             return true;
         }
+
+        public async Task<IEnumerable<UserDto>> GetDriversAssignedToVansAsync()
+        {
+            var users = await _userRepository.GetDriversAssignedToVansAsync();
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
     }
 }

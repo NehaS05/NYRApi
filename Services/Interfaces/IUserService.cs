@@ -16,5 +16,6 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<DriverAvailabilityDto>> GetDriverAvailabilityAsync(int userId);
         Task<bool> SaveDriverAvailabilityAsync(int userId, DriverAvailabilityBulkDto bulkDto);
         Task<bool> DeleteDriverAvailabilityAsync(int userId, int availabilityId);
+        Task<IEnumerable<UserDto>> GetDriversAssignedToVansAsync();
     }
 }

@@ -145,5 +145,18 @@ namespace NYR.API.Repositories
                 { "createdat", u => u.CreatedAt }
             };
         }
+        public async Task<IEnumerable<User>> GetDriversAssignedToVansAsync()
+        {
+            // Use LINQ with AsNoTracking for better performance while avoiding raw SQL navigation issues
+            return await _dbSet
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .Include(u => u.Customer)
+                .Include(u => u.Location)
+                .Include(u => u.Warehouse)
+                .Where(u => _context.Vans.Any(v => v.DriverId == u.Id))
+                .OrderBy(u => u.Name)
+                .ToListAsync();
+        }
     }
 }

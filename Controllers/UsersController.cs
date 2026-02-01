@@ -187,5 +187,20 @@ namespace NYR.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("drivers-assigned-to-vans")]
+        [Authorize(Roles = "Admin,Staff")] //Its for Drivers/Users data for whom Van Assigned
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetDriversAssignedToVans()
+        {
+            try
+            {
+                var drivers = await _userService.GetDriversAssignedToVansAsync();
+                return Ok(drivers);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

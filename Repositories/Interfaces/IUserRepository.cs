@@ -12,5 +12,6 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<User>> GetUsersByLocationAsync(int locationId);
         Task<User?> GetByRefreshTokenAsync(string refreshToken);
         Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(PaginationParamsDto paginationParams);
+        Task<IEnumerable<User>> GetDriversAssignedToVansAsync();
     }
 }
