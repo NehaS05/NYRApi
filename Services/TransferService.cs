@@ -357,11 +357,11 @@ namespace NYR.API.Services
                 }));
                 
                 // Load shipping inventory and location inventory for RestockRequest types
-                foreach (var transfer in transfers.Where(x => x.Type == "RestockRequest"))
-                {
-                    await LoadShippingInventoryForTransfer(transfer);
-                    await LoadLocationInventoryForTransfer(transfer);
-                }
+                //foreach (var transfer in transfers.Where(x => x.Type == "RestockRequest"))
+                //{
+                //    await LoadShippingInventoryForTransfer(transfer);
+                //    await LoadLocationInventoryForTransfer(transfer);
+                //}
             }
 
             return transfers.OrderByDescending(t => t.RequestDate);
