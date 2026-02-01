@@ -119,6 +119,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
     builder.Services.AddScoped<IRestockRequestService, RestockRequestService>();
     builder.Services.AddScoped<IFollowupRequestService, FollowupRequestService>();
     builder.Services.AddScoped<ITransferService, TransferService>();
+    builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 
 // Configure Spoke API Settings
 builder.Services.Configure<SpokeApiSettings>(builder.Configuration.GetSection("SpokeApi"));

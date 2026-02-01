@@ -202,5 +202,27 @@ namespace NYR.API.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpPost("upload-image/{userId}")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<ActionResult> UploadUserImage(int userId, IFormFile image)
+        {
+            if (image == null || image.Length == 0)
+                return BadRequest("No image file provided");
+
+            try
+            {
+                var imageUrl = await _userService.UploadUserImageAsync(userId, image);
+                return Ok(new { imageUrl = imageUrl, message = "Image uploaded successfully" });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }

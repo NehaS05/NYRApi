@@ -17,6 +17,7 @@ namespace NYR.API.Services
         private readonly IWarehouseRepository _warehouseRepository;
         private readonly IDriverAvailabilityRepository _driverAvailabilityRepository;
         private readonly IMapper _mapper;
+        private readonly IFileUploadService _fileUploadService;
 
         public UserService(
             IUserRepository userRepository,
@@ -25,7 +26,8 @@ namespace NYR.API.Services
             ILocationRepository locationRepository,
             IWarehouseRepository warehouseRepository,
             IDriverAvailabilityRepository driverAvailabilityRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IFileUploadService fileUploadService)
         {
             _userRepository = userRepository;
             _roleRepository = roleRepository;
@@ -34,6 +36,7 @@ namespace NYR.API.Services
             _warehouseRepository = warehouseRepository;
             _driverAvailabilityRepository = driverAvailabilityRepository;
             _mapper = mapper;
+            _fileUploadService = fileUploadService;
         }
 
         public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
@@ -266,6 +269,30 @@ namespace NYR.API.Services
         {
             var users = await _userRepository.GetDriversAssignedToVansAsync();
             return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
+
+        public async Task<string> UploadUserImageAsync(int userId, IFormFile image)
+        {
+            // Validate user exists
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null)
+                throw new ArgumentException("User not found");
+
+            // Delete old image if exists
+            if (!string.IsNullOrEmpty(user.ImageUrl))
+            {
+                await _fileUploadService.DeleteImageAsync(user.ImageUrl);
+            }
+
+            // Upload new image
+            var imageUrl = await _fileUploadService.UploadImageAsync(image, "users");
+
+            // Update user with new image URL
+            user.ImageUrl = imageUrl;
+            user.UpdatedAt = DateTime.UtcNow;
+            await _userRepository.UpdateAsync(user);
+
+            return imageUrl;
         }
     }
 }

@@ -65,6 +65,10 @@ namespace NYR.API.Models.Entities
         public DateTime? UpdatedAt { get; set; }
         public bool IsActive { get; set; } = true;
 
+        // Image field for user profile picture
+        [MaxLength(500)]
+        public string? ImageUrl { get; set; }
+
         // Refresh Token fields
         [MaxLength(500)]
         public string? RefreshToken { get; set; }

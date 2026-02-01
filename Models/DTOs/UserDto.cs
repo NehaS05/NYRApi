@@ -21,6 +21,7 @@ namespace NYR.API.Models.DTOs
         public string? LocationName { get; set; }
         public int? WarehouseId { get; set; }
         public string? WarehouseName { get; set; }
+        public string? ImageUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsActive { get; set; }
         public IEnumerable<DriverAvailabilityDto>? DriverAvailabilities { get; set; }
@@ -66,6 +67,9 @@ namespace NYR.API.Models.DTOs
         public int? CustomerId { get; set; }
         public int? LocationId { get; set; }
         public int? WarehouseId { get; set; }
+        
+        [MaxLength(500)]
+        public string? ImageUrl { get; set; }
     }
 
     public class UpdateUserDto
@@ -104,6 +108,10 @@ namespace NYR.API.Models.DTOs
         public int? CustomerId { get; set; }
         public int? LocationId { get; set; }
         public int? WarehouseId { get; set; }
+        
+        [MaxLength(500)]
+        public string? ImageUrl { get; set; }
+        
         public bool IsActive { get; set; } = true;
     }
 
@@ -130,5 +138,91 @@ namespace NYR.API.Models.DTOs
     {
         [Required]
         public string RefreshToken { get; set; } = string.Empty;
+    }
+
+    public class CreateUserWithImageDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        [MaxLength(255)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(20)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [MaxLength(255)]
+        public string? AddressLine1 { get; set; }
+
+        [MaxLength(255)]
+        public string? AddressLine2 { get; set; }
+
+        [MaxLength(100)]
+        public string? City { get; set; }
+
+        [MaxLength(50)]
+        public string? State { get; set; }
+
+        [MaxLength(20)]
+        public string? ZipCode { get; set; }
+
+        [Required]
+        [MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+
+        [Required]
+        public int RoleId { get; set; }
+
+        public int? CustomerId { get; set; }
+        public int? LocationId { get; set; }
+        public int? WarehouseId { get; set; }
+        
+        public IFormFile? Image { get; set; }
+    }
+
+    public class UpdateUserWithImageDto
+    {
+        [Required]
+        [MaxLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        [MaxLength(255)]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(20)]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [MaxLength(255)]
+        public string? AddressLine1 { get; set; }
+
+        [MaxLength(255)]
+        public string? AddressLine2 { get; set; }
+
+        [MaxLength(100)]
+        public string? City { get; set; }
+
+        [MaxLength(50)]
+        public string? State { get; set; }
+
+        [MaxLength(20)]
+        public string? ZipCode { get; set; }
+
+        [Required]
+        public int RoleId { get; set; }
+
+        public int? CustomerId { get; set; }
+        public int? LocationId { get; set; }
+        public int? WarehouseId { get; set; }
+        
+        public bool IsActive { get; set; } = true;
+        
+        public IFormFile? Image { get; set; }
     }
 }
