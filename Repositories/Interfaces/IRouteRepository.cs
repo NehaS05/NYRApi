@@ -1,3 +1,4 @@
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 
 namespace NYR.API.Repositories.Interfaces
@@ -11,5 +12,8 @@ namespace NYR.API.Repositories.Interfaces
         Task<IEnumerable<Routes>> GetByDeliveryDateAsync(DateTime deliveryDate);
         Task<IEnumerable<Routes>> GetByStatusAsync(string status);
         Task<bool> DeleteAsync(int id);
+        
+        // Optimized methods for better performance
+        Task<IEnumerable<RouteSummaryDto>> GetAllRoutesSummaryAsync();
     }
 }

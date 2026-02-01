@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NYR.API.Data;
+using NYR.API.Models.DTOs;
 using NYR.API.Models.Entities;
 using NYR.API.Repositories.Interfaces;
 
@@ -196,6 +197,32 @@ namespace NYR.API.Repositories
                 .Where(r => r.Status == status && r.IsActive)
                 .OrderByDescending(r => r.DeliveryDate)
                 .ToListAsync();
+        }
+
+        // New method for simplified route summary response
+        public async Task<IEnumerable<RouteSummaryDto>> GetAllRoutesSummaryAsync()
+        {
+            var sql = @"
+                SELECT 
+                    r.Id,
+                    r.UserId,
+                    u.Name as UserName,
+                    r.DeliveryDate,
+                    r.Status,
+                    r.IsActive,
+                    r.CreatedAt,
+                    ISNULL(u.WarehouseId, 0) as WarehouseId,
+                    ISNULL(w.Name, '') as WarehouseName,
+                    COUNT(rs.Id) as RouteStops
+                FROM Routes r
+                INNER JOIN Users u ON r.UserId = u.Id
+                LEFT JOIN Warehouses w ON u.WarehouseId = w.Id
+                LEFT JOIN RouteStops rs ON r.Id = rs.RouteId
+                WHERE r.IsActive = 1
+                GROUP BY r.Id, r.UserId, u.Name, r.DeliveryDate, r.Status, r.IsActive, r.CreatedAt, u.WarehouseId, w.Name
+                ORDER BY r.DeliveryDate DESC";
+
+            return await _context.Database.SqlQueryRaw<RouteSummaryDto>(sql).ToListAsync();
         }
 
         public async Task<bool> DeleteAsync(int id)

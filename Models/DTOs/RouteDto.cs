@@ -151,4 +151,18 @@ namespace NYR.API.Models.DTOs
 
         public bool IsActive { get; set; } = true;
     }
+
+    public class RouteSummaryDto
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public string UserName { get; set; } = string.Empty;
+        public DateTime DeliveryDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int WarehouseId { get; set; }
+        public string WarehouseName { get; set; } = string.Empty;
+        public int routeStops { get; set; }
+    }
 }

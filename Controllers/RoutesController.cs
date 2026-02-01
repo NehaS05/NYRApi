@@ -38,6 +38,27 @@ namespace NYR.API.Controllers
             return Ok(allRoutes);
         }
 
+        [HttpGet]
+        [HttpGet("routeSummaryById")]
+        public async Task<ActionResult<IEnumerable<RouteDto>>> GetRoutesSummaryById([FromQuery] int? routeId = null)
+        {
+            if (routeId.HasValue)
+            {
+                var routes = await _routeService.GetRouteByIdAsync(routeId.Value);
+                return Ok(routes);
+            }
+
+            var allRoutes = await _routeService.GetAllRoutesAsync();
+            return Ok(allRoutes);
+        }
+
+        [HttpGet("routeSummary")]
+        public async Task<ActionResult<IEnumerable<RouteSummaryDto>>> GetAllRoutesSummary()
+        {
+            var routesSummary = await _routeService.GetAllRoutesSummaryAsync();
+            return Ok(routesSummary);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<RouteDto>> GetRoute(int id)
         {

@@ -79,7 +79,26 @@ namespace NYR.API.Services
             if (route == null) return null;
             
             var routeDto = _mapper.Map<RouteDto>(route);
-            
+            // Cache LocationInventoryData by locationId to avoid redundant DB calls
+            var locationInventoryCache = new Dictionary<int, List<LocationInventoryDataDto>>();
+
+            //// Get LocationInventoryData for each route stop
+            foreach (var stopDto in routeDto.RouteStops)
+            {
+                // Check if we already fetched data for this location
+                if (!locationInventoryCache.ContainsKey(stopDto.LocationId))
+                {
+                    var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(stopDto.LocationId);
+                    var mappedData = locationInventoryData != null && locationInventoryData.Any()
+                        ? _mapper.Map<List<LocationInventoryDataDto>>(locationInventoryData)
+                        : new List<LocationInventoryDataDto>();
+
+                    locationInventoryCache[stopDto.LocationId] = mappedData;
+                }
+
+                // Use cached data
+                stopDto.LocationInventory = locationInventoryCache[stopDto.LocationId];
+            }
             return routeDto;
         }
 
@@ -303,6 +322,11 @@ namespace NYR.API.Services
         {
             var routes = await _routeRepository.GetByStatusAsync(status);
             return _mapper.Map<IEnumerable<RouteDto>>(routes);
+        }
+
+        public async Task<IEnumerable<RouteSummaryDto>> GetAllRoutesSummaryAsync()
+        {
+            return await _routeRepository.GetAllRoutesSummaryAsync();
         }
 
         /// <summary>
