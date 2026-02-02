@@ -41,6 +41,12 @@ namespace NYR.API.Services
             return _mapper.Map<IEnumerable<ProductDto>>(products);
         }
 
+        public async Task<IEnumerable<ProductDto>> GetAllOnlyProductAsync()
+        {
+            var products = await _productRepository.GetAllOnlyProductAsync();
+            return _mapper.Map<IEnumerable<ProductDto>>(products);
+        }
+
         public async Task<PagedResultDto<ProductDto>> GetProductsPagedAsync(PaginationParamsDto paginationParams)
         {
             PaginationServiceHelper.NormalizePaginationParams(paginationParams);

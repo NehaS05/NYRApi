@@ -326,7 +326,8 @@ namespace NYR.API.Services
 
         public async Task<IEnumerable<RouteSummaryDto>> GetAllRoutesSummaryAsync()
         {
-            return await _routeRepository.GetAllRoutesSummaryAsync();
+            var routes = await _routeRepository.GetAllRoutesSummaryAsync();
+            return _mapper.Map<IEnumerable<RouteSummaryDto>>(routes);
         }
 
         /// <summary>

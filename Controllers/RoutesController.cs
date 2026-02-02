@@ -38,7 +38,6 @@ namespace NYR.API.Controllers
             return Ok(allRoutes);
         }
 
-        [HttpGet]
         [HttpGet("routeSummaryById")]
         public async Task<ActionResult<IEnumerable<RouteDto>>> GetRoutesSummaryById([FromQuery] int? routeId = null)
         {

@@ -155,6 +155,14 @@ namespace NYR.API.Repositories
                 .OrderBy(p => p.Name)
                 .ToListAsync();
         }
+        
+        public async Task<IEnumerable<Product>> GetAllOnlyProductAsync()
+        {
+            return await _dbSet
+                .Where(x => x.IsActive)
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+        }
 
         public override async Task<Product?> GetByIdAsync(int id)
         {

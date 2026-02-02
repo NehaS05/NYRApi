@@ -34,6 +34,13 @@ namespace NYR.API.Controllers
             return Ok(products);
         }
 
+        [HttpGet("onlyProdcutList")]
+        public async Task<ActionResult> GetAllOnlyProductsList([FromQuery] PaginationParamsDto? paginationParams = null)
+        {
+            var products = await _productService.GetAllOnlyProductAsync();
+            return Ok(products);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductDto>> GetProduct(int id)
         {
