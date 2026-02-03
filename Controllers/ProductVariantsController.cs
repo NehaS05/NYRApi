@@ -36,9 +36,13 @@ namespace NYR.API.Controllers
                 Id = v.Id,
                 ProductId = v.ProductId,
                 VariantName = v.VariantName,
-                SKU = (v.SKU == ""  ? (v.BarcodeSKU) : v.SKU),
+                SKU = (string.IsNullOrEmpty(v.SKU) ? (v.BarcodeSKU) : v.SKU),
                 Price = v.Price,
                 IsEnabled = v.IsEnabled,
+                BarcodeSKU = v.BarcodeSKU,
+                BarcodeSKU2 = v.BarcodeSKU2,
+                BarcodeSKU3 = v.BarcodeSKU3,
+                BarcodeSKU4 = v.BarcodeSKU4,
                 Attributes = v.Attributes.Select(a => new ProductVariantAttributeDto
                 {
                     Id = a.Id,
