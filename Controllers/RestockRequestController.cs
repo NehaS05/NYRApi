@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NYR.API.Models.DTOs;
 using NYR.API.Services.Interfaces;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace NYR.API.Controllers
 {
@@ -95,7 +96,16 @@ namespace NYR.API.Controllers
         public async Task<ActionResult<IEnumerable<ProductVariantInfoDto>>> GetProductVariantNameBySku(string barcode, [FromQuery] int locationId, [FromQuery] int? userId = null, [FromQuery] int? productVariantId = null)
         {
             if (string.IsNullOrWhiteSpace(barcode))
-                return BadRequest("Barcode cannot be empty");
+                return BadRequest("Barcode cannot be empty");            
+
+            if (userId == null || userId == 0)
+            {
+                // Get UserId from JWT token
+                var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int tokenUserId))
+                    return Unauthorized("User ID not found in token");
+                userId = tokenUserId;
+            }
 
             var variantInfo = await _restockRequestService.GetProductVariantNameBySkuAsync(barcode, locationId, userId, productVariantId);
             if (!variantInfo.Any())

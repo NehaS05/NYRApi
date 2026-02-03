@@ -16,6 +16,17 @@ namespace NYR.API.Services
         public string Message { get; set; } = string.Empty;
     }
 
+    public class VanInventoryItemResult
+    {
+        public int VanId { get; set; }
+        public int Id { get; set; }
+        public int VanInventoryId { get; set; }
+        public int ProductId { get; set; }
+        public int? ProductVariantId { get; set; }
+        public int Quantity { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
     public class RestockRequestService : IRestockRequestService
     {
         private readonly IRestockRequestRepository _restockRequestRepository;
@@ -24,6 +35,8 @@ namespace NYR.API.Services
         private readonly IProductRepository _productRepository;
         private readonly IGenericRepository<ProductVariant> _productVariantRepository;
         private readonly ILocationInventoryDataService _locationInventoryDataService;
+        private readonly IVanRepository _vanRepository;
+        private readonly IVanInventoryRepository _vanInventoryRepository;
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
@@ -34,6 +47,8 @@ namespace NYR.API.Services
             IProductRepository productRepository,
             IGenericRepository<ProductVariant> productVariantRepository,
             ILocationInventoryDataService locationInventoryDataService,
+            IVanRepository vanRepository,
+            IVanInventoryRepository vanInventoryRepository,
             ApplicationDbContext context,
             IMapper mapper)
         {
@@ -43,6 +58,8 @@ namespace NYR.API.Services
             _productRepository = productRepository;
             _productVariantRepository = productVariantRepository;
             _locationInventoryDataService = locationInventoryDataService;
+            _vanRepository = vanRepository;
+            _vanInventoryRepository = vanInventoryRepository;
             _context = context;
             _mapper = mapper;
         }
@@ -346,7 +363,22 @@ namespace NYR.API.Services
 
                         // Only create inventory if item is not delivered or partially delivered
                         await _locationInventoryDataService.CreateInventoryAsync(createOutwardDto);
-                        
+
+                        //Start:- According to this Update data in Van As well
+                        if (userId > 0)
+                        {
+                            //Get Van details from UserId (DriverId in Van entity)
+                            var vans = await _vanRepository.GetByDriverIdAsync(userId.Value);
+                            var van = vans.FirstOrDefault();
+
+                            if (van != null)
+                            {
+                                // Get Inventory from VanId from VanInventoryItems table by vanId, productVariantId and make it -1 quantity
+                                await UpdateVanInventoryQuantityAsync(van.Id, item.ProductVariantId, 1);
+                            }
+                        }
+                        //End
+
                         // Update delivered quantity after creating inventory
                         var deliveryStatus = await UpdateDeliveredQuantityForItemAsync(item.Id, createOutwardDto.Quantity);
                         
@@ -358,7 +390,7 @@ namespace NYR.API.Services
                                 VariantName = deliveryStatus.Message,
                                 ProdcutId = item.ProductId
                             }
-                        };
+                        };                        
                     }
                     catch (Exception ex)
                     {
@@ -551,6 +583,38 @@ namespace NYR.API.Services
                     IsFullyDelivered = false,
                     Message = $"Item available for delivery - {currentDelivered}/{restockRequestItem.Quantity} delivered"
                 };
+            }
+        }
+
+        /// <summary>
+        /// Updates van inventory quantity for a specific product variant
+        /// </summary>
+        /// <param name="vanId">Van ID</param>
+        /// <param name="productVariantId">Product Variant ID</param>
+        /// <param name="quantityChange">Quantity change (negative to decrease)</param>
+        /// <returns>Task</returns>
+        private async Task UpdateVanInventoryQuantityAsync(int vanId, int? productVariantId, int quantityChange)
+        {
+            if (!productVariantId.HasValue) return;
+
+            // Use direct SQL query to get and update van inventory item
+            var vanInventoryItems = await _context.Database.SqlQueryRaw<VanInventoryItemResult>(
+                @"SELECT vi.VanId, vii.* 
+                  FROM VanInventories vi 
+                  INNER JOIN VanInventoryItems vii ON vi.Id = vii.VanInventoryId 
+                  WHERE vi.VanId = {0} AND vii.ProductVariantId = {1}", 
+                vanId, productVariantId.Value).ToListAsync();
+            
+            var vanInventoryItem = vanInventoryItems.FirstOrDefault();
+            
+            if (vanInventoryItem != null && vanInventoryItem.Quantity > 0)
+            {
+                // Update quantity directly using SQL
+                await _context.Database.ExecuteSqlRawAsync(
+                    @"UPDATE VanInventoryItems 
+                      SET Quantity = Quantity - {0} 
+                      WHERE Id = {1}", 
+                    quantityChange, vanInventoryItem.Id);
             }
         }
        
