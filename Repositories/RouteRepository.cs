@@ -47,7 +47,7 @@ namespace NYR.API.Repositories
         {
             return await _dbSet
                 .Include(r => r.User)
-                .Include(r => r.RouteStops.OrderBy(s => s.StopOrder))
+                .Include(r => r.RouteStops.Where(x => x.IsActive).OrderBy(s => s.StopOrder))
                     .ThenInclude(rs => rs.Location)
                 .Include(r => r.RouteStops)
                     .ThenInclude(rs => rs.Customer)
@@ -213,11 +213,11 @@ namespace NYR.API.Repositories
                     r.CreatedAt,
                     ISNULL(u.WarehouseId, 0) as WarehouseId,
                     ISNULL(w.Name, '') as WarehouseName,
-                    COUNT(rs.Id) as RouteStops
+                    COUNT(DISTINCT rs.LocationId) as RouteStops
                 FROM Routes r
                 INNER JOIN Users u ON r.UserId = u.Id
                 LEFT JOIN Warehouses w ON u.WarehouseId = w.Id
-                LEFT JOIN RouteStops rs ON r.Id = rs.RouteId
+                LEFT JOIN RouteStops rs ON r.Id = rs.RouteId AND rs.IsActive = 1
                 WHERE r.IsActive = 1
                 GROUP BY r.Id, r.UserId, u.Name, r.DeliveryDate, r.Status, r.IsActive, r.CreatedAt, u.WarehouseId, w.Name
                 ORDER BY r.DeliveryDate DESC";
