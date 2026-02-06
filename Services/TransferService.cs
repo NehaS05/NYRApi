@@ -312,7 +312,15 @@ namespace NYR.API.Services
                     Status = vt.Status,
                     TotalItems = vt.Items?.Sum(i => i.Quantity) ?? 0,
                     CreatedAt = vt.CreatedAt,
-                    LocationAddress = vt.Location.AddressLine1 + ", " + vt.Location.AddressLine2 + ", " + vt.Location.City + ", " + vt.Location.State + ", " + vt.Location.ZipCode
+                    LocationAddress = vt.Location.AddressLine1 +
+                    (string.IsNullOrWhiteSpace(vt.Location.AddressLine2) ? "" : ", " + vt.Location.AddressLine2) +
+                    (string.IsNullOrWhiteSpace(vt.Location.City) ? "" : ", " + vt.Location.City) +
+                    (string.IsNullOrWhiteSpace(vt.Location.State) ? "" : ", " + vt.Location.State) +
+                    (string.IsNullOrWhiteSpace(vt.Location.ZipCode) ? "" : ", " + vt.Location.ZipCode)
+                    //LocationAddress = vt.Location.AddressLine1 + ", " +
+                    //(string.IsNullOrWhiteSpace(vt.Location.AddressLine2)
+                    //    ? ""
+                    //    : vt.Location.AddressLine2 + ", ") + ", " + vt.Location.City + ", " + vt.Location.State + ", " + vt.Location.ZipCode
                 }));
             }
             else if (type.Equals("RestockRequest", StringComparison.OrdinalIgnoreCase))
@@ -335,7 +343,13 @@ namespace NYR.API.Services
                     Status = rr.Status == "Restock Request" ? "Restock Requested" : rr.Status,
                     TotalItems = rr.Items?.Sum(i => i.Quantity) ?? 0,
                     CreatedAt = rr.CreatedAt,
-                    LocationAddress = rr.Location.AddressLine1 + ", " + rr.Location.AddressLine2 + ", " + rr.Location.City + ", " + rr.Location.State + ", " + rr.Location.ZipCode
+                    LocationAddress = rr.Location.AddressLine1 +
+                    (string.IsNullOrWhiteSpace(rr.Location.AddressLine2) ? "" : ", " + rr.Location.AddressLine2) +
+                    (string.IsNullOrWhiteSpace(rr.Location.City) ? "" : ", " + rr.Location.City) +
+                    (string.IsNullOrWhiteSpace(rr.Location.State) ? "" : ", " + rr.Location.State) +
+                    (string.IsNullOrWhiteSpace(rr.Location.ZipCode) ? "" : ", " + rr.Location.ZipCode)
+
+                    //LocationAddress = rr.Location.AddressLine1 + ", " + rr.Location.AddressLine2 + ", " + rr.Location.City + ", " + rr.Location.State + ", " + rr.Location.ZipCode
                 }));
 
                 transfers.AddRange(followupRequests.Select(fr => new TransferDto
@@ -353,7 +367,12 @@ namespace NYR.API.Services
                     Status = fr.Status,
                     TotalItems = 0,
                     CreatedAt = fr.CreatedAt,
-                    LocationAddress = fr.Location.AddressLine1 + ", " + fr.Location.AddressLine2 + ", " + fr.Location.City + ", " + fr.Location.State + ", " + fr.Location.ZipCode
+                    LocationAddress = fr.Location.AddressLine1 +
+                    (string.IsNullOrWhiteSpace(fr.Location.AddressLine2) ? "" : ", " + fr.Location.AddressLine2) +
+                    (string.IsNullOrWhiteSpace(fr.Location.City) ? "" : ", " + fr.Location.City) +
+                    (string.IsNullOrWhiteSpace(fr.Location.State) ? "" : ", " + fr.Location.State) +
+                    (string.IsNullOrWhiteSpace(fr.Location.ZipCode) ? "" : ", " + fr.Location.ZipCode)
+                    //LocationAddress = fr.Location.AddressLine1 + ", " + fr.Location.AddressLine2 + ", " + fr.Location.City + ", " + fr.Location.State + ", " + fr.Location.ZipCode
                 }));
                 
                 // Load shipping inventory and location inventory for RestockRequest types
