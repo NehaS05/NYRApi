@@ -72,12 +72,87 @@ namespace NYR.API.Services
 
             // Get All location inventory data
             var all_locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(0);
-            foreach (var locationDto in locationDtos)
+            //foreach (var locationDto in locationDtos)
+            //{
+            //    try
+            //    {
+            //        // Get restock requests for this location
+            //        var restockRequests = await _restockRequestRepository.GetRequestedItemsByLocationIdAsync(locationDto.Id);
+            //        if (restockRequests != null && restockRequests.Any())
+            //        {
+            //            // Flatten all items from all restock requests for this location
+            //            var allItems = restockRequests.SelectMany(rr => rr.Items).ToList();
+            //            if (allItems.Any())
+            //            {
+            //                // Map RestockRequestItems to TransferInventoryItemDto
+            //                locationDto.TransferItems = allItems.Select(item => new TransferInventoryItemDto
+            //                {
+            //                    ProductId = item.ProductId,
+            //                    ProductName = item.Product?.Name ?? string.Empty,
+            //                    SkuCode = item.ProductVariant?.BarcodeSKU,
+            //                    ProductVariantId = item.ProductVariantId,
+            //                    VariantName = item.ProductVariant?.VariantName,
+            //                    Quantity = item.Quantity,
+            //                    RestockRequestId = item.RestockRequestId
+            //                }).ToList();
+            //            }
+            //        }
+
+            //        // Get location inventory data for this location
+            //        //var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(locationDto.Id);
+            //        var locationInventoryData = all_locationInventoryData.Where(lid => lid.LocationId == locationDto.Id).ToList();
+            //        if (locationInventoryData != null && locationInventoryData.Any())
+            //        {
+            //            locationDto.LocationInventoryData = locationInventoryData.Select(inventory => new LocationInventoryDataDto
+            //            {
+            //                Id = inventory.Id,
+            //                LocationId = inventory.LocationId,
+            //                LocationName = inventory.Location?.LocationName ?? string.Empty,
+            //                ProductId = inventory.ProductId,
+            //                ProductName = inventory.Product?.Name ?? string.Empty,
+            //                ProductSKU = inventory.ProductVariant?.BarcodeSKU ?? string.Empty,
+            //                ProductVariantId = inventory.ProductVariantId,
+            //                Quantity = inventory.Quantity,
+            //                VariantName = inventory.VariationName,
+            //                CreatedAt = inventory.CreatedAt,
+            //                CreatedBy = inventory.CreatedBy,
+            //                CreatedByName = string.Empty,//inventory.CreatedByUser?.Name ?? string.Empty,
+            //                UpdatedBy = inventory.UpdatedBy,
+            //                UpdatedByName = string.Empty,//inventory.UpdatedByUser?.Name,
+            //                UpdatedDate = inventory.UpdatedDate
+            //            }).ToList();
+            //        }
+            //    }
+            //    catch (Exception)
+            //    {
+            //        // If there's an error loading inventory data for this location, just skip it
+            //        locationDto.TransferItems = new List<TransferInventoryItemDto>();
+            //        locationDto.LocationInventoryData = new List<LocationInventoryDataDto>();
+            //    }
+            //}
+            
+            return locationDtos;
+        }
+
+        public async Task<IEnumerable<LocationDto>> GetLocationsInventoryByIdAsync(int locationId)
+        {
+            var location = await _locationRepository.GetByIdAsync(locationId);
+            if (location == null)
+                return Enumerable.Empty<LocationDto>();
+            
+            var locationDto = _mapper.Map<LocationDto>(location);
+
+            // Get All location inventory data
+            var all_locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(locationId);
+            
+            // Create a list with single location
+            var locationDtos = new List<LocationDto> { locationDto };
+            foreach (var dto in locationDtos)
             {
                 try
                 {
                     // Get restock requests for this location
-                    var restockRequests = await _restockRequestRepository.GetRequestedItemsByLocationIdAsync(locationDto.Id);
+                    var restockRequests = await _restockRequestRepository.GetRequestedItemsByLocationIdAsync(dto.Id);
                     if (restockRequests != null && restockRequests.Any())
                     {
                         // Flatten all items from all restock requests for this location
@@ -85,7 +160,7 @@ namespace NYR.API.Services
                         if (allItems.Any())
                         {
                             // Map RestockRequestItems to TransferInventoryItemDto
-                            locationDto.TransferItems = allItems.Select(item => new TransferInventoryItemDto
+                            dto.TransferItems = allItems.Select(item => new TransferInventoryItemDto
                             {
                                 ProductId = item.ProductId,
                                 ProductName = item.Product?.Name ?? string.Empty,
@@ -99,11 +174,11 @@ namespace NYR.API.Services
                     }
 
                     // Get location inventory data for this location
-                    //var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(locationDto.Id);
-                    var locationInventoryData = all_locationInventoryData.Where(lid => lid.LocationId == locationDto.Id).ToList();
+                    //var locationInventoryData = await _locationInventoryDataRepository.GetByLocationIdAsync(dto.Id);
+                    var locationInventoryData = all_locationInventoryData.Where(lid => lid.LocationId == dto.Id).ToList();
                     if (locationInventoryData != null && locationInventoryData.Any())
                     {
-                        locationDto.LocationInventoryData = locationInventoryData.Select(inventory => new LocationInventoryDataDto
+                        dto.LocationInventoryData = locationInventoryData.Select(inventory => new LocationInventoryDataDto
                         {
                             Id = inventory.Id,
                             LocationId = inventory.LocationId,
@@ -130,7 +205,7 @@ namespace NYR.API.Services
                     locationDto.LocationInventoryData = new List<LocationInventoryDataDto>();
                 }
             }
-            
+
             return locationDtos;
         }
 

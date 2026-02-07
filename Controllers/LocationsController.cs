@@ -49,6 +49,21 @@ namespace NYR.API.Controllers
             }
         }
 
+        [HttpGet("locationDetails/{locationId}")]
+        [Authorize(Roles = "Admin,Customer,Staff,Driver")]
+        public async Task<ActionResult<IEnumerable<LocationDto>>> GetAllLocationsWithInventory(int locationId)
+        {
+            try
+            {
+                var locations = await _locationService.GetLocationsInventoryByIdAsync(locationId);
+                return Ok(locations);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message, stackTrace = ex.StackTrace });
+            }
+        }
+
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin,Customer,Staff,Driver")]
         public async Task<ActionResult<LocationDto>> GetLocation(int id)

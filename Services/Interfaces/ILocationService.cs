@@ -7,6 +7,7 @@ namespace NYR.API.Services.Interfaces
         Task<IEnumerable<LocationDto>> GetAllLocationsAsync();
         Task<PagedResultDto<LocationDto>> GetLocationsPagedAsync(PaginationParamsDto paginationParams);
         Task<IEnumerable<LocationDto>> GetAllLocationsWithInventoryAsync();
+        Task<IEnumerable<LocationDto>> GetLocationsInventoryByIdAsync(int locationId);
         Task<LocationDto?> GetLocationByIdAsync(int id);
         Task<LocationDto> CreateLocationAsync(CreateLocationDto createLocationDto);
         Task<LocationDto?> UpdateLocationAsync(int id, UpdateLocationDto updateLocationDto);
